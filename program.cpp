@@ -3,16 +3,13 @@
 #include <algorithm>
 #include <numeric>
 
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-
-#include "entities.h"
-
+#include "game.h"
 
 
-int main(int argc, char const *argv[])
+int main(int , char const ** )
 {
-	auto logger = spdlog::stderr_color_st("pongLog");
+	auto logger = spdlog::stderr_color_st("gamelog");
 
 	sf::RenderWindow window({1280, 1024}, "Sf Pong!");
 	auto win_size = window.getSize();
@@ -87,28 +84,24 @@ int main(int argc, char const *argv[])
 					switch (event.key.code)
 					{
 						case sf::Keyboard::F1:
+							p1.setAi(!p1.isAi());
+							logger->info("P1 Ai={}", p1.isAi());
+							break;
+						case sf::Keyboard::F2:
+							p2.setAi(!p2.isAi());
+							logger->info("P2 Ai={}", p2.isAi());
+							break;
+						case sf::Keyboard::Enter:
 							ball = def_ball;
 							ball.velocity = { -red::ball::SERVE_SPEED, 0 };
-
 							logger->info("Ball serve");
 							break;
-
-						case sf::Keyboard::F5:
+						case sf::Keyboard::F12:
 							p1 = def_players.first;
 							p2 = def_players.second;
 							ball = def_ball;
 							scores.set_scores(0, 0);
-
 							logger->info("State reset");
-							break;
-
-						case sf::Keyboard::F9:
-							p1.setAi(!p1.isAi());
-							logger->info("P1 Ai={}", p1.isAi());
-							break;
-						case sf::Keyboard::F10:
-							p2.setAi(!p2.isAi());
-							logger->info("P2 Ai={}", p2.isAi());
 							break;
 					}
 				} break;

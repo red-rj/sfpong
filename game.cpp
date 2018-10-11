@@ -1,4 +1,5 @@
-#include "entities.h"
+#include "game.h"
+#include "rng.h"
 #include <string>
 #include <algorithm>
 #include <random>
@@ -9,19 +10,17 @@ namespace
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 }
 
-int random_num(int min, int max)
+int red::random_num(int min, int max)
 {
 	static auto dist = std::uniform_int_distribution(min, max);
 	return dist(rnd_eng);
 }
 
-bool coin_flip()
+bool red::coin_flip()
 {
 	static std::bernoulli_distribution dist;
 	return dist(rnd_eng);
 }
-
-
 
 
 void red::score::set_padding(short p)
@@ -41,7 +40,7 @@ void red::score::format_score_txt()
 
 void red::paddle::update(game_objs& go)
 {
-	if (m_ai) 
+	if (m_ai)
 	{
 		auto reaction = random_num(20, 250);
 		auto ballbounds = go.ball->getGlobalBounds();
@@ -87,7 +86,7 @@ void red::paddle::update(game_objs& go)
 		{
 			velocity.y /= 2;
 		}
-		
+
 		if (sf::Keyboard::isKeyPressed(fast_key) && moving)
 		{
 			velocity.y *= 2;
@@ -95,17 +94,17 @@ void red::paddle::update(game_objs& go)
 
 	}
 
-	auto bounds = getGlobalBounds();
-
-	if (bounds.intersects(go.court->top.getGlobalBounds()))
+	// check colisão com bordas
+	while (getGlobalBounds().intersects(go.court->top.getGlobalBounds()))
 	{
 		velocity.y = 0;
-		move(0, ACCEL_FACTOR);
+		move(0, ACCEL_FACTOR * 10);
 	}
-	else if (bounds.intersects(go.court->bottom.getGlobalBounds()))
+
+	while (getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
 	{
 		velocity.y = 0;
-		move(0, -ACCEL_FACTOR);
+		move(0, -ACCEL_FACTOR * 10);
 	}
 
 	move(velocity);
@@ -178,8 +177,7 @@ void red::net_shape::setup()
 	auto piece_size = sf::Vector2f(m_piece_size, m_piece_size);
 	auto current_pt = sf::Vector2f();
 
-	int p = 0;
-	for (bool gap = false; p < m_piece_count; gap = !gap)
+	for (int gap = false, p = 0; p < m_piece_count; gap = !gap)
 	{
 		if (gap)
 		{

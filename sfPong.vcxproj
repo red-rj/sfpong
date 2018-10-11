@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="game_input.h" />
-    <ClInclude Include="entities.h" />
+    <ClInclude Include="game.h" />
+    <ClInclude Include="rng.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="entities.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="program.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -95,12 +95,14 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>F:\DEV\_libs\SFML\x64\include;F:\DEV\_libs\fmt-5.2.1\include;F:\DEV\_libs\spdlog-1.x\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>F:\DEV\_libs\SFML\x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -128,7 +130,7 @@ if not %rce%==1 exit %rce% else exit 0</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -136,6 +138,8 @@ if not %rce%==1 exit %rce% else exit 0</Command>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>F:\DEV\_libs\SFML\x64\include;F:\DEV\_libs\fmt-5.2.1\include;F:\DEV\_libs\spdlog-1.x\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

@@ -1,26 +1,10 @@
 #pragma once
 
 #include <utility>
-#include <cstdint>
 #include "SFML/Graphics.hpp"
 
 namespace red
 {
-	struct paddle; 
-	struct ball;
-	struct score;
-	struct court;
-
-	struct game_objs
-	{
-		std::pair<paddle*, paddle*> players = {};
-		ball*	ball		= nullptr;
-		score*	score		= nullptr;
-		court*	court		= nullptr;
-		sf::FloatRect* playable_bounds = nullptr;
-	};
-
-	
 	struct score : public sf::Drawable, public sf::Transformable
 	{
 	 	explicit score(const sf::Text& text_) : m_text(text_)
@@ -59,7 +43,7 @@ namespace red
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
 		{
-			states.transform = getTransform();
+			states.transform *= getTransform();
 			target.draw(m_text, states);
 		}
 
@@ -80,7 +64,7 @@ namespace red
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
 		{
-			states.transform = getTransform();
+			states.transform *= getTransform();
 			target.draw(m_net, states);
 		}
 
@@ -111,6 +95,7 @@ namespace red
 		}
 	};
 	
+	struct game_objs;
 	
 	struct game_entity
 	{
@@ -121,14 +106,9 @@ namespace red
 		sf::Vector2f velocity = {};
 	};
 
-	struct entity : sf::Drawable, sf::Transformable
-	{
-
-	};
-
 	struct paddle : sf::RectangleShape, game_entity
 	{
-		explicit paddle(bool ai_ = false) : sf::RectangleShape({25.f, 150.f}), m_ai(ai_)
+		explicit paddle(bool ai_ = false) : sf::RectangleShape({ 25.f, 150.f }), m_ai(ai_)
 		{
 			setOrigin(12.5f, 75.f);
 		}
@@ -140,25 +120,35 @@ namespace red
 		bool isAi() const { return m_ai; }
 		void setAi(bool b) { m_ai = b; }
 
-		constexpr static float ACCEL_FACTOR = 0.0001f, 
-							   MAX_VELOCITY = ACCEL_FACTOR * 1000;
+		constexpr static float ACCEL_FACTOR = 0.0001f,
+			MAX_VELOCITY = ACCEL_FACTOR * 1000;
 
 	private:
 		bool m_ai = false;
 	};
 
-
 	struct ball : sf::CircleShape, game_entity
 	{
-		ball() : sf::CircleShape(25.f) {
-			setOrigin(12.5f, 12.5f);
+		ball() : sf::CircleShape(RADIUS) {
+			setOrigin(RADIUS / 2, RADIUS / 2);
+			setFillColor(sf::Color::Red);
 		}
 
 		virtual void update(game_objs& go) override;
 
 		constexpr static float MAX_VELOCITY = 5.f;
 		constexpr static float SERVE_SPEED = 0.05F;
+		constexpr static float RADIUS = 20.f;
 	};
 
 
+
+	struct game_objs
+	{
+		std::pair<paddle*, paddle*> players = {};
+		ball*	ball = nullptr;
+		score*	score = nullptr;
+		court*	court = nullptr;
+		sf::FloatRect* playable_bounds = nullptr;
+	};
 }
