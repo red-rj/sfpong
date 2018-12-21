@@ -8,4 +8,14 @@
     <ClCompile Include="program.cpp" />
     <ClCompile Include="game.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="resources">
+      <UniqueIdentifier>{a7986812-e9ca-4a06-a418-a0c570855926}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="resources\LiberationMono-Regular.ttf">
+      <Filter>resources</Filter>
+    </Font>
+  </ItemGroup>
 </Project>

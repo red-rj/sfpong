@@ -12,7 +12,7 @@ namespace
 
 int red::random_num(int min, int max)
 {
-	static auto dist = std::uniform_int_distribution(min, max);
+	auto dist = std::uniform_int_distribution(min, max);
 	return dist(rnd_eng);
 }
 
@@ -21,6 +21,9 @@ bool red::coin_flip()
 	static std::bernoulli_distribution dist;
 	return dist(rnd_eng);
 }
+
+// constantes
+
 
 
 void red::score::set_padding(short p)
