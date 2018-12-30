@@ -40,7 +40,7 @@ void red::score::format_score_txt()
 
 void red::paddle::update(game_objs& go)
 {
-	if (m_ai)
+	if (ai)
 	{
 		auto reaction = random_num(20, 250);
 		auto ballbounds = go.ball->getGlobalBounds();
@@ -93,6 +93,8 @@ void red::paddle::update(game_objs& go)
 		}
 
 	}
+    
+    move(velocity);
 
 	// check colisão com bordas
 	while (getGlobalBounds().intersects(go.court->top.getGlobalBounds()))
@@ -107,7 +109,6 @@ void red::paddle::update(game_objs& go)
 		move(0, -max_speed * 10);
 	}
 
-	move(velocity);
 }
 
 void red::ball::update(game_objs& go)
@@ -153,13 +154,13 @@ void red::ball::update(game_objs& go)
 		// ponto!
 		if (getPosition().x < 0)
 		{
-			// indo p/ dir, ponto p1
+			// indo p/ direita, ponto p1
 			go.score->add_scores(1, 0);
 			velocity = { -serve_speed, 0 };
 		}
 		else
 		{
-			// indo p/ esq, ponto p2
+			// indo p/ esquerda, ponto p2
 			go.score->add_scores(0, 1);
 			velocity = { serve_speed, 0 };
 		}

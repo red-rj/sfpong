@@ -6,8 +6,6 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "game.h"
 
-// CONFIG
-
 
 int main(int , char const ** )
 {
@@ -47,8 +45,10 @@ int main(int , char const ** )
 	scores.set_padding(4);
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
-	red::paddle p1(false);
-	red::paddle p2(true);
+    // jogadores
+	red::paddle p1;
+    red::paddle p2; 
+    p2.ai = true;
 	red::ball ball;
 
 	p1.setPosition(margin.x, win_size.y / 2.f);
@@ -63,12 +63,15 @@ int main(int , char const ** )
 
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
 
-	// padrao
+    // ajustes WIP
+
+    ball.serve_speed += 0.05f;
+
+    // -------
+	
+    // padrao
 	const auto def_players = std::make_pair(p1, p2);
 	const auto def_ball = ball;
-
-    // ajustes
-    
 
 
 	red::game_objs go = {
@@ -90,12 +93,12 @@ int main(int , char const ** )
 					switch (event.key.code)
 					{
 						case sf::Keyboard::F1:
-							p1.setAi(!p1.isAi());
-							logger->info("P1 Ai={}", p1.isAi());
+							p1.ai = !p1.ai;
+							logger->info("P1 Ai={}", p1.ai);
 							break;
 						case sf::Keyboard::F2:
-							p2.setAi(!p2.isAi());
-							logger->info("P2 Ai={}", p2.isAi());
+                            p2.ai = !p2.ai;
+							logger->info("P2 Ai={}", p2.ai);
 							break;
 						case sf::Keyboard::Enter:
 							ball = def_ball;

@@ -108,7 +108,7 @@ namespace red
 
 	struct paddle : sf::RectangleShape, game_entity
 	{
-		explicit paddle(bool ai_ = false) : sf::RectangleShape({ 25.f, 150.f }), m_ai(ai_)
+		paddle() : sf::RectangleShape({ 25.f, 150.f })
 		{
 			setOrigin(12.5f, 75.f);
 		}
@@ -117,13 +117,11 @@ namespace red
 
 		sf::Keyboard::Key up_key, down_key, fast_key;
 
-		bool isAi() const { return m_ai; }
-		void setAi(bool b) { m_ai = b; }
 
         float accel = 0.0001f, max_speed = 1.f;
+		bool ai = false;
 
 	private:
-		bool m_ai = false;
 	};
 
 	struct ball : sf::CircleShape, game_entity
