@@ -22,9 +22,6 @@ bool red::coin_flip()
 	return dist(rnd_eng);
 }
 
-// constantes
-
-
 
 void red::score::set_padding(short p)
 {
@@ -58,11 +55,11 @@ void red::paddle::update(game_objs& go)
 		{
 			if (ballPos.y < paddlePos.y)
 			{
-				velocity.y = std::clamp(-ySpeed, -MAX_VELOCITY * 2, 0.f);
+				velocity.y = std::clamp(-ySpeed, -max_speed * 2, 0.f);
 			}
 			else if (ballPos.y > paddlePos.y)
 			{
-				velocity.y = std::clamp(ySpeed, 0.f, MAX_VELOCITY * 2);
+				velocity.y = std::clamp(ySpeed, 0.f, max_speed * 2);
 			}
 		}
 		else
@@ -77,22 +74,22 @@ void red::paddle::update(game_objs& go)
 
 		if (sf::Keyboard::isKeyPressed(up_key))
 		{
-			velocity.y = std::clamp(vy - ACCEL_FACTOR, -MAX_VELOCITY, 0.f);
+			velocity.y = std::clamp(velocity.y - accel, -max_speed, 0.f);
 			moving = true;
 		}
 		else if (sf::Keyboard::isKeyPressed(down_key))
 		{
-			velocity.y = std::clamp(vy + ACCEL_FACTOR, 0.f, MAX_VELOCITY);
+			velocity.y = std::clamp(velocity.y + accel, 0.f, max_speed);
 			moving = true;
 		}
 		else
 		{
-			velocity.y /= 2;
+			velocity.y /= 1.25f;
 		}
 
 		if (sf::Keyboard::isKeyPressed(fast_key) && moving)
 		{
-			velocity.y *= 2;
+			velocity.y *= 1.25f;
 		}
 
 	}
@@ -101,13 +98,13 @@ void red::paddle::update(game_objs& go)
 	while (getGlobalBounds().intersects(go.court->top.getGlobalBounds()))
 	{
 		velocity.y = 0;
-		move(0, ACCEL_FACTOR * 10);
+		move(0, max_speed * 10);
 	}
 
 	while (getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
 	{
 		velocity.y = 0;
-		move(0, -ACCEL_FACTOR * 10);
+		move(0, -max_speed * 10);
 	}
 
 	move(velocity);
@@ -134,12 +131,12 @@ void red::ball::update(game_objs& go)
 
 	if (paddle)
 	{
-		const auto vX = velocity.x * (1.f + paddle::ACCEL_FACTOR);
+		const auto vX = velocity.x * (1.f + accel);
 		const auto vY = paddle->velocity.y != 0 ? paddle->velocity.y * 0.75f : velocity.y;
 
 		velocity = {
-			-std::clamp(vX, -MAX_VELOCITY, MAX_VELOCITY), 
-			 std::clamp(vY, -MAX_VELOCITY, MAX_VELOCITY)
+			-std::clamp(vX, -max_speed, max_speed),
+			 std::clamp(vY, -max_speed, max_speed)
 		};
 		
 		const auto desloc = velocity.x < 0 ? -paddle->getSize().x : paddle->getSize().x;
@@ -158,13 +155,13 @@ void red::ball::update(game_objs& go)
 		{
 			// indo p/ dir, ponto p1
 			go.score->add_scores(1, 0);
-			velocity = { -SERVE_SPEED, 0 };
+			velocity = { -serve_speed, 0 };
 		}
 		else
 		{
 			// indo p/ esq, ponto p2
 			go.score->add_scores(0, 1);
-			velocity = { SERVE_SPEED, 0 };
+			velocity = { serve_speed, 0 };
 		}
 
 		setPosition(go.playable_bounds->width / 2, go.playable_bounds->height / 2);

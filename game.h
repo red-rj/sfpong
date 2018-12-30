@@ -120,8 +120,7 @@ namespace red
 		bool isAi() const { return m_ai; }
 		void setAi(bool b) { m_ai = b; }
 
-		constexpr static float ACCEL_FACTOR = 0.0001f,
-			MAX_VELOCITY = ACCEL_FACTOR * 1000;
+        float accel = 0.0001f, max_speed = 1.f;
 
 	private:
 		bool m_ai = false;
@@ -129,16 +128,14 @@ namespace red
 
 	struct ball : sf::CircleShape, game_entity
 	{
-		ball() : sf::CircleShape(RADIUS) {
-			setOrigin(RADIUS / 2, RADIUS / 2);
+		ball() : sf::CircleShape(20.f) {
+			setOrigin(10.f, 10.f);
 			setFillColor(sf::Color::Red);
 		}
 
 		virtual void update(game_objs& go) override;
 
-		constexpr static float MAX_VELOCITY = 5.f;
-		constexpr static float SERVE_SPEED = 0.05F;
-		constexpr static float RADIUS = 20.f;
+        float max_speed = 5.f, serve_speed = 0.05f, accel = 0.0001f;
 	};
 
 

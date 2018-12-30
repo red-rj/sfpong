@@ -6,6 +6,8 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "game.h"
 
+// CONFIG
+
 
 int main(int , char const ** )
 {
@@ -30,7 +32,7 @@ int main(int , char const ** )
 	court.net.setPosition({ win_size.x / 2.f, margin.y });
 
 	auto score_font = sf::Font();
-	if (!score_font.loadFromFile("C:\\Windows\\Fonts\\LiberationMono-Regular.ttf"))
+	if (!score_font.loadFromFile("resources/LiberationMono-Regular.ttf"))
 	{
 		logger->error("Font not found");
 		return EXIT_FAILURE;
@@ -65,6 +67,10 @@ int main(int , char const ** )
 	const auto def_players = std::make_pair(p1, p2);
 	const auto def_ball = ball;
 
+    // ajustes
+    
+
+
 	red::game_objs go = {
 		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
 	};
@@ -93,7 +99,7 @@ int main(int , char const ** )
 							break;
 						case sf::Keyboard::Enter:
 							ball = def_ball;
-							ball.velocity = { -red::ball::SERVE_SPEED, 0 };
+							ball.velocity = { -ball.serve_speed, 0 };
 							logger->info("Ball serve");
 							break;
 						case sf::Keyboard::F12:
