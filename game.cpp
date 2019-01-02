@@ -83,7 +83,7 @@ void red::paddle::update(game_objs& go)
 		}
 		else
 		{
-			velocity.y /= 1.25f;
+			velocity.y = 0;
 		}
 
 		if (sf::Keyboard::isKeyPressed(fast_key) && moving)

@@ -133,13 +133,14 @@ namespace red
 
 		virtual void update(game_objs& go) override;
 
-        float max_speed = 5.f, serve_speed = 0.05f, accel = 0.0001f;
+        float max_speed = 5.f, serve_speed = 0.1f, accel = 0.0001f;
 	};
 
 
 
 	struct game_objs
 	{
+        sf::Clock* game_time;
 		std::pair<paddle*, paddle*> players = {};
 		ball*	ball = nullptr;
 		score*	score = nullptr;

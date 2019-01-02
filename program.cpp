@@ -65,7 +65,7 @@ int main(int , char const ** )
 
     // ajustes WIP
 
-    ball.serve_speed += 0.05f;
+
 
     // -------
 	
@@ -74,8 +74,10 @@ int main(int , char const ** )
 	const auto def_ball = ball;
 
 
+    sf::Clock clock;
+
 	red::game_objs go = {
-		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
+		&clock, { &p1, &p2 }, &ball, &scores, &court, &win_bounds
 	};
 
     while(window.isOpen()) {
