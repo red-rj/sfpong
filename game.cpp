@@ -69,7 +69,6 @@ void red::paddle::update(game_objs& go)
 	}
 	else // player
 	{
-		const auto vy = velocity.y;
 		bool moving = false;
 
 		if (sf::Keyboard::isKeyPressed(up_key))
@@ -93,22 +92,17 @@ void red::paddle::update(game_objs& go)
 		}
 
 	}
-    
+
+    auto oldPos = getPosition();
+
     move(velocity);
 
 	// check colisão com bordas
-	while (getGlobalBounds().intersects(go.court->top.getGlobalBounds()))
+	if (getGlobalBounds().intersects(go.court->top.getGlobalBounds()) || getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
 	{
-		velocity.y = 0;
-		move(0, max_speed * 10);
+        velocity.y = 0;
+        setPosition(oldPos);
 	}
-
-	while (getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
-	{
-		velocity.y = 0;
-		move(0, -max_speed * 10);
-	}
-
 }
 
 void red::ball::update(game_objs& go)
