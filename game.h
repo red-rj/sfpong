@@ -118,10 +118,13 @@ namespace red
 		sf::Keyboard::Key up_key, down_key, fast_key;
 
 
-        float accel = 0.0001f, max_speed = 1.f;
 		bool ai = false;
+        float accel = 1.f;
+        float base_speed = 450.f;
 
 	private:
+        //sf::Clock ai_timer;
+        //sf::Time ai_react = sf::seconds(0.1f);
 	};
 
 	struct ball : sf::CircleShape, game_entity
@@ -134,6 +137,7 @@ namespace red
 		virtual void update(game_objs& go) override;
 
         float max_speed = 5.f, serve_speed = 0.1f, accel = 0.0001f;
+
 	};
 
 

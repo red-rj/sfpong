@@ -65,7 +65,9 @@ int main(int , char const ** )
 
     // ajustes WIP
 
-
+    p1.base_speed = p2.base_speed = 500.f;
+    p1.accel = 1.5f;
+    p2.accel = 10.f;
 
     // -------
 	
@@ -81,8 +83,8 @@ int main(int , char const ** )
 	};
 
     while(window.isOpen()) {
-        sf::Event event;
         
+        sf::Event event;
         while(window.pollEvent(event)) {
             
             switch (event.type)
