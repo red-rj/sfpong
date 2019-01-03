@@ -1,8 +1,11 @@
-#include "game.h"
-#include "rng.h"
 #include <string>
 #include <algorithm>
 #include <random>
+
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "game.h"
+#include "rng.h"
+
 
 namespace
 {
@@ -40,7 +43,7 @@ void red::score::format_score_txt()
 
 void red::paddle::update(game_objs& go)
 {
-    float deltaTime = go.game_time->restart().asSeconds();
+    float deltaTime = go.game_time->restart().asSeconds() * accel;
 
 	if (ai)
 	{
@@ -90,8 +93,6 @@ void red::paddle::update(game_objs& go)
         {
             velocity.y *= 3.f;
         }
-
-        velocity.y *= accel;
 	}
 
     auto oldPos = getPosition();
@@ -127,7 +128,7 @@ void red::ball::update(game_objs& go)
 
 	if (paddle)
 	{
-		const auto vX = velocity.x * (1.f + accel);
+		const auto vX = velocity.x * 1.05f;
 		const auto vY = paddle->velocity.y != 0 ? paddle->velocity.y * 0.75f : velocity.y;
 
 		velocity = {

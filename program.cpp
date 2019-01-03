@@ -9,27 +9,28 @@
 
 int main(int , char const ** )
 {
-	auto logger = spdlog::stderr_color_st("gamelog");
-
-	sf::RenderWindow window({1280, 1024}, "Sf Pong!");
-	auto win_size = window.getSize();
-	auto win_bounds = sf::FloatRect({ 0,0 }, static_cast<sf::Vector2f>(win_size));
-
+    auto win_size = sf::Vector2u(1280, 1024);
+    auto win_bounds = sf::FloatRect({ 0, 0 }, static_cast<sf::Vector2f>(win_size));
 	auto margin = sf::Vector2f(15, 20);
-	auto playArea = win_size - sf::Vector2u{ 30, 40 };
+	auto playArea = static_cast<sf::Vector2f>(win_size) - (margin * 2.f);
+
+    auto const PaddleSize = sf::Vector2f(25.f, 150.f);
+    const float BallRadius = 10.f;
+
+    auto logger = spdlog::stderr_color_st("pong");
+
+    sf::RenderWindow window({ win_size.x, win_size.y }, "Sf Pong!");
+
 	
 	// pong court
-	red::court court = {
-		{ (float)playArea.x, 25.f },
-		{ (float)playArea.x, 25.f },
-	};
+	red::court court{ { (float)playArea.x, 25.f } };
 
 	court.top.setPosition(margin);
 	court.bottom.setOrigin(0, 25.f);
 	court.bottom.setPosition(margin + sf::Vector2f{0, win_size.y - margin.y * 2});
 	court.net.setPosition({ win_size.x / 2.f, margin.y });
 
-	auto score_font = sf::Font();
+    sf::Font score_font;
 	if (!score_font.loadFromFile("resources/LiberationMono-Regular.ttf"))
 	{
 		logger->error("Font not found");
@@ -42,14 +43,12 @@ int main(int , char const ** )
 	scr_txt.setFillColor(sf::Color::Red);
 
 	red::score scores{ scr_txt };
-	scores.set_padding(4);
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
     // jogadores
-	red::paddle p1;
-    red::paddle p2; 
+    red::paddle p1{ PaddleSize };
+    red::paddle p2{ PaddleSize };
     p2.ai = true;
-	red::ball ball;
 
 	p1.setPosition(margin.x, win_size.y / 2.f);
 	p2.setPosition(win_size.x - margin.x, win_size.y / 2.f);
@@ -61,13 +60,13 @@ int main(int , char const ** )
 	p2.down_key = sf::Keyboard::Down;
 	p2.fast_key = sf::Keyboard::RControl;
 
+    red::ball ball{ BallRadius };
+
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
 
     // ajustes WIP
 
-    p1.base_speed = p2.base_speed = 500.f;
-    p1.accel = 1.5f;
-    p2.accel = 10.f;
+
 
     // -------
 	

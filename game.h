@@ -7,7 +7,7 @@ namespace red
 {
 	struct score : public sf::Drawable, public sf::Transformable
 	{
-	 	explicit score(const sf::Text& text_) : m_text(text_)
+	 	explicit score(const sf::Text& text_, short padding = 4) : m_text(text_), m_padding(padding)
 		{
 			format_score_txt();
 		}
@@ -50,7 +50,7 @@ namespace red
 		void format_score_txt();
 
 		sf::Text m_text;
-		short m_padding = 5, m_p1_score = 0, m_p2_score = 0;
+		short m_padding = 4, m_p1_score = 0, m_p2_score = 0;
 	};
 
 	struct net_shape : public sf::Drawable, public sf::Transformable
@@ -82,8 +82,9 @@ namespace red
 		{
 		}
 
-		sf::RectangleShape top;
-		sf::RectangleShape bottom;
+        explicit court(const sf::Vector2f& size_) : court(size_, size_) {}
+
+		sf::RectangleShape top, bottom;
 		net_shape net;
 
 	private:
@@ -108,9 +109,9 @@ namespace red
 
 	struct paddle : sf::RectangleShape, game_entity
 	{
-		paddle() : sf::RectangleShape({ 25.f, 150.f })
+        explicit paddle(const sf::Vector2f& size) : RectangleShape(size)
 		{
-			setOrigin(12.5f, 75.f);
+			setOrigin(size.x / 2, size.y / 2);
 		}
 
 		void update(game_objs& go) override;
@@ -120,7 +121,7 @@ namespace red
 
 		bool ai = false;
         float accel = 1.f;
-        float base_speed = 450.f;
+        float base_speed = 500.f;
 
 	private:
         //sf::Clock ai_timer;
@@ -129,15 +130,14 @@ namespace red
 
 	struct ball : sf::CircleShape, game_entity
 	{
-		ball() : sf::CircleShape(20.f) {
-			setOrigin(10.f, 10.f);
+		explicit ball(float radius) : CircleShape(radius) {
+			setOrigin(radius / 2, radius / 2);
 			setFillColor(sf::Color::Red);
 		}
 
 		virtual void update(game_objs& go) override;
 
-        float max_speed = 5.f, serve_speed = 0.1f, accel = 0.0001f;
-
+        float max_speed = 5.f, serve_speed = 0.1f;
 	};
 
 
