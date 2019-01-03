@@ -65,7 +65,9 @@ int main(int , char const ** )
 
     // ajustes WIP
 
-    ball.serve_speed += 0.05f;
+    p1.base_speed = p2.base_speed = 500.f;
+    p1.accel = 1.5f;
+    p2.accel = 10.f;
 
     // -------
 	
@@ -74,13 +76,15 @@ int main(int , char const ** )
 	const auto def_ball = ball;
 
 
+    sf::Clock clock;
+
 	red::game_objs go = {
-		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
+		&clock, { &p1, &p2 }, &ball, &scores, &court, &win_bounds
 	};
 
     while(window.isOpen()) {
-        sf::Event event;
         
+        sf::Event event;
         while(window.pollEvent(event)) {
             
             switch (event.type)

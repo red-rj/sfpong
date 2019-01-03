@@ -40,69 +40,70 @@ void red::score::format_score_txt()
 
 void red::paddle::update(game_objs& go)
 {
+    float deltaTime = go.game_time->restart().asSeconds();
+
 	if (ai)
 	{
-		auto reaction = random_num(20, 250);
-		auto ballbounds = go.ball->getGlobalBounds();
-		auto ballPos = go.ball->getPosition();
-		auto paddlePos = getPosition();
-		auto d = (paddlePos - ballPos).y;
-		auto diff = d < 0 ? -d + reaction : d - reaction;
+        auto reaction = random_num(20, 250);
+        auto ballPos = go.ball->getPosition();
+        auto paddlePos = getPosition();
+        auto d = (paddlePos - ballPos).y;
+        auto diff = d < 0 ? -d + reaction : d - reaction;
 
-		auto ySpeed = diff / 100.0f;
+        auto ySpeed = diff / 100.0f;
 
-		if (diff > ballbounds.height)
-		{
-			if (ballPos.y < paddlePos.y)
-			{
-				velocity.y = std::clamp(-ySpeed, -max_speed * 2, 0.f);
-			}
-			else if (ballPos.y > paddlePos.y)
-			{
-				velocity.y = std::clamp(ySpeed, 0.f, max_speed * 2);
-			}
-		}
-		else
-		{
-			velocity.y = 0;
-		}
-	}
+        if (diff > go.ball->getGlobalBounds().height)
+        {
+            if (ballPos.y < paddlePos.y)
+            {
+                velocity.y = std::clamp(-ySpeed, -base_speed * 2, 0.f);
+            }
+            else if (ballPos.y > paddlePos.y)
+            {
+                velocity.y = std::clamp(ySpeed, 0.f, base_speed * 2);
+            }
+        }
+        else
+        {
+            velocity.y = 0;
+        }
+    }
 	else // player
 	{
-		bool moving = false;
-
+        bool moving = false;
 		if (sf::Keyboard::isKeyPressed(up_key))
 		{
-			velocity.y = std::clamp(velocity.y - accel, -max_speed, 0.f);
-			moving = true;
+            velocity.y = -base_speed * deltaTime;
+            moving = true;
 		}
 		else if (sf::Keyboard::isKeyPressed(down_key))
 		{
-			velocity.y = std::clamp(velocity.y + accel, 0.f, max_speed);
-			moving = true;
-		}
-		else
-		{
-			velocity.y /= 1.25f;
-		}
+            velocity.y = base_speed * deltaTime;
+            moving = true;
+        }
+        else
+        {
+            velocity.y = 0;
+        }
 
-		if (sf::Keyboard::isKeyPressed(fast_key) && moving)
-		{
-			velocity.y *= 1.25f;
-		}
+        if (moving && sf::Keyboard::isKeyPressed(fast_key))
+        {
+            velocity.y *= 3.f;
+        }
 
+        velocity.y *= accel;
 	}
 
     auto oldPos = getPosition();
 
     move(velocity);
 
-	// check colisão com bordas
-	if (getGlobalBounds().intersects(go.court->top.getGlobalBounds()) || getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
-	{
+    // check colisão com bordas
+    if (getGlobalBounds().intersects(go.court->top.getGlobalBounds()) || getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
+    {
         velocity.y = 0;
         setPosition(oldPos);
-	}
+    }
 }
 
 void red::ball::update(game_objs& go)
