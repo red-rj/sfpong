@@ -3,10 +3,12 @@
   <ItemGroup>
     <ClInclude Include="rng.h" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="menu.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="menu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">

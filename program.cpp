@@ -5,6 +5,7 @@
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "game.h"
+#include "menu.h"
 
 
 int main(int , char const ** )
@@ -13,6 +14,7 @@ int main(int , char const ** )
     auto win_bounds = sf::FloatRect({ 0, 0 }, static_cast<sf::Vector2f>(win_size));
 	auto margin = sf::Vector2f(15, 20);
 	auto playArea = static_cast<sf::Vector2f>(win_size) - (margin * 2.f);
+    bool isPlaying = false;
 
     auto const PaddleSize = sf::Vector2f(25.f, 150.f);
     const float BallRadius = 10.f;
@@ -37,11 +39,12 @@ int main(int , char const ** )
 		return EXIT_FAILURE;
 	}
 
+    // placar
 	sf::Text scr_txt;
 	scr_txt.setFont(score_font);
 	scr_txt.setCharacterSize(55);
 	scr_txt.setFillColor(sf::Color::Red);
-
+    
 	red::score scores{ scr_txt };
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
@@ -61,14 +64,35 @@ int main(int , char const ** )
 	p2.fast_key = sf::Keyboard::RControl;
 
     red::ball ball{ BallRadius };
-
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
+
+    // menu
+    auto mainMenu = red::pong::menu(800, 600, { "Jogar", "Opções", "Sair" });
+    mainMenu.setFont(score_font);
 
     // ajustes WIP
 
 
 
     // -------
+
+    auto onMainMenuItem = [&](int i) {
+        switch (i)
+        {
+        case 0: // Jogar
+            logger->info("Jogar");
+            isPlaying = !isPlaying;
+            break;
+        case 1: // Opções
+            logger->info("Opções");
+            logger->warn("Não implementado...");
+            // WIP
+            break;
+        case 2: // Sair
+            window.close();
+            break;
+        }
+    };
 	
     // padrao
 	const auto def_players = std::make_pair(p1, p2);
@@ -76,6 +100,7 @@ int main(int , char const ** )
 
 
     sf::Clock clock;
+    sf::FloatRect visibleArea;
 
 	red::game_objs go = {
 		&clock, { &p1, &p2 }, &ball, &scores, &court, &win_bounds
@@ -91,8 +116,11 @@ int main(int , char const ** )
                 case sf::Event::Closed:
                     window.close();
                     break;
-				case sf::Event::KeyPressed:
+				
+                case sf::Event::KeyPressed:
 				{
+                    if (!isPlaying) break;
+
 					switch (event.key.code)
 					{
 						case sf::Keyboard::F1:
@@ -115,27 +143,86 @@ int main(int , char const ** )
 							scores.set_scores(0, 0);
 							logger->info("State reset");
 							break;
+                        case sf::Keyboard::Escape:
+                            isPlaying = !isPlaying;
+                            break;
 					}
 				} break;
+
+                case sf::Event::KeyReleased:
+                {
+                    if (isPlaying) break;
+
+                    switch (event.key.code)
+                    {
+                    case sf::Keyboard::Up:
+                        mainMenu.moveUp();
+                        break;
+                    case sf::Keyboard::Down:
+                        mainMenu.moveDown();
+                        break;
+                    case::sf::Keyboard::Return:
+                        onMainMenuItem(mainMenu.selected());
+                    }
+                } break;
+
 				case sf::Event::Resized:
-					sf::FloatRect visibleArea(0, 0, (float)event.size.width, (float)event.size.height);
+                    visibleArea.width = (float)event.size.width;
+                    visibleArea.height = (float)event.size.height;
 					window.setView(sf::View(visibleArea));
 					break;
+
+                case sf::Event::MouseMoved:
+                {
+                    if (!isPlaying)
+                    {
+                        mainMenu.deselect();
+                        int idx = 0;
+                        
+                        for (auto& i : mainMenu)
+                        {
+                            if (i.getGlobalBounds().contains((float)event.mouseMove.x, (float)event.mouseMove.y))
+                            {
+                                mainMenu.select(idx);
+                                break;
+                            }
+                            
+                            idx++;
+                        }
+                    }
+                } break;
+
+                case sf::Event::MouseButtonReleased:
+                {
+                    if (!isPlaying)
+                    {
+                        if (event.mouseButton.button == sf::Mouse::Left)
+                        {
+                            onMainMenuItem(mainMenu.selected());
+                        }
+                    }
+                } break;
             }            
         }
 
-		ball.update(go);
-		p1.update(go);
-		p2.update(go);
-
-        // drawing
         window.clear(sf::Color::Black);
 
-		window.draw(court);
-		window.draw(ball);
-		window.draw(p1);
-		window.draw(p2);
-		window.draw(scores);
+        if (isPlaying)
+        {
+            ball.update(go);
+            p1.update(go);
+            p2.update(go);
+
+            window.draw(court);
+            window.draw(ball);
+            window.draw(p1);
+            window.draw(p2);
+            window.draw(scores);
+        }
+        else
+        {
+            window.draw(mainMenu);
+        }
 
 		window.display();
     }
