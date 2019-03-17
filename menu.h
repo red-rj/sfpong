@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
+#include <functional>
 
 #include "SFML/Graphics.hpp"
 

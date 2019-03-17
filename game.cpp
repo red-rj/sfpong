@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <random>
 
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "game.h"
 #include "rng.h"
 
@@ -43,7 +42,6 @@ void red::score::format_score_txt()
 
 void red::paddle::update(game_objs& go)
 {
-    float deltaTime = go.game_time->restart().asSeconds() * accel;
 
 	if (ai)
 	{
@@ -73,7 +71,9 @@ void red::paddle::update(game_objs& go)
     }
 	else // player
 	{
+        float deltaTime = go.game_time->restart().asSeconds() * accel;
         bool moving = false;
+
 		if (sf::Keyboard::isKeyPressed(up_key))
 		{
             velocity.y = -base_speed * deltaTime;
@@ -128,7 +128,7 @@ void red::ball::update(game_objs& go)
 
 	if (paddle)
 	{
-		const auto vX = velocity.x * 1.05f;
+		const auto vX = velocity.x * (1.f + accel);
 		const auto vY = paddle->velocity.y != 0 ? paddle->velocity.y * 0.75f : velocity.y;
 
 		velocity = {
@@ -136,12 +136,12 @@ void red::ball::update(game_objs& go)
 			 std::clamp(vY, -max_speed, max_speed)
 		};
 		
-		const auto desloc = velocity.x < 0 ? -paddle->getSize().x : paddle->getSize().x;
+		const auto desloc = (velocity.x < 0 ? -paddle->getSize().x : paddle->getSize().x) * 0.1f;
 
 		// mover bola até não intersectar mais no paddle, isso evita q
 		// ela fique presa
 		while (paddle->getGlobalBounds().intersects(getGlobalBounds())) {
-			move(desloc * 0.1f, 0);
+			move(desloc, 0);
 		}
 	}
 
