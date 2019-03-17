@@ -4,11 +4,13 @@
     <ClInclude Include="rng.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="menu.h" />
+    <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="menu.cpp" />
+    <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">
@@ -19,5 +21,8 @@
     <Font Include="resources\LiberationMono-Regular.ttf">
       <Filter>resources</Filter>
     </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="game.cfg" />
   </ItemGroup>
 </Project>

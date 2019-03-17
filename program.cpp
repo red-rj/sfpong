@@ -2,28 +2,86 @@
 #include <string_view>
 #include <algorithm>
 #include <numeric>
+#include <iostream>
+#include <fstream>
 
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "boost/program_options.hpp"
+
 #include "game.h"
 #include "menu.h"
+#include "util.h"
 
+namespace opt = boost::program_options;
 
-int main(int , char const ** )
+void make_cfg_file()
 {
+    auto file = std::ofstream("game.cfg");
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open cfg file!\n";
+        return;
+    }
+
+    file << "[controls]" "\n";
+    file << "player1.up = w" "\n";
+    file << "player1.down = s" "\n";
+    file << "player1.fast = lshift" "\n";
+    file << "player2.up = up" "\n";
+    file << "player2.down = down" "\n";
+    file << "player2.fast = rcontrol" "\n";
+
+    file << "[game]" "\n";
+    file << "player2.fast = rcontrol" "\n";
+
+}
+
+int main()
+{
+    setlocale(LC_ALL, "");
+
+    // config file options
+    auto PaddleSize = sf::Vector2f(25.f, 150.f);
+    float BallRadius = 10.f;
+
+    opt::options_description desc{ "config file" };
+    desc.add_options()
+        ("controls.player1.up", opt::value<std::string>()),
+        ("controls.player1.down", opt::value<std::string>()),
+        ("controls.player1.fast", opt::value<std::string>()),
+        ("controls.player2.up", opt::value<std::string>()),
+        ("controls.player2.down", opt::value<std::string>()),
+        ("controls.player2.fast", opt::value<std::string>()),
+
+        ("game.paddle.base_speed", opt::value<float>()->default_value(500.f)),
+        ("game.paddle.accel", opt::value<float>()->default_value(1.f)),
+        ("game.paddle.size", opt::value<sf::Vector2f>(&PaddleSize)),
+
+        ("game.ball.max_speed", opt::value<float>()->default_value(5.f)),
+        ("game.ball.serve_speed", opt::value<float>()->default_value(0.1f)),
+        ("game.ball.accel", opt::value<float>()->default_value(0.05f)),
+        ("game.ball.radius", opt::value<float>(&BallRadius))
+        ;
+
+    // read cfg
+    auto cfgfile = std::fstream("game.cfg");
+    opt::variables_map cfg_vm;
+
+    auto parsed = opt::parse_config_file(cfgfile, desc, true);
+    opt::store(parsed, cfg_vm);
+
+    // ----
     auto win_size = sf::Vector2u(1280, 1024);
     auto win_bounds = sf::FloatRect({ 0, 0 }, static_cast<sf::Vector2f>(win_size));
 	auto margin = sf::Vector2f(15, 20);
 	auto playArea = static_cast<sf::Vector2f>(win_size) - (margin * 2.f);
     bool isPlaying = false;
 
-    auto const PaddleSize = sf::Vector2f(25.f, 150.f);
-    const float BallRadius = 10.f;
 
     auto logger = spdlog::stderr_color_st("pong");
-
+    
     sf::RenderWindow window({ win_size.x, win_size.y }, "Sf Pong!");
 
-	
 	// pong court
 	red::court court{ { (float)playArea.x, 25.f } };
 
@@ -209,6 +267,8 @@ int main(int , char const ** )
 
         if (isPlaying)
         {
+            window.setFramerateLimit(144);
+
             ball.update(go);
             p1.update(go);
             p2.update(go);
@@ -221,6 +281,7 @@ int main(int , char const ** )
         }
         else
         {
+            window.setFramerateLimit(5);
             window.draw(mainMenu);
         }
 
