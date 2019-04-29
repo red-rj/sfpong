@@ -109,10 +109,6 @@ namespace red
 
 	struct paddle : sf::RectangleShape, game_entity
 	{
-        explicit paddle(const sf::Vector2f& size) : RectangleShape(size)
-		{
-			setOrigin(size.x / 2, size.y / 2);
-		}
 
 		void update(game_objs& go) override;
 

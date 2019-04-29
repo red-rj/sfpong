@@ -1,7 +1,9 @@
 #pragma once
 #include <string_view>
+#include <iostream>
 
 #include "SFML/Window/Keyboard.hpp"
+#include "SFML/System/Vector2.hpp"
 #include "boost/program_options/value_semantic.hpp"
 
 namespace red
@@ -46,16 +48,8 @@ namespace red
     using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
     using ci_wstring_view = std::basic_string_view<wchar_t, ci_char_traits<wchar_t>>;
 
-    std::string_view nameof(sf::Keyboard::Key key);
-
-    class keybordkey_value : public boost::program_options::typed_value<sf::Keyboard::Key>
-    {
-    public:
-        using typed_value::typed_value;
-
-        bool apply_default(boost::any& storage) const {
-            storage = sf::Keyboard::Unknown;
-            return true;
-        }
-    };
+    sf::Keyboard::Key parse_kb_key(ci_string_view);
+    inline auto parse_kb_key(std::string_view view) {
+        return parse_kb_key(ci_string_view{ view.data(), view.size() });
+    }
 }

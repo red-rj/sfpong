@@ -2,7 +2,7 @@ set mode=%1
 set libfolder=%2
 set destination=%3
 
-set copyopts=/NP /NS
+set copyopts=/NP /NS /NC
 
 :: Dlls
 :: sfml-window-2
@@ -21,6 +21,7 @@ call :cp %sfmlDlls% %libfolder% %destination% %copyopts%
 :: resources
 if not exist "%destination%resources" mkdir "%destination%resources"
 copy resources\* "%destination%resources"
+copy game.cfg "%destination%"
 
 goto :eof
 

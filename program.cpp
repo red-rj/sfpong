@@ -14,53 +14,42 @@
 
 namespace opt = boost::program_options;
 
-void make_cfg_file()
-{
-    auto file = std::ofstream("game.cfg");
-
-    if (!file.is_open()) {
-        std::cerr << "Failed to open cfg file!\n";
-        return;
-    }
-
-    file << "[controls]" "\n";
-    file << "player1.up = w" "\n";
-    file << "player1.down = s" "\n";
-    file << "player1.fast = lshift" "\n";
-    file << "player2.up = up" "\n";
-    file << "player2.down = down" "\n";
-    file << "player2.fast = rcontrol" "\n";
-
-    file << "[game]" "\n";
-    file << "player2.fast = rcontrol" "\n";
-
-}
 
 int main()
 {
-    setlocale(LC_ALL, "");
+    auto logger = spdlog::stderr_color_st("pong");
 
     // config file options
-    auto PaddleSize = sf::Vector2f(25.f, 150.f);
-    float BallRadius = 10.f;
 
-    opt::options_description desc{ "config file" };
+    // config storage struct
+    struct {
+        std::string p1_up, p1_down, p1_fast;
+        std::string p2_up, p2_down, p2_fast;
+
+        sf::Vector2f paddle_size = { 25.f, 150.f };
+        float paddle_basespeed, paddle_accel;
+
+        float ball_radius, ball_maxspeed, ball_servespeed, ball_accel;
+
+    } config;
+
+    opt::options_description desc;
     desc.add_options()
-        ("controls.player1.up", opt::value<std::string>()),
-        ("controls.player1.down", opt::value<std::string>()),
-        ("controls.player1.fast", opt::value<std::string>()),
-        ("controls.player2.up", opt::value<std::string>()),
-        ("controls.player2.down", opt::value<std::string>()),
-        ("controls.player2.fast", opt::value<std::string>()),
+        ("controls.player1.up", opt::value<std::string>(&config.p1_up))
+        ("controls.player1.down", opt::value<std::string>(&config.p1_down))
+        ("controls.player1.fast", opt::value<std::string>(&config.p1_fast))
+        ("controls.player2.up", opt::value<std::string>(&config.p2_up))
+        ("controls.player2.down", opt::value<std::string>(&config.p2_down))
+        ("controls.player2.fast", opt::value<std::string>(&config.p2_fast))
 
-        ("game.paddle.base_speed", opt::value<float>()->default_value(500.f)),
-        ("game.paddle.accel", opt::value<float>()->default_value(1.f)),
-        ("game.paddle.size", opt::value<sf::Vector2f>(&PaddleSize)),
+        ("game.paddle.base_speed", opt::value<float>(&config.paddle_basespeed)->default_value(500.f))
+        ("game.paddle.accel", opt::value<float>(&config.paddle_accel)->default_value(1.f))
+        //("game.paddle.size", opt::value<sf::Vector2f>(&PaddleSize))
 
-        ("game.ball.max_speed", opt::value<float>()->default_value(5.f)),
-        ("game.ball.serve_speed", opt::value<float>()->default_value(0.1f)),
-        ("game.ball.accel", opt::value<float>()->default_value(0.05f)),
-        ("game.ball.radius", opt::value<float>(&BallRadius))
+        ("game.ball.max_speed", opt::value<float>(&config.ball_maxspeed)->default_value(5.f))
+        ("game.ball.serve_speed", opt::value<float>(&config.ball_servespeed)->default_value(0.1f))
+        ("game.ball.accel", opt::value<float>(&config.ball_accel)->default_value(0.05f))
+        ("game.ball.radius", opt::value<float>(&config.ball_radius)->default_value(10.f))
         ;
 
     // read cfg
@@ -69,6 +58,7 @@ int main()
 
     auto parsed = opt::parse_config_file(cfgfile, desc, true);
     opt::store(parsed, cfg_vm);
+    opt::notify(cfg_vm);
 
     // ----
     auto win_size = sf::Vector2u(1280, 1024);
@@ -77,9 +67,6 @@ int main()
 	auto playArea = static_cast<sf::Vector2f>(win_size) - (margin * 2.f);
     bool isPlaying = false;
 
-
-    auto logger = spdlog::stderr_color_st("pong");
-    
     sf::RenderWindow window({ win_size.x, win_size.y }, "Sf Pong!");
 
 	// pong court
@@ -107,22 +94,34 @@ int main()
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
     // jogadores
-    red::paddle p1{ PaddleSize };
-    red::paddle p2{ PaddleSize };
+    red::paddle p1;
+
+    p1.setSize(config.paddle_size);
+    p1.setOrigin(config.paddle_size.x / 2, config.paddle_size.y / 2);
+    
+    p1.accel = config.paddle_accel;
+    p1.base_speed = config.paddle_basespeed;
+
+    auto p2 = p1;
+
     p2.ai = true;
 
 	p1.setPosition(margin.x, win_size.y / 2.f);
 	p2.setPosition(win_size.x - margin.x, win_size.y / 2.f);
 
-	p1.up_key	= sf::Keyboard::W;
-	p1.down_key = sf::Keyboard::S;
-	p1.fast_key = sf::Keyboard::LShift;
-	p2.up_key	= sf::Keyboard::Up;
-	p2.down_key = sf::Keyboard::Down;
-	p2.fast_key = sf::Keyboard::RControl;
+	p1.up_key	= red::parse_kb_key(config.p1_up);
+	p1.down_key = red::parse_kb_key(config.p1_down);
+	p1.fast_key = red::parse_kb_key(config.p1_fast);
+	p2.up_key	= red::parse_kb_key(config.p2_up);
+	p2.down_key = red::parse_kb_key(config.p2_down);
+	p2.fast_key = red::parse_kb_key(config.p2_fast);
 
-    red::ball ball{ BallRadius };
+
+    red::ball ball{ config.ball_radius };
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
+    ball.max_speed = config.ball_maxspeed;
+    ball.serve_speed = config.ball_servespeed;
+    ball.accel = config.ball_accel;
 
     // menu
     auto mainMenu = red::pong::menu(800, 600, { "Jogar", "Opções", "Sair" });

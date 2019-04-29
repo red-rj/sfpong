@@ -1,14 +1,10 @@
-#include <charconv>
 #include <string>
 
 #include "util.h"
 
 
-auto sv_to_key(red::ci_string_view sv) {
+auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
     using Key = sf::Keyboard::Key;
-
-    if (sv.empty())
-        return Key::Unknown;
 
     int key = Key::Unknown;
 
@@ -57,6 +53,8 @@ auto sv_to_key(red::ci_string_view sv) {
             key = Key::LControl;
         } else if (sv == "LAlt") {
             key = Key::LAlt;
+        } else if (sv == "LShift") {
+            key = Key::LShift;
         } else if (sv == "RControl") {
             key = Key::RControl;
         } else if (sv == "RShift") {
@@ -98,21 +96,9 @@ auto sv_to_key(red::ci_string_view sv) {
         }
     }
 
+    if (key == Key::Unknown)
+        throw std::runtime_error("Unknown key");
+
     return Key(key);
 }
 
-namespace red
-{
-    std::string_view nameof(sf::Keyboard::Key key)
-    {
-        using Key = sf::Keyboard::Key;
-        
-        std::string_view name;
-
-        if (key == Key::Unknown) return "Unknown";
-        else if (key >= Key::A && key <= Key::Z) {
-            name = "A";
-        }
-        
-    }
-}
