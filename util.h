@@ -1,10 +1,14 @@
 #pragma once
+#include <string>
 #include <string_view>
-#include <iostream>
 
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "boost/program_options/value_semantic.hpp"
+
+#define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; \
+    __red_tu_main_t__::__red_tu_main_t__()
+
 
 namespace red
 {
@@ -46,9 +50,10 @@ namespace red
     };
 
     using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
-    using ci_wstring_view = std::basic_string_view<wchar_t, ci_char_traits<wchar_t>>;
+    using ci_string = std::basic_string<char, ci_char_traits<char>>;
 
     sf::Keyboard::Key parse_kb_key(ci_string_view);
+
     inline auto parse_kb_key(std::string_view view) {
         return parse_kb_key(ci_string_view{ view.data(), view.size() });
     }

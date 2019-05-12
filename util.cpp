@@ -1,104 +1,131 @@
 #include <string>
+#include <map>
 
 #include "util.h"
+#include "common.h"
+#include "spdlog/spdlog.h"
+
+using std::array;
+
+using KbKey = sf::Keyboard::Key;
+using namekey_map_t = std::map<red::ci_string_view, int>;
+
+
+static namekey_map_t kbkey_mapping {
+    {"[", KbKey::LBracket}, 
+    {"]", KbKey::RBracket},
+    {";", KbKey::Semicolon},
+    {",", KbKey::Comma},
+    {".", KbKey::Period},
+    {"'", KbKey::Quote},
+    {"/", KbKey::Slash},
+    {"\\", KbKey::BackSlash},
+    {"~", KbKey::Tilde},
+    {"=", KbKey::Equal},
+    {"-", KbKey::Hyphen},
+    {"+", KbKey::Add},
+    {"*", KbKey::Multiply},
+    
+    {"Escape", KbKey::Escape}, {"Esc", KbKey::Escape},
+    {"LControl", KbKey::LControl},{"LCtrl", KbKey::LControl},
+    {"LAlt", KbKey::LAlt},
+    {"LShift", KbKey::LShift},
+    {"RControl", KbKey::RControl}, {"RCtrl", KbKey::RControl},
+    {"RAlt", KbKey::RAlt},
+    {"RShift", KbKey::RShift},
+
+    {"Menu", KbKey::Menu},
+    {"Space", KbKey::Space},
+    {"Enter", KbKey::Enter},
+    {"Backspace", KbKey::Backspace},
+    {"Tab", KbKey::Tab},
+
+    {"PageUp", KbKey::PageUp},
+    {"PageDown", KbKey::PageDown},
+    {"End", KbKey::End},
+    {"Home", KbKey::Home},
+    {"Insert", KbKey::Insert},
+    {"Delete", KbKey::Delete},
+
+    {"Left", KbKey::Left},   {"LeftArrow", KbKey::Left},
+    {"Right", KbKey::Right}, {"RightArrow", KbKey::Right},
+    {"Up", KbKey::Up},       {"UpArrow", KbKey::Up},
+    {"Down", KbKey::Down},   {"DownArrow", KbKey::Down},
+
+    {"Pause", KbKey::Pause},
+
+    // autogen
+    // ----------------
+    {"0", KbKey::Num0},
+    {"Num0", KbKey::Num0},
+    {"Numpad0", KbKey::Numpad0},
+    {"1", KbKey::Num1},
+    {"Num1", KbKey::Num1},
+    {"Numpad1", KbKey::Numpad1},
+    {"2", KbKey::Num2},
+    {"Num2", KbKey::Num2},
+    {"Numpad2", KbKey::Numpad2},
+    {"3", KbKey::Num3},
+    {"Num3", KbKey::Num3},
+    {"Numpad3", KbKey::Numpad3},
+    {"4", KbKey::Num4},
+    {"Num4", KbKey::Num4},
+    {"Numpad4", KbKey::Numpad4},
+    {"5", KbKey::Num5},
+    {"Num5", KbKey::Num5},
+    {"Numpad5", KbKey::Numpad5},
+    {"6", KbKey::Num6},
+    {"Num6", KbKey::Num6},
+    {"Numpad6", KbKey::Numpad6},
+    {"7", KbKey::Num7},
+    {"Num7", KbKey::Num7},
+    {"Numpad7", KbKey::Numpad7},
+    {"8", KbKey::Num8},
+    {"Num8", KbKey::Num8},
+    {"Numpad8", KbKey::Numpad8},
+    {"9", KbKey::Num9},
+    {"Num9", KbKey::Num9},
+    {"Numpad9", KbKey::Numpad9},
+    {"A", KbKey::A},
+    {"B", KbKey::B},
+    {"C", KbKey::C},
+    {"D", KbKey::D},
+    {"E", KbKey::E},
+    {"F", KbKey::F},
+    {"G", KbKey::G},
+    {"H", KbKey::H},
+    {"I", KbKey::I},
+    {"J", KbKey::J},
+    {"K", KbKey::K},
+    {"L", KbKey::L},
+    {"M", KbKey::M},
+    {"N", KbKey::N},
+    {"O", KbKey::O},
+    {"P", KbKey::P},
+    {"Q", KbKey::Q},
+    {"R", KbKey::R},
+    {"S", KbKey::S},
+    {"T", KbKey::T},
+    {"U", KbKey::U},
+    {"V", KbKey::V},
+    {"W", KbKey::W},
+    {"X", KbKey::X},
+    {"Y", KbKey::Y},
+    {"Z", KbKey::Z}
+};
 
 
 auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
-    using Key = sf::Keyboard::Key;
-
-    int key = Key::Unknown;
-
-    if (sv.length() == 1) {
-        const char c = sv[0];
-        if (c >= '0' && c <= '9') {
-            key = (c - '0') + Key::Num0;
-        }
-        else if (auto uc = toupper(c); uc >= 'A' && uc <= 'Z') {
-            key = uc - 'A';
-        }
-        else switch (c)
-        {
-        case '[': key = Key::LBracket; break;
-        case ']': key = Key::RBracket; break;
-        case ';': key = Key::Semicolon; break;
-        case ',': key = Key::Comma; break;
-        case '.': key = Key::Period; break;
-        case '\'': key = Key::Quote; break;
-        case '/': key = Key::Slash; break;
-        case '\\': key = Key::Backslash; break;
-        case '~': key = Key::Tilde; break;
-        case '=': key = Key::Equal; break;
-        case '-': key = Key::Hyphen; break;
-        case '+': key = Key::Add; break;
-        //case '-': key = Key::Subtract; break;
-        case '*': key = Key::Multiply; break;
-        //case '/': key = Key::Divide; break;
-        }
+    try
+    {
+        int code = kbkey_mapping.at(sv);
+        return (KbKey)code;
     }
-    else if (sv.length() == 7 && sv.compare(0, 6, "numpad") == 0) {
-        const char num = sv[6];
-        if (num >= '0' && num <= '9') {
-            key = (num - '0') + Key::Numpad0;
-        }
-    }
-    else if (sv.length() <= 3 && sv.compare(0, 1, "F") == 0) {
-        sv.remove_prefix(1);
-        int fnum = std::stoi(std::string(sv.data(), sv.size()));
-        key = fnum - 1 + Key::F1;
-    }
-    else {
-        if (sv == "Escape" || sv == "Esc") {
-            key = Key::Escape;
-        } else if (sv == "LControl") {
-            key = Key::LControl;
-        } else if (sv == "LAlt") {
-            key = Key::LAlt;
-        } else if (sv == "LShift") {
-            key = Key::LShift;
-        } else if (sv == "RControl") {
-            key = Key::RControl;
-        } else if (sv == "RShift") {
-            key = Key::RShift;
-        } else if (sv == "RAlt") {
-            key = Key::RAlt;
-        } else if (sv == "Menu") {
-            key = Key::Menu;
-        } else if (sv == "Space") {
-            key = Key::Space;
-        } else if (sv == "Enter") {
-            key = Key::Enter;
-        } else if (sv == "Backspace") {
-            key = Key::Backspace;
-        } else if (sv == "Tab") {
-            key = Key::Tab;
-        } else if (sv == "PageUp") {
-            key = Key::PageUp;
-        } else if (sv == "PageDown") {
-            key = Key::PageDown;
-        } else if (sv == "End") {
-            key = Key::End;
-        } else if (sv == "Home") {
-            key = Key::Home;
-        } else if (sv == "Insert") {
-            key = Key::Insert;
-        } else if (sv == "Delete") {
-            key = Key::Delete;
-        } else if (sv == "Left") {
-            key = Key::Left;
-        } else if (sv == "Right") {
-            key = Key::Right;
-        } else if (sv == "Up") {
-            key = Key::Up;
-        } else if (sv == "Down") {
-            key = Key::Down;
-        } else if (sv == "Pause") {
-            key = Key::Pause;
-        }
+    catch (const std::out_of_range&)
+    {
+        gamelog()->error("invalid key name '{}'", sv);
+        return KbKey::Unknown;
     }
 
-    if (key == Key::Unknown)
-        throw std::runtime_error("Unknown key");
-
-    return Key(key);
 }
 

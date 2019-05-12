@@ -5,6 +5,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="util.h" />
+    <ClInclude Include="common.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />

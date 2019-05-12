@@ -8,6 +8,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "boost/program_options.hpp"
 
+#include "common.h"
 #include "game.h"
 #include "menu.h"
 #include "util.h"
@@ -17,7 +18,8 @@ namespace opt = boost::program_options;
 
 int main()
 {
-    auto logger = spdlog::stderr_color_st("pong");
+    auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
+    spdlog::register_logger(logger);
 
     // config file options
 
@@ -50,7 +52,7 @@ int main()
         ("game.ball.serve_speed", opt::value<float>(&config.ball_servespeed)->default_value(0.1f))
         ("game.ball.accel", opt::value<float>(&config.ball_accel)->default_value(0.05f))
         ("game.ball.radius", opt::value<float>(&config.ball_radius)->default_value(10.f))
-        ;
+    ;
 
     // read cfg
     auto cfgfile = std::fstream("game.cfg");
