@@ -19,7 +19,6 @@ namespace opt = boost::program_options;
 int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
-    spdlog::register_logger(logger);
 
     // config file options
 

@@ -3,7 +3,6 @@
 
 #include "util.h"
 #include "common.h"
-#include "spdlog/spdlog.h"
 
 using std::array;
 
@@ -128,4 +127,3 @@ auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
     }
 
 }
-

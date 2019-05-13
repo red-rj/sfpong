@@ -5,9 +5,7 @@
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "boost/program_options/value_semantic.hpp"
-
-#define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; \
-    __red_tu_main_t__::__red_tu_main_t__()
+#include "fmt/format.h"
 
 
 namespace red
@@ -58,3 +56,11 @@ namespace red
         return parse_kb_key(ci_string_view{ view.data(), view.size() });
     }
 }
+
+template<>
+struct fmt::formatter<red::ci_string_view> : fmt::formatter<std::string_view> {
+    template <typename FormatContext>
+    auto format(red::ci_string_view view, FormatContext &ctx) {
+        return formatter<std::string_view>::format({ view.data(), view.size() }, ctx);
+    }
+};

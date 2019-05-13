@@ -3,6 +3,10 @@
 
 #include "spdlog/spdlog.h"
 
+#define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; \
+    __red_tu_main_t__::__red_tu_main_t__()
+
+
 namespace red
 {
     inline auto LOGGER_NAME = "sfPong";
