@@ -120,8 +120,6 @@ namespace red
         float base_speed = 500.f;
 
 	private:
-        //sf::Clock ai_timer;
-        //sf::Time ai_react = sf::seconds(0.1f);
 	};
 
 	struct ball : sf::CircleShape, game_entity
@@ -133,14 +131,13 @@ namespace red
 
 		virtual void update(game_objs& go) override;
 
-        float max_speed = 5.f, serve_speed = 0.1f, accel = 0.05f;
+        float max_speed, serve_speed, accel;
 	};
 
     struct kb_controls
     {
         sf::Keyboard::Key up, down, fast;
     };
-
 
 
 	struct game_objs
@@ -152,4 +149,9 @@ namespace red
 		court*	court = nullptr;
 		sf::FloatRect* playable_bounds = nullptr;
 	};
+
+    bool check_collision(const sf::Shape* a, const sf::Shape* b);
+    inline bool check_collision(const sf::Shape* a, const court* court) {
+        return check_collision(a, &court->top) || check_collision(a, &court->bottom);
+    }
 }

@@ -3,14 +3,13 @@
 
 #include "util.h"
 #include "common.h"
+#include "serial_map.h"
 
-using std::array;
 
 using KbKey = sf::Keyboard::Key;
 using namekey_map_t = std::map<red::ci_string_view, int>;
 
-
-static namekey_map_t kbkey_mapping {
+static red::serial_map<red::ci_string_view, int> kb_serialmap {
     {"[", KbKey::LBracket}, 
     {"]", KbKey::RBracket},
     {";", KbKey::Semicolon},
@@ -117,7 +116,7 @@ static namekey_map_t kbkey_mapping {
 auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
     try
     {
-        int code = kbkey_mapping.at(sv);
+        int code = kb_serialmap.at(sv);
         return (KbKey)code;
     }
     catch (const std::out_of_range&)
@@ -125,5 +124,4 @@ auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
         gamelog()->error("invalid key name '{}'", sv);
         return KbKey::Unknown;
     }
-
 }

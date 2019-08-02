@@ -191,3 +191,8 @@ void red::net_shape::setup()
 
 	setOrigin(piece_size.x / 2, 0);
 }
+
+bool red::check_collision(const sf::Shape * a, const sf::Shape * b)
+{
+    return a->getGlobalBounds().intersects(b->getGlobalBounds());
+}
