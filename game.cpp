@@ -167,7 +167,7 @@ void red::ball::update(game_objs& go)
 	move(velocity);
 }
 
-void red::net_shape::setup()
+red::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
 {
 	m_net.clear();
 

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="game_config.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="serial_map.h" />
@@ -113,7 +114,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>F:\Libs\Source\SFML\x64\include;F:\Libs\comun\FMT\include;F:\Libs\xmulti\spdlog-1.x\include;F:\Libs\xmulti\boost\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\Libs\Source\SFML\x64\include;F:\Libs\x64\FMT\include;F:\Libs\xmulti\spdlog-1.x\include;F:\Libs\xmulti\boost\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>

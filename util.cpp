@@ -125,3 +125,6 @@ auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
         return KbKey::Unknown;
     }
 }
+
+#include "game_config.h"
+

@@ -1,8 +1,9 @@
+@echo off
 set mode=%1
 set libfolder=%2
 set destination=%3
 
-set copyopts=/NP /NS /NC
+set copyopts=/NJS /NP
 
 :: Dlls
 :: sfml-window-2
@@ -33,4 +34,4 @@ setlocal
 robocopy %*
 set rce=%errorlevel%
 if %rce% LSS 8 (exit /B 0) else (exit %rce%)
-endlocal
+endlocal & goto:eof

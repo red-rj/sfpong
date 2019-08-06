@@ -55,11 +55,7 @@ namespace red
 
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
-		net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25)
-			: m_piece_size(pieceSize_), m_piece_count(pieceCount_)
-		{
-			setup();
-		}
+        net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
@@ -68,7 +64,6 @@ namespace red
 			target.draw(m_net, states);
 		}
 
-		void setup();
 		
 		float m_piece_size = 20.f;
 		int m_piece_count = 50;
@@ -134,10 +129,6 @@ namespace red
         float max_speed, serve_speed, accel;
 	};
 
-    struct kb_controls
-    {
-        sf::Keyboard::Key up, down, fast;
-    };
 
 
 	struct game_objs
