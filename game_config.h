@@ -27,6 +27,7 @@ namespace red::pong
 
         struct {
             float base_speed, accel;
+            sf::Vector2f size = { 25.f, 150.f };
         } paddle;
 
         struct {

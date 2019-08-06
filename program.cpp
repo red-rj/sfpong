@@ -12,6 +12,7 @@
 #include "game.h"
 #include "menu.h"
 #include "util.h"
+#include "game_config.h"
 
 namespace opt = boost::program_options;
 
@@ -20,46 +21,16 @@ int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
 
-    // config file options
-
-    // config storage struct
-    struct {
-        std::string p1_up, p1_down, p1_fast;
-        std::string p2_up, p2_down, p2_fast;
-
-        sf::Vector2f paddle_size = { 25.f, 150.f };
-        float paddle_basespeed, paddle_accel;
-
-        float ball_radius, ball_maxspeed, ball_servespeed, ball_accel;
-
-    } config;
-
-    opt::options_description desc;
-    desc.add_options()
-        ("controls.player1.up", opt::value<std::string>(&config.p1_up))
-        ("controls.player1.down", opt::value<std::string>(&config.p1_down))
-        ("controls.player1.fast", opt::value<std::string>(&config.p1_fast))
-        ("controls.player2.up", opt::value<std::string>(&config.p2_up))
-        ("controls.player2.down", opt::value<std::string>(&config.p2_down))
-        ("controls.player2.fast", opt::value<std::string>(&config.p2_fast))
-
-        ("game.paddle.base_speed", opt::value<float>(&config.paddle_basespeed)->default_value(500.f))
-        ("game.paddle.accel", opt::value<float>(&config.paddle_accel)->default_value(1.f))
-        //("game.paddle.size", opt::value<sf::Vector2f>(&PaddleSize))
-
-        ("game.ball.max_speed", opt::value<float>(&config.ball_maxspeed)->default_value(5.f))
-        ("game.ball.serve_speed", opt::value<float>(&config.ball_servespeed)->default_value(0.1f))
-        ("game.ball.accel", opt::value<float>(&config.ball_accel)->default_value(0.05f))
-        ("game.ball.radius", opt::value<float>(&config.ball_radius)->default_value(10.f))
-    ;
-
-    // read cfg
-    auto cfgfile = std::fstream("game.cfg");
-    opt::variables_map cfg_vm;
-
-    auto parsed = opt::parse_config_file(cfgfile, desc, true);
-    opt::store(parsed, cfg_vm);
-    opt::notify(cfg_vm);
+    red::pong::config_t config;
+    try
+    {
+        config = red::pong::load_config();
+    }
+    catch (const std::exception& err)
+    {
+        logger->error("failed to load game config: '{}'", err.what());
+        return 5;
+    }
 
     // ----
     auto win_size = sf::Vector2u(1280, 1024);

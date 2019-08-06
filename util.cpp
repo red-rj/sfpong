@@ -127,4 +127,48 @@ auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
 }
 
 #include "game_config.h"
+#include "boost/program_options.hpp"
 
+red::pong::config_t red::pong::load_config() 
+{
+    using std::string;
+    namespace po = boost::program_options;
+
+    // temp pra parsear controles
+    enum : short { player_1, player_2 };
+    struct { string up, down, fast; } keys[2];
+
+    config_t config;
+
+    po::options_description cfg_desc;
+    cfg_desc.add_options()
+        ("controls.player1.up", po::value<string>(&keys[player_1].up))
+        ("controls.player1.down", po::value<string>(&keys[player_1].down))
+        ("controls.player1.fast", po::value<string>(&keys[player_1].fast))
+        ("controls.player2.up", po::value<string>(&keys[player_2].up))
+        ("controls.player2.down", po::value<string>(&keys[player_2].down))
+        ("controls.player2.fast", po::value<string>(&keys[player_2].fast))
+
+        ("game.paddle.base_speed", po::value<float>(&config.paddle.base_speed))
+        ("game.paddle.accel", po::value<float>(&config.paddle.accel))
+
+        ("game.ball.max_speed", po::value<float>(&config.ball.max_speed))
+        ("game.ball.serve_speed", po::value<float>(&config.ball.base_speed))
+        ("game.ball.accel", po::value<float>(&config.ball.accel))
+        ("game.ball.radius", po::value<float>(&config.ball.radius))
+    ;
+
+    po::variables_map cfg_vm;
+    auto parsed = po::parse_config_file("game.cfg", cfg_desc, true);
+    po::store(parsed, cfg_vm);
+    po::notify(cfg_vm);
+
+    config.controls[player_1].up = red::parse_kb_key(keys[player_1].up);
+    config.controls[player_1].down = red::parse_kb_key(keys[player_1].down);
+    config.controls[player_1].fast = red::parse_kb_key(keys[player_1].fast);
+    config.controls[player_2].up = red::parse_kb_key(keys[player_2].up);
+    config.controls[player_2].down = red::parse_kb_key(keys[player_2].down);
+    config.controls[player_2].fast = red::parse_kb_key(keys[player_2].fast);
+
+    return config;
+}
