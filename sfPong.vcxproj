@@ -127,8 +127,9 @@
       <AdditionalDependencies>sfml-main-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>if not exist $(OutputPath)game.cfg  copy game.cfg $(OutputPath)
+if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
+copy resources\* $(OutputPath)resources</Command>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -172,7 +173,9 @@
       <AdditionalDependencies>sfml-main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>$(SolutionDir)postbuild.bat $(Configuration) F:\Libs\x64\SFML\bin\ $(OutDir)</Command>
+      <Command>if not exist $(OutputPath)game.cfg  copy game.cfg $(OutputPath)
+if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
+copy resources\* $(OutputPath)resources</Command>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>

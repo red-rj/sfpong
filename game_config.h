@@ -1,16 +1,24 @@
 #pragma once
+#include <string_view>
 
 #include "SFML/Window/Keyboard.hpp"
+#include "boost/program_options/variables_map.hpp"
 #include "common.h"
 
 namespace red::pong
 {
+
+namespace player_id {
+    enum : uint8_t {
+        player_1, player_2
+    };
+}
+
     struct config_t
     {
         using Keyboard = sf::Keyboard;
 
         struct kb_controls { Keyboard::Key up, down, fast; };
-        enum player_id : short { player_1, player_2 };
 
         // ----
         kb_controls controls[2] = {
@@ -27,8 +35,11 @@ namespace red::pong
             float base_speed, accel, max_speed;
             float radius;
         } ball;
+
+        unsigned framerate;
     };
 
+    boost::program_options::variables_map load_config_variables(std::string_view file);
 
     config_t load_config();
 }

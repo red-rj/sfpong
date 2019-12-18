@@ -7,9 +7,10 @@
 
 
 using KbKey = sf::Keyboard::Key;
-using namekey_map_t = std::map<red::ci_string_view, int>;
+using serial_key_map = red::serial_map<red::ci_string_view, int>;
+namespace po = boost::program_options;
 
-static red::serial_map<red::ci_string_view, int> kb_serialmap {
+static serial_key_map kb_serialmap {
     {"[", KbKey::LBracket}, 
     {"]", KbKey::RBracket},
     {";", KbKey::Semicolon},
@@ -129,46 +130,76 @@ auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
 #include "game_config.h"
 #include "boost/program_options.hpp"
 
-red::pong::config_t red::pong::load_config() 
+// config keys
+constexpr auto 
+    CFG_P1_UP          = "controls.player1.up", 
+    CFG_P1_DOWN        = "controls.player1.down",
+    CFG_P1_FAST        = "controls.player2.fast",
+    CFG_P2_UP          = "controls.player2.up", 
+    CFG_P2_DOWN        = "controls.player2.down",
+    CFG_P2_FAST        = "controls.player2.fast",
+    CFG_PADDLE_SPEED   = "game.paddle.base_speed",
+    CFG_PADDLE_ACCEL   = "game.paddle.accel",
+    CFG_BALL_SPEED     = "game.ball.base_speed",
+    CFG_BALL_MAXSPEED  = "game.ball.max_speed",
+    CFG_BALL_ACCEL     = "game.ball.accel",
+    CFG_BALL_RADIUS    = "game.ball.radius",
+    CFG_FRAMERATE      = "game.framerate"
+;
+
+po::variables_map red::pong::load_config_variables(std::string_view file)
 {
     using std::string;
-    namespace po = boost::program_options;
-
-    // temp pra parsear controles
-    enum : short { player_1, player_2 };
-    struct { string up, down, fast; } keys[2];
-
-    config_t config;
 
     po::options_description cfg_desc;
     cfg_desc.add_options()
-        ("controls.player1.up", po::value<string>(&keys[player_1].up))
-        ("controls.player1.down", po::value<string>(&keys[player_1].down))
-        ("controls.player1.fast", po::value<string>(&keys[player_1].fast))
-        ("controls.player2.up", po::value<string>(&keys[player_2].up))
-        ("controls.player2.down", po::value<string>(&keys[player_2].down))
-        ("controls.player2.fast", po::value<string>(&keys[player_2].fast))
+        (CFG_P1_UP, po::value<string>()->default_value("w"))
+        (CFG_P1_DOWN, po::value<string>()->default_value("s"))
+        (CFG_P1_FAST, po::value<string>()->default_value("Lshift"))
+        (CFG_P2_UP, po::value<string>()->default_value("upArrow"))
+        (CFG_P2_DOWN, po::value<string>()->default_value("downArrow"))
+        (CFG_P2_FAST, po::value<string>()->default_value("Rctrl"))
 
-        ("game.paddle.base_speed", po::value<float>(&config.paddle.base_speed))
-        ("game.paddle.accel", po::value<float>(&config.paddle.accel))
+        (CFG_PADDLE_SPEED, po::value<float>())
+        (CFG_PADDLE_ACCEL, po::value<float>())
 
-        ("game.ball.max_speed", po::value<float>(&config.ball.max_speed))
-        ("game.ball.serve_speed", po::value<float>(&config.ball.base_speed))
-        ("game.ball.accel", po::value<float>(&config.ball.accel))
-        ("game.ball.radius", po::value<float>(&config.ball.radius))
+        (CFG_BALL_MAXSPEED, po::value<float>())
+        (CFG_BALL_SPEED, po::value<float>())
+        (CFG_BALL_ACCEL, po::value<float>())
+        (CFG_BALL_RADIUS, po::value<float>())   
+        (CFG_FRAMERATE, po::value<unsigned>()->default_value(60))
     ;
 
     po::variables_map cfg_vm;
-    auto parsed = po::parse_config_file("game.cfg", cfg_desc, true);
-    po::store(parsed, cfg_vm);
-    po::notify(cfg_vm);
+    auto parsed = po::parse_config_file(file.data(), cfg_desc, true);
+    po::store(parsed, cfg_vm); po::notify(cfg_vm);
 
-    config.controls[player_1].up = red::parse_kb_key(keys[player_1].up);
-    config.controls[player_1].down = red::parse_kb_key(keys[player_1].down);
-    config.controls[player_1].fast = red::parse_kb_key(keys[player_1].fast);
-    config.controls[player_2].up = red::parse_kb_key(keys[player_2].up);
-    config.controls[player_2].down = red::parse_kb_key(keys[player_2].down);
-    config.controls[player_2].fast = red::parse_kb_key(keys[player_2].fast);
+    return cfg_vm;
+}
+
+red::pong::config_t red::pong::load_config()
+{
+    using std::string;
+    using namespace red::pong::player_id;
+
+    config_t config;
+
+    auto vmap = load_config_variables("game.cfg");
+
+    config.controls[player_1].up = red::parse_kb_key(vmap[CFG_P1_UP].as<string>());
+    config.controls[player_1].down = red::parse_kb_key(vmap[CFG_P1_DOWN].as<string>());
+    config.controls[player_1].fast = red::parse_kb_key(vmap[CFG_P1_FAST].as<string>());
+    config.controls[player_2].up = red::parse_kb_key(vmap[CFG_P2_UP].as<string>());
+    config.controls[player_2].down = red::parse_kb_key(vmap[CFG_P2_DOWN].as<string>());
+    config.controls[player_2].fast = red::parse_kb_key(vmap[CFG_P2_FAST].as<string>());
+
+    config.paddle.base_speed = vmap[CFG_PADDLE_SPEED].as<float>();
+    config.paddle.accel = vmap[CFG_PADDLE_ACCEL].as<float>();
+    config.ball.base_speed = vmap[CFG_BALL_SPEED].as<float>();
+    config.ball.accel = vmap[CFG_BALL_ACCEL].as<float>();
+    config.ball.max_speed = vmap[CFG_BALL_MAXSPEED].as<float>();
+    config.ball.radius = vmap[CFG_BALL_RADIUS].as<float>();
+    config.framerate = vmap[CFG_FRAMERATE].as<unsigned>();
 
     return config;
 }

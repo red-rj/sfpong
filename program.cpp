@@ -14,7 +14,7 @@
 #include "util.h"
 #include "game_config.h"
 
-namespace opt = boost::program_options;
+namespace po = boost::program_options;
 
 
 int main()
@@ -80,12 +80,13 @@ int main()
 	p1.setPosition(margin.x, win_size.y / 2.f);
 	p2.setPosition(win_size.x - margin.x, win_size.y / 2.f);
 
-    p1.up_key   = config.controls[config.player_1].up;
-	p1.down_key = config.controls[config.player_1].down;
-	p1.fast_key = config.controls[config.player_1].fast;
-	p2.up_key	= config.controls[config.player_2].up;
-	p2.down_key = config.controls[config.player_2].down;
-	p2.fast_key = config.controls[config.player_2].fast;
+    using namespace red::pong::player_id;
+    p1.up_key   = config.controls[player_1].up;
+	p1.down_key = config.controls[player_1].down;
+	p1.fast_key = config.controls[player_1].fast;
+	p2.up_key	= config.controls[player_2].up;
+	p2.down_key = config.controls[player_2].down;
+	p2.fast_key = config.controls[player_2].fast;
 
 
     red::ball ball{ config.ball.radius };
@@ -101,7 +102,7 @@ int main()
     // ajustes WIP
 
     // WIP: velocidade da bola depende da taxa de frames :/
-    //window.setFramerateLimit(30);
+    window.setFramerateLimit(60);
 
     // -------
 
