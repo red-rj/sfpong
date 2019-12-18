@@ -68,32 +68,31 @@ int main()
     // jogadores
     red::paddle p1;
 
-    p1.setSize(config.paddle_size);
-    p1.setOrigin(config.paddle_size.x / 2, config.paddle_size.y / 2);
+    p1.setSize(config.paddle.size);
+    p1.setOrigin(config.paddle.size.x / 2, config.paddle.size.y / 2);
     
-    p1.accel = config.paddle_accel;
-    p1.base_speed = config.paddle_basespeed;
+    p1.accel = config.paddle.accel;
+    p1.base_speed = config.paddle.base_speed;
 
     auto p2 = p1;
-
     p2.ai = true;
 
 	p1.setPosition(margin.x, win_size.y / 2.f);
 	p2.setPosition(win_size.x - margin.x, win_size.y / 2.f);
 
-	p1.up_key	= red::parse_kb_key(config.p1_up);
-	p1.down_key = red::parse_kb_key(config.p1_down);
-	p1.fast_key = red::parse_kb_key(config.p1_fast);
-	p2.up_key	= red::parse_kb_key(config.p2_up);
-	p2.down_key = red::parse_kb_key(config.p2_down);
-	p2.fast_key = red::parse_kb_key(config.p2_fast);
+    p1.up_key   = config.controls[config.player_1].up;
+	p1.down_key = config.controls[config.player_1].down;
+	p1.fast_key = config.controls[config.player_1].fast;
+	p2.up_key	= config.controls[config.player_2].up;
+	p2.down_key = config.controls[config.player_2].down;
+	p2.fast_key = config.controls[config.player_2].fast;
 
 
-    red::ball ball{ config.ball_radius };
+    red::ball ball{ config.ball.radius };
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
-    ball.max_speed = config.ball_maxspeed;
-    ball.serve_speed = config.ball_servespeed;
-    ball.accel = config.ball_accel;
+    ball.max_speed = config.ball.max_speed;
+    ball.serve_speed = config.ball.base_speed;
+    ball.accel = config.ball.accel;
 
     // menu
     auto mainMenu = red::pong::menu(800, 600, { "Jogar", "Opções", "Sair" });
@@ -101,7 +100,8 @@ int main()
 
     // ajustes WIP
 
-
+    // WIP: velocidade da bola depende da taxa de frames :/
+    //window.setFramerateLimit(30);
 
     // -------
 
@@ -238,8 +238,6 @@ int main()
 
         if (isPlaying)
         {
-            window.setFramerateLimit(144);
-
             ball.update(go);
             p1.update(go);
             p2.update(go);
@@ -252,7 +250,6 @@ int main()
         }
         else
         {
-            window.setFramerateLimit(5);
             window.draw(mainMenu);
         }
 

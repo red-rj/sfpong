@@ -5,13 +5,6 @@
 
 namespace red::pong
 {
-    struct config_t;
-
-    config_t load_config();
-
-    // -----
-
-
     struct config_t
     {
         using Keyboard = sf::Keyboard;
@@ -25,17 +18,17 @@ namespace red::pong
             { Keyboard::Up, Keyboard::Down, Keyboard::RControl }
         };
 
-        struct {
+        struct paddle_cfg {
             float base_speed, accel;
             sf::Vector2f size = { 25.f, 150.f };
         } paddle;
 
-        struct {
+        struct ball_cfg {
             float base_speed, accel, max_speed;
             float radius;
         } ball;
-
-
     };
 
+
+    config_t load_config();
 }

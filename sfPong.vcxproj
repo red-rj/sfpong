@@ -120,6 +120,7 @@
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <PreprocessorDefinitions>SPDLOG_FMT_EXTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4275</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(VcpkgRoot)debug/lib/manual-link;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -162,6 +163,7 @@
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <PreprocessorDefinitions>SPDLOG_FMT_EXTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4275</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

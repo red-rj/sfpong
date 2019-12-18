@@ -136,7 +136,7 @@ void red::ball::update(game_objs& go)
 			 std::clamp(vY, -max_speed, max_speed)
 		};
 		
-		const auto desloc = (velocity.x < 0 ? -paddle->getSize().x : paddle->getSize().x) * 0.1f;
+		const auto desloc = (velocity.x < 0 ? -paddle->getSize().x : paddle->getSize().x) * 0.15f;
 
 		// mover bola até não intersectar mais no paddle, isso evita q
 		// ela fique presa
