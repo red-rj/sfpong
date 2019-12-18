@@ -22,12 +22,10 @@ call :cp %sfmlDlls% %libfolder% %destination% %copyopts%
 :: resources
 if not exist "%destination%resources" mkdir "%destination%resources"
 copy resources\* "%destination%resources"
-echo game.cfg
 copy game.cfg "%destination%"
 
 goto :eof
 
-rem END
 
 :cp
 setlocal
