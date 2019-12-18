@@ -129,7 +129,7 @@ void red::ball::update(game_objs& go)
 	if (paddle)
 	{
 		const auto vX = velocity.x * (1.f + accel);
-		const auto vY = paddle->velocity.y != 0 ? paddle->velocity.y * 0.75f : velocity.y;
+		const auto vY = (paddle->velocity.y != 0 ? paddle->velocity.y*0.75f : velocity.y) + random_num(-5, 5);
 
 		velocity = {
 			-std::clamp(vX, -max_speed, max_speed),
@@ -140,7 +140,7 @@ void red::ball::update(game_objs& go)
 
 		// mover bola até não intersectar mais no paddle, isso evita q
 		// ela fique presa
-		while (paddle->getGlobalBounds().intersects(getGlobalBounds())) {
+		while (check_collision(paddle, this)) {
 			move(desloc, 0);
 		}
 	}
