@@ -18,13 +18,13 @@ namespace red
 			return std::make_pair(m_p1_score, m_p2_score);
 		}
 
-		void set_scores(short p1, short p2)
+		void set(short p1, short p2)
 		{
 			m_p1_score = p1; m_p2_score = p2;
 			format_score_txt();
 		}
 
-		void add_scores(short p1, short p2)
+		void add(short p1, short p2)
 		{
 			m_p1_score += p1; m_p2_score += p2;
 			format_score_txt();
@@ -133,12 +133,12 @@ namespace red
 
 	struct game_objs
 	{
-        sf::Clock* game_time = nullptr;
 		std::pair<paddle*, paddle*> players = {};
 		ball*	ball = nullptr;
 		score*	score = nullptr;
 		court*	court = nullptr;
 		sf::FloatRect* playable_bounds = nullptr;
+		uint64_t tickcount = 0;
 	};
 
     bool check_collision(const sf::Shape* a, const sf::Shape* b);

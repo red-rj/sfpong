@@ -16,7 +16,6 @@
 
 namespace po = boost::program_options;
 
-
 int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
@@ -39,13 +38,12 @@ int main()
     auto win_size = sf::Vector2u(1280, 1024);
     auto win_bounds = sf::FloatRect({ 0, 0 }, static_cast<sf::Vector2f>(win_size));
 	auto margin = sf::Vector2f(15, 20);
-	auto playArea = static_cast<sf::Vector2f>(win_size) - (margin * 2.f);
     bool isPlaying = false;
 
     sf::RenderWindow window({ win_size.x, win_size.y }, "Sf Pong!");
 
 	// pong court
-	red::court court{ { (float)playArea.x, 25.f } };
+	red::court court{ { (float)win_size.x - margin.x * 2, 25.f } };
 
 	court.top.setPosition(margin);
 	court.bottom.setOrigin(0, 25.f);
@@ -60,12 +58,12 @@ int main()
 	}
 
     // placar
-	sf::Text scr_txt;
-	scr_txt.setFont(score_font);
-	scr_txt.setCharacterSize(55);
-	scr_txt.setFillColor(sf::Color::Red);
+	sf::Text score_txt;
+    score_txt.setFont(score_font);
+    score_txt.setCharacterSize(55);
+    score_txt.setFillColor(sf::Color::Red);
     
-	red::score scores{ scr_txt };
+	red::score scores{ score_txt };
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
     // jogadores
@@ -106,6 +104,7 @@ int main()
 
     // WIP: velocidade da bola depende da taxa de frames :/
     window.setFramerateLimit(config.framerate);
+    auto& playable_bounds = win_bounds;
 
     // -------
 
@@ -136,7 +135,7 @@ int main()
     sf::FloatRect visibleArea;
 
 	red::game_objs go = {
-		&clock, { &p1, &p2 }, &ball, &scores, &court, &win_bounds
+		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
 	};
 
     while(window.isOpen()) {
@@ -173,7 +172,7 @@ int main()
 							p1 = def_players.first;
 							p2 = def_players.second;
 							ball = def_ball;
-							scores.set_scores(0, 0);
+							scores.set(0, 0);
 							logger->info("State reset");
 							break;
                         case sf::Keyboard::Escape:
@@ -246,6 +245,29 @@ int main()
             p1.update(go);
             p2.update(go);
 
+            // check score
+            if (go.tickcount % 30 == 0)
+            {
+                if (!playable_bounds.intersects(ball.getGlobalBounds()))
+                {
+                    // ponto!
+                    if (ball.getPosition().x < 0)
+                    {
+                        // indo p/ direita, ponto player 1
+                        scores.add(1, 0);
+                        ball.velocity = { -config.ball.accel, 0 };
+                    }
+                    else
+                    {
+                        // indo p/ esquerda, ponto player 2
+                        scores.add(0, 1);
+                        ball.velocity = { config.ball.accel, 0 };
+                    }
+
+                    ball.setPosition(playable_bounds.width / 2, playable_bounds.height / 2);
+                }
+            }
+
             window.draw(court);
             window.draw(ball);
             window.draw(p1);
@@ -258,6 +280,7 @@ int main()
         }
 
 		window.display();
+        go.tickcount++;
     }
 
     return EXIT_SUCCESS;

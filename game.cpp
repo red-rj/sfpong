@@ -73,6 +73,7 @@ void red::paddle::update(game_objs& go)
 	{
 		auto offset = base_speed * accel;
 
+
 		if (sf::Keyboard::isKeyPressed(up_key))
 		{
             velocity.y -= offset;
@@ -83,7 +84,7 @@ void red::paddle::update(game_objs& go)
         }
         else
         {
-            velocity.y *= accel;
+            velocity.y *= 0.5f;
         }
 
 		bool moving = velocity != sf::Vector2f();
@@ -142,25 +143,6 @@ void red::ball::update(game_objs& go)
 		while (check_collision(paddle, this)) {
 			move(desloc, 0);
 		}
-	}
-
-	if (!go.playable_bounds->intersects(bounds))
-	{
-		// ponto!
-		if (getPosition().x < 0)
-		{
-			// indo p/ direita, ponto p1
-			go.score->add_scores(1, 0);
-			velocity = { -serve_speed, 0 };
-		}
-		else
-		{
-			// indo p/ esquerda, ponto p2
-			go.score->add_scores(0, 1);
-			velocity = { serve_speed, 0 };
-		}
-
-		setPosition(go.playable_bounds->width / 2, go.playable_bounds->height / 2);
 	}
 
 	move(velocity);
