@@ -43,7 +43,7 @@ int main()
     sf::RenderWindow window({ win_size.x, win_size.y }, "Sf Pong!");
 
 	// pong court
-	red::court court{ { (float)win_size.x - margin.x * 2, 25.f } };
+	red::pong::court court{ { (float)win_size.x - margin.x * 2, 25.f } };
 
 	court.top.setPosition(margin);
 	court.bottom.setOrigin(0, 25.f);
@@ -63,11 +63,11 @@ int main()
     score_txt.setCharacterSize(55);
     score_txt.setFillColor(sf::Color::Red);
     
-	red::score scores{ score_txt };
+	red::pong::score scores{ score_txt };
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
     // jogadores
-    red::paddle p1;
+    red::pong::paddle p1;
 
     p1.setSize(config.paddle.size);
     p1.setOrigin(config.paddle.size.x / 2, config.paddle.size.y / 2);
@@ -90,7 +90,7 @@ int main()
 	p2.fast_key = config.controls[player_2].fast;
 
 
-    red::ball ball{ config.ball.radius };
+    red::pong::ball ball{ config.ball.radius };
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
     ball.max_speed = config.ball.max_speed;
     ball.serve_speed = config.ball.base_speed;
@@ -134,7 +134,7 @@ int main()
     sf::Clock clock;
     sf::FloatRect visibleArea;
 
-	red::game_objs go = {
+	red::pong::game_objs go = {
 		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
 	};
 

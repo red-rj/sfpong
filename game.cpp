@@ -25,7 +25,7 @@ bool red::coin_flip()
 }
 
 
-void red::score::set_padding(short p)
+void red::pong::score::set_padding(short p)
 {
 	if (p != m_padding)
 	{
@@ -34,13 +34,13 @@ void red::score::set_padding(short p)
 	}
 }
 
-void red::score::format_score_txt()
+void red::pong::score::format_score_txt()
 {
 	auto str = std::to_string(m_p1_score) + std::string(m_padding, ' ') + std::to_string(m_p2_score);
 	m_text.setString(str);
 }
 
-void red::paddle::update(game_objs& go)
+void red::pong::paddle::update(game_objs& go)
 {
 
 	if (ai)
@@ -107,7 +107,7 @@ void red::paddle::update(game_objs& go)
     }
 }
 
-void red::ball::update(game_objs& go)
+void red::pong::ball::update(game_objs& go)
 {
 	paddle* paddle = nullptr;
 	auto bounds = getGlobalBounds();
@@ -148,7 +148,7 @@ void red::ball::update(game_objs& go)
 	move(velocity);
 }
 
-red::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
+red::pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
 {
 	m_net.clear();
 
@@ -173,7 +173,7 @@ red::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(piec
 	setOrigin(piece_size.x / 2, 0);
 }
 
-bool red::check_collision(const sf::Shape * a, const sf::Shape * b)
+bool red::pong::check_collision(const sf::Shape * a, const sf::Shape * b)
 {
     return a->getGlobalBounds().intersects(b->getGlobalBounds());
 }
