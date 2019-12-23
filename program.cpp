@@ -102,7 +102,7 @@ int main()
     // ajustes WIP
 
     // WIP: velocidade da bola depende da taxa de frames :/
-    window.setFramerateLimit(60);
+    window.setFramerateLimit(config.framerate);
 
     // -------
 

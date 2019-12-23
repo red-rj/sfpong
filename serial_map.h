@@ -21,18 +21,14 @@ namespace red
             }
         }
 
-        auto at(const string_type& key) const {
-            return m_name_to_value.at(key);
-        }
-        auto at(const value_type& key) const {
+        auto operator[] (const value_type& key) const {
             return m_value_to_name.at(key);
         }
-
-        auto operator[] (const value_type& key) const {
-            return this->at(key);
-        }
         auto operator[] (const string_type& key) const {
-            return this->at(key);
+            return m_name_to_value.at(key);
+        }
+        auto operator[] (std::string_view key) const {
+            return m_name_to_value.at(string_type(key.data(), key.size()));
         }
 
     private:

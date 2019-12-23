@@ -1,5 +1,8 @@
 #include <string>
 #include <map>
+#include "SFML/Window/Keyboard.hpp"
+#include "SFML/Window/Joystick.hpp"
+#include "SFML/Window/Mouse.hpp"
 
 #include "util.h"
 #include "common.h"
@@ -10,7 +13,7 @@ using KbKey = sf::Keyboard::Key;
 using serial_key_map = red::serial_map<red::ci_string_view, int>;
 namespace po = boost::program_options;
 
-static serial_key_map kb_serialmap {
+static const red::serial_map<red::ci_string_view, KbKey> kb_serialmap {
     {"[", KbKey::LBracket}, 
     {"]", KbKey::RBracket},
     {";", KbKey::Semicolon},
@@ -113,19 +116,35 @@ static serial_key_map kb_serialmap {
     {"Z", KbKey::Z}
 };
 
-
-auto red::parse_kb_key(red::ci_string_view sv) -> sf::Keyboard::Key {
-    try
-    {
-        int code = kb_serialmap.at(sv);
-        return (KbKey)code;
+namespace {
+    template<class I> I parse(red::ci_string_view) = delete;
+    template<class I> I parse(std::string_view view) {
+        return parse<I>(red::ci_string_view{ view.data(), view.size() });
     }
-    catch (const std::out_of_range&)
-    {
-        gamelog()->error("invalid key name '{}'", sv);
-        return KbKey::Unknown;
+
+    template<class I> red::ci_string_view serialize(I) = delete;
+
+    template<>
+    sf::Keyboard::Key parse(red::ci_string_view sv) {
+        try
+        {
+            int code = kb_serialmap[sv];
+            return (KbKey)code;
+        }
+        catch (const std::out_of_range&)
+        {
+            red::gamelog()->error("invalid key name '{}'", sv);
+            return KbKey::Unknown;
+        }
+    }
+
+    template<>
+    red::ci_string_view serialize(sf::Keyboard::Key key) {
+        auto str = kb_serialmap[key];
+        return str;
     }
 }
+
 
 #include "game_config.h"
 #include "boost/program_options.hpp"
@@ -186,12 +205,12 @@ red::pong::config_t red::pong::load_config()
 
     auto vmap = load_config_variables("game.cfg");
 
-    config.controls[player_1].up = red::parse_kb_key(vmap[CFG_P1_UP].as<string>());
-    config.controls[player_1].down = red::parse_kb_key(vmap[CFG_P1_DOWN].as<string>());
-    config.controls[player_1].fast = red::parse_kb_key(vmap[CFG_P1_FAST].as<string>());
-    config.controls[player_2].up = red::parse_kb_key(vmap[CFG_P2_UP].as<string>());
-    config.controls[player_2].down = red::parse_kb_key(vmap[CFG_P2_DOWN].as<string>());
-    config.controls[player_2].fast = red::parse_kb_key(vmap[CFG_P2_FAST].as<string>());
+    config.controls[player_1].up = parse<KbKey>(vmap[CFG_P1_UP].as<string>());
+    config.controls[player_1].down = kb_serialmap[vmap[CFG_P1_DOWN].as<string>()];
+    config.controls[player_1].fast = kb_serialmap[vmap[CFG_P1_FAST].as<string>()];
+    config.controls[player_2].up = kb_serialmap[vmap[CFG_P2_UP].as<string>()];
+    config.controls[player_2].down = kb_serialmap[vmap[CFG_P2_DOWN].as<string>()];
+    config.controls[player_2].fast = kb_serialmap[vmap[CFG_P2_FAST].as<string>()];
 
     config.paddle.base_speed = vmap[CFG_PADDLE_SPEED].as<float>();
     config.paddle.accel = vmap[CFG_PADDLE_ACCEL].as<float>();

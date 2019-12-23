@@ -49,12 +49,6 @@ namespace red
 
     using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
     using ci_string = std::basic_string<char, ci_char_traits<char>>;
-
-    sf::Keyboard::Key parse_kb_key(ci_string_view);
-
-    inline auto parse_kb_key(std::string_view view) {
-        return parse_kb_key(ci_string_view{ view.data(), view.size() });
-    }
 }
 
 template<>
