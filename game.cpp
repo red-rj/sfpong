@@ -71,27 +71,26 @@ void red::paddle::update(game_objs& go)
     }
 	else // player
 	{
-        float deltaTime = go.game_time->restart().asSeconds() * accel;
-        bool moving = false;
+		auto offset = base_speed * accel;
 
 		if (sf::Keyboard::isKeyPressed(up_key))
 		{
-            velocity.y = -base_speed * deltaTime;
-            moving = true;
+            velocity.y -= offset;
 		}
 		else if (sf::Keyboard::isKeyPressed(down_key))
 		{
-            velocity.y = base_speed * deltaTime;
-            moving = true;
+            velocity.y += offset;
         }
         else
         {
-            velocity.y = 0;
+            velocity.y *= accel;
         }
+
+		bool moving = velocity != sf::Vector2f();
 
         if (moving && sf::Keyboard::isKeyPressed(fast_key))
         {
-            velocity.y *= 3.f;
+            velocity.y *= 1.25f;
         }
 	}
 
@@ -100,7 +99,7 @@ void red::paddle::update(game_objs& go)
     move(velocity);
 
     // check colisão com bordas
-    if (getGlobalBounds().intersects(go.court->top.getGlobalBounds()) || getGlobalBounds().intersects(go.court->bottom.getGlobalBounds()))
+    if (check_collision(this, go.court))
     {
         velocity.y = 0;
         setPosition(oldPos);
@@ -129,7 +128,7 @@ void red::ball::update(game_objs& go)
 	if (paddle)
 	{
 		const auto vX = velocity.x * (1.f + accel);
-		const auto vY = (paddle->velocity.y != 0 ? paddle->velocity.y*0.75f : velocity.y) + random_num(-5, 5);
+		const auto vY = (paddle->velocity.y != 0 ? paddle->velocity.y*0.75f : velocity.y) + random_num(-2, 2);
 
 		velocity = {
 			-std::clamp(vX, -max_speed, max_speed),

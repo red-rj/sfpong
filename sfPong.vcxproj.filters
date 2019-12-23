@@ -13,7 +13,7 @@
     <ClCompile Include="program.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="menu.cpp" />
-    <ClCompile Include="util.cpp" />
+    <ClCompile Include="config.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">
@@ -26,6 +26,6 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
-    <None Include="game.cfg" />
+    <CopyFileToFolders Include="game.cfg" />
   </ItemGroup>
 </Project>

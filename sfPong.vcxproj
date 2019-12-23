@@ -31,7 +31,7 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="program.cpp" />
-    <ClCompile Include="util.cpp" />
+    <ClCompile Include="config.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\LiberationMono-Regular.ttf">
@@ -39,7 +39,9 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
-    <None Include="game.cfg" />
+    <CopyFileToFolders Include="game.cfg">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -127,8 +129,7 @@
       <AdditionalDependencies>sfml-main-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist $(OutputPath)game.cfg  copy game.cfg $(OutputPath)
-if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
+      <Command>if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
 copy resources\* $(OutputPath)resources</Command>
     </PostBuildEvent>
     <PreLinkEvent>

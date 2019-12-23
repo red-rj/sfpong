@@ -20,6 +20,9 @@ namespace po = boost::program_options;
 int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
+    atexit([] {
+        std::puts("exit trap");
+    });
 
     red::pong::config_t config;
     try
@@ -28,7 +31,7 @@ int main()
     }
     catch (const std::exception& err)
     {
-        logger->error("failed to load game config: '{}'", err.what());
+        logger->error("failed to load game config: {}", err.what());
         return 5;
     }
 

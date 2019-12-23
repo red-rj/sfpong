@@ -1,5 +1,8 @@
 #include <string>
 #include <map>
+#include <sstream>
+#include <fstream>
+
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Joystick.hpp"
 #include "SFML/Window/Mouse.hpp"
@@ -13,7 +16,7 @@ using KbKey = sf::Keyboard::Key;
 using serial_key_map = red::serial_map<red::ci_string_view, int>;
 namespace po = boost::program_options;
 
-static const red::serial_map<red::ci_string_view, KbKey> kb_serialmap {
+static const serial_key_map kb_serialmap {
     {"[", KbKey::LBracket}, 
     {"]", KbKey::RBracket},
     {";", KbKey::Semicolon},
@@ -116,35 +119,6 @@ static const red::serial_map<red::ci_string_view, KbKey> kb_serialmap {
     {"Z", KbKey::Z}
 };
 
-namespace {
-    template<class I> I parse(red::ci_string_view) = delete;
-    template<class I> I parse(std::string_view view) {
-        return parse<I>(red::ci_string_view{ view.data(), view.size() });
-    }
-
-    template<class I> red::ci_string_view serialize(I) = delete;
-
-    template<>
-    sf::Keyboard::Key parse(red::ci_string_view sv) {
-        try
-        {
-            int code = kb_serialmap[sv];
-            return (KbKey)code;
-        }
-        catch (const std::out_of_range&)
-        {
-            red::gamelog()->error("invalid key name '{}'", sv);
-            return KbKey::Unknown;
-        }
-    }
-
-    template<>
-    red::ci_string_view serialize(sf::Keyboard::Key key) {
-        auto str = kb_serialmap[key];
-        return str;
-    }
-}
-
 
 #include "game_config.h"
 #include "boost/program_options.hpp"
@@ -153,7 +127,7 @@ namespace {
 constexpr auto 
     CFG_P1_UP          = "controls.player1.up", 
     CFG_P1_DOWN        = "controls.player1.down",
-    CFG_P1_FAST        = "controls.player2.fast",
+    CFG_P1_FAST        = "controls.player1.fast",
     CFG_P2_UP          = "controls.player2.up", 
     CFG_P2_DOWN        = "controls.player2.down",
     CFG_P2_FAST        = "controls.player2.fast",
@@ -166,9 +140,24 @@ constexpr auto
     CFG_FRAMERATE      = "game.framerate"
 ;
 
+static std::stringstream read_config_file(std::string_view filepath) {
+    using read_iterator = std::istreambuf_iterator<char>;
+    using write_iterator = std::ostreambuf_iterator<char>;
+    
+    auto filestream = std::ifstream(filepath.data());
+    std::stringstream ss;
+
+    std::transform(read_iterator(filestream.rdbuf()), read_iterator(), write_iterator(ss),
+        [](unsigned char c) { return (char)std::tolower(c); }
+    );
+
+    return ss;
+}
+
 po::variables_map red::pong::load_config_variables(std::string_view file)
 {
     using std::string;
+
 
     po::options_description cfg_desc;
     cfg_desc.add_options()
@@ -177,7 +166,7 @@ po::variables_map red::pong::load_config_variables(std::string_view file)
         (CFG_P1_FAST, po::value<string>()->default_value("Lshift"))
         (CFG_P2_UP, po::value<string>()->default_value("upArrow"))
         (CFG_P2_DOWN, po::value<string>()->default_value("downArrow"))
-        (CFG_P2_FAST, po::value<string>()->default_value("Rctrl"))
+        (CFG_P2_FAST, po::value<string>()->default_value("RCtrl"))
 
         (CFG_PADDLE_SPEED, po::value<float>())
         (CFG_PADDLE_ACCEL, po::value<float>())
@@ -190,9 +179,11 @@ po::variables_map red::pong::load_config_variables(std::string_view file)
     ;
 
     po::variables_map cfg_vm;
-    auto parsed = po::parse_config_file(file.data(), cfg_desc, true);
-    po::store(parsed, cfg_vm); po::notify(cfg_vm);
 
+    auto filecontents = read_config_file(file);
+    auto parsed = po::parse_config_file(filecontents, cfg_desc);
+    po::store(parsed, cfg_vm); po::notify(cfg_vm);
+    
     return cfg_vm;
 }
 
@@ -205,12 +196,12 @@ red::pong::config_t red::pong::load_config()
 
     auto vmap = load_config_variables("game.cfg");
 
-    config.controls[player_1].up = parse<KbKey>(vmap[CFG_P1_UP].as<string>());
-    config.controls[player_1].down = kb_serialmap[vmap[CFG_P1_DOWN].as<string>()];
-    config.controls[player_1].fast = kb_serialmap[vmap[CFG_P1_FAST].as<string>()];
-    config.controls[player_2].up = kb_serialmap[vmap[CFG_P2_UP].as<string>()];
-    config.controls[player_2].down = kb_serialmap[vmap[CFG_P2_DOWN].as<string>()];
-    config.controls[player_2].fast = kb_serialmap[vmap[CFG_P2_FAST].as<string>()];
+    config.controls[player_1].up    = (KbKey) kb_serialmap[vmap[CFG_P1_UP].as<string>()];
+    config.controls[player_1].down  = (KbKey) kb_serialmap[vmap[CFG_P1_DOWN].as<string>()];
+    config.controls[player_1].fast  = (KbKey) kb_serialmap[vmap[CFG_P1_FAST].as<string>()];
+    config.controls[player_2].up    = (KbKey) kb_serialmap[vmap[CFG_P2_UP].as<string>()];
+    config.controls[player_2].down  = (KbKey) kb_serialmap[vmap[CFG_P2_DOWN].as<string>()];
+    config.controls[player_2].fast  = (KbKey) kb_serialmap[vmap[CFG_P2_FAST].as<string>()];
 
     config.paddle.base_speed = vmap[CFG_PADDLE_SPEED].as<float>();
     config.paddle.accel = vmap[CFG_PADDLE_ACCEL].as<float>();
