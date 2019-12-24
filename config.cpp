@@ -14,7 +14,6 @@
 
 using KbKey = sf::Keyboard::Key;
 using serial_key_map = red::serial_map<red::ci_string_view, int>;
-namespace po = boost::program_options;
 
 static const serial_key_map kb_serialmap {
     {"[", KbKey::LBracket}, 
@@ -119,9 +118,20 @@ static const serial_key_map kb_serialmap {
     {"Z", KbKey::Z}
 };
 
+static const serial_key_map mouse_serialmap {
+    {"MouseLeft", sf::Mouse::Left}, {"Mouse1", sf::Mouse::Left},
+    {"MouseRight", sf::Mouse::Right}, {"Mouse2", sf::Mouse::Right},
+    {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Right},
+    {"Mouse4", sf::Mouse::XButton1},
+    {"Mouse5", sf::Mouse::XButton2},
+    {"MouseWheel", sf::Mouse::VerticalWheel},
+    {"MouseHWheel", sf::Mouse::HorizontalWheel}
+};
 
 #include "game_config.h"
 #include "boost/program_options.hpp"
+
+namespace po = boost::program_options;
 
 // config keys
 constexpr auto 
@@ -191,6 +201,8 @@ red::pong::config_t red::pong::load_config()
 {
     using std::string;
     using namespace red::pong::player_id;
+
+    gamelog()->info("Loading config file.");
 
     config_t config;
 

@@ -91,6 +91,7 @@ namespace red::pong
 		}
 	};
 	
+	
 	struct game_objs;
 	
 	struct game_entity
@@ -128,7 +129,6 @@ namespace red::pong
 
         float max_speed, serve_speed, accel;
 	};
-
 
 
 	struct game_objs
