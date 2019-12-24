@@ -7,7 +7,7 @@
 #include "SFML/Window/Joystick.hpp"
 #include "SFML/Window/Mouse.hpp"
 
-#include "util.h"
+#include "ci_string.h"
 #include "common.h"
 #include "serial_map.h"
 

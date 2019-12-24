@@ -11,7 +11,7 @@
 #include "common.h"
 #include "game.h"
 #include "menu.h"
-#include "util.h"
+#include "ci_string.h"
 #include "game_config.h"
 
 namespace po = boost::program_options;
@@ -132,7 +132,6 @@ int main()
 
 
     sf::Clock clock;
-    sf::FloatRect visibleArea;
 
 	red::pong::game_objs go = {
 		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
@@ -199,10 +198,10 @@ int main()
                 } break;
 
 				case sf::Event::Resized:
-                    visibleArea.width = (float)event.size.width;
-                    visibleArea.height = (float)event.size.height;
+                {
+                    sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
 					window.setView(sf::View(visibleArea));
-					break;
+                } break;
 
                 case sf::Event::MouseMoved:
                 {
@@ -273,14 +272,14 @@ int main()
             window.draw(p1);
             window.draw(p2);
             window.draw(scores);
+            go.tickcount++;
         }
         else
         {
             window.draw(mainMenu);
         }
-
-		window.display();
-        go.tickcount++;
+     
+        window.display();
     }
 
     return EXIT_SUCCESS;

@@ -2,9 +2,6 @@
 #include <string>
 #include <string_view>
 
-#include "SFML/Window/Keyboard.hpp"
-#include "SFML/System/Vector2.hpp"
-#include "boost/program_options/value_semantic.hpp"
 #include "fmt/format.h"
 
 
@@ -36,7 +33,7 @@ namespace red
             return 0;
         }
         static const char_type* find(const char_type* s, int n, char_type a) {
-            auto const ua(to_upper(a));
+            auto const ua = to_upper(a);
             while (n-- != 0)
             {
                 if (to_upper(*s) == ua)

@@ -4,10 +4,10 @@
     <ClInclude Include="rng.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="menu.h" />
-    <ClInclude Include="util.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="serial_map.h" />
     <ClInclude Include="game_config.h" />
+    <ClInclude Include="ci_string.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />
