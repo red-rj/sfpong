@@ -28,9 +28,6 @@ namespace red
         auto operator[] (const string_type& key) const {
             return m_name_to_value.at(key);
         }
-        auto operator[] (std::string_view key) const {
-            return m_name_to_value.at(string_type(key.data(), key.size()));
-        }
 
     private:
         std::map<string_type, value_type> m_name_to_value;

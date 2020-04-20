@@ -6,6 +6,7 @@
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Joystick.hpp"
 #include "SFML/Window/Mouse.hpp"
+#include "fmt/ostream.h"
 
 #include "ci_string.h"
 #include "common.h"
@@ -13,7 +14,7 @@
 
 
 using KbKey = sf::Keyboard::Key;
-using serial_key_map = red::serial_map<red::ci_string_view, int>;
+using serial_key_map = red::serial_map<std::string_view, int>;
 
 static const serial_key_map kb_serialmap {
     {"[", KbKey::LBracket}, 
@@ -150,11 +151,11 @@ constexpr auto
     CFG_FRAMERATE      = "game.framerate"
 ;
 
-static std::stringstream read_config_file(std::string_view filepath) {
+static std::stringstream read_config_file(std::filesystem::path filepath) {
     using read_iterator = std::istreambuf_iterator<char>;
     using write_iterator = std::ostreambuf_iterator<char>;
     
-    auto filestream = std::ifstream(filepath.data());
+    auto filestream = std::ifstream(filepath);
     std::stringstream ss;
 
     std::transform(read_iterator(filestream.rdbuf()), read_iterator(), write_iterator(ss),
@@ -164,7 +165,7 @@ static std::stringstream read_config_file(std::string_view filepath) {
     return ss;
 }
 
-po::variables_map red::pong::load_config_variables(std::string_view file)
+static po::variables_map load_config_variables(std::filesystem::path file)
 {
     using std::string;
 
@@ -224,4 +225,25 @@ red::pong::config_t red::pong::load_config()
     config.framerate = vmap[CFG_FRAMERATE].as<unsigned>();
 
     return config;
+}
+
+void red::pong::save_config_file(config_t cfg, std::filesystem::path filepath)
+{
+    using namespace red::pong::player_id;
+    auto file = std::ofstream(filepath, std::ios::trunc);
+
+    file << "# sfPong configuration\n\n";
+    fmt::print(file, "{} = {}\n", CFG_P1_UP, kb_serialmap[cfg.controls[player_1].up]);
+    fmt::print(file, "{} = {}\n", CFG_P1_DOWN, kb_serialmap[cfg.controls[player_1].down]);
+    fmt::print(file, "{} = {}\n", CFG_P1_FAST, kb_serialmap[cfg.controls[player_1].fast]);
+    fmt::print(file, "{} = {}\n", CFG_P2_UP, kb_serialmap[cfg.controls[player_2].up]);
+    fmt::print(file, "{} = {}\n", CFG_P2_DOWN, kb_serialmap[cfg.controls[player_2].down]);
+    fmt::print(file, "{} = {}\n", CFG_P2_FAST, kb_serialmap[cfg.controls[player_2].fast]);
+    fmt::print(file, "{} = {:.1}\n", CFG_PADDLE_SPEED, cfg.paddle.base_speed);
+    fmt::print(file, "{} = {:.1}\n", CFG_PADDLE_ACCEL, cfg.paddle.accel);
+    fmt::print(file, "{} = {:.1}\n", CFG_BALL_SPEED, cfg.ball.base_speed);
+    fmt::print(file, "{} = {:.1}\n", CFG_BALL_MAXSPEED, cfg.ball.max_speed);
+    fmt::print(file, "{} = {:.1}\n", CFG_BALL_ACCEL, cfg.ball.accel);
+    fmt::print(file, "{} = {:.1}\n", CFG_BALL_RADIUS, cfg.ball.radius);
+    fmt::print(file, "{} = {}\n", CFG_FRAMERATE, cfg.framerate);
 }

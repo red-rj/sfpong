@@ -1,9 +1,9 @@
 #pragma once
 #include <string_view>
+#include <filesystem>
 
 #include "SFML/Window/Keyboard.hpp"
 #include "boost/program_options/variables_map.hpp"
-#include "common.h"
 
 namespace red::pong
 {
@@ -39,7 +39,7 @@ namespace player_id {
         unsigned framerate;
     };
 
-    boost::program_options::variables_map load_config_variables(std::string_view file);
-
     config_t load_config();
+
+    void save_config_file(config_t cfg, std::filesystem::path filepath = "game.cfg");
 }
