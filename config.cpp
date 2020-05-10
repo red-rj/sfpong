@@ -26,19 +26,19 @@ using enum_names_table = red::serial_map<red::ci_string_view, E>;
 
 // config keys
 constexpr auto
-    CFG_P1_UP = "controls.player1.up",
-    CFG_P1_DOWN = "controls.player1.down",
-    CFG_P1_FAST = "controls.player1.fast",
-    CFG_P2_UP = "controls.player2.up",
-    CFG_P2_DOWN = "controls.player2.down",
-    CFG_P2_FAST = "controls.player2.fast",
-    CFG_PADDLE_SPEED = "game.paddle.base_speed",
-    CFG_PADDLE_ACCEL = "game.paddle.accel",
-    CFG_PADDLE_SIZE = "game.paddle.size",
-    CFG_BALL_SPEED = "game.ball.base_speed",
-    CFG_BALL_MAXSPEED = "game.ball.max_speed",
-    CFG_BALL_ACCEL = "game.ball.accel",
-    CFG_BALL_RADIUS = "game.ball.radius",
+    CFG_P1_UP = "player1.up",
+    CFG_P1_DOWN = "player1.down",
+    CFG_P1_FAST = "player1.fast",
+    CFG_P2_UP = "player2.up",
+    CFG_P2_DOWN = "player2.down",
+    CFG_P2_FAST = "player2.fast",
+    CFG_PADDLE_SPEED = "game.paddle_base_speed",
+    CFG_PADDLE_ACCEL = "game.paddle_accel",
+    CFG_PADDLE_SIZE = "game.paddle_size",
+    CFG_BALL_SPEED = "game.ball_base_speed",
+    CFG_BALL_MAXSPEED = "game.ball_max_speed",
+    CFG_BALL_ACCEL = "game.ball_accel",
+    CFG_BALL_RADIUS = "game.ball_radius",
     CFG_FRAMERATE = "game.framerate"
 ;
 
@@ -126,7 +126,7 @@ struct sfVec_translator
         std::ostringstream ss;
         ss.imbue(std::locale::classic());
 
-        ss << v.x << ", " << v.y;
+        ss << v.x << "  " << v.y;
         return ss.str();
     }
 };

@@ -22,8 +22,16 @@ int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
 
-    //auto cfg_tree = red::pong::load_settings("game.cfg");
     red::pong::config_t config;
+    try
+    {
+        config.load("game.cfg");
+    }
+    catch (const std::exception& e)
+    {
+        logger->error("Failed to load config '{}', using defaults", e.what());
+        config = red::pong::config_t{};
+    }
 
     // ----
     auto win_size = sf::Vector2u(1280, 1024);
@@ -230,6 +238,7 @@ int main()
     }
 
     ImGui::SFML::Shutdown();
+    config.save("game.cfg");
 
     return EXIT_SUCCESS;
 }
