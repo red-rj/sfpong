@@ -14,7 +14,7 @@
 
 
 using KbKey = sf::Keyboard::Key;
-using serial_key_map = red::serial_map<std::string_view, int>;
+using serial_key_map = red::serial_map<red::ci_string_view, int>;
 
 static const serial_key_map kb_serialmap {
     {"[", KbKey::LBracket}, 
@@ -151,21 +151,7 @@ constexpr auto
     CFG_FRAMERATE      = "game.framerate"
 ;
 
-static std::stringstream read_config_file(std::filesystem::path filepath) {
-    using read_iterator = std::istreambuf_iterator<char>;
-    using write_iterator = std::ostreambuf_iterator<char>;
-    
-    auto filestream = std::ifstream(filepath);
-    std::stringstream ss;
-
-    std::transform(read_iterator(filestream.rdbuf()), read_iterator(), write_iterator(ss),
-        [](unsigned char c) { return (char)std::tolower(c); }
-    );
-
-    return ss;
-}
-
-static po::variables_map load_config_variables(std::filesystem::path file)
+po::variables_map red::pong::load_config_variables(std::filesystem::path file)
 {
     using std::string;
 
@@ -191,7 +177,7 @@ static po::variables_map load_config_variables(std::filesystem::path file)
 
     po::variables_map cfg_vm;
 
-    auto filecontents = read_config_file(file);
+    auto filecontents = std::ifstream(file);
     auto parsed = po::parse_config_file(filecontents, cfg_desc);
     po::store(parsed, cfg_vm); po::notify(cfg_vm);
     

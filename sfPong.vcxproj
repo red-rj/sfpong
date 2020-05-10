@@ -24,12 +24,10 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="serial_map.h" />
     <ClInclude Include="ci_string.h" />
-    <ClInclude Include="menu.h" />
     <ClInclude Include="rng.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />
-    <ClCompile Include="menu.cpp" />
     <ClCompile Include="program.cpp" />
     <ClCompile Include="config.cpp" />
   </ItemGroup>
@@ -48,6 +46,7 @@
     <ProjectGuid>{C5EE35BC-FAFE-48A8-A198-A52C06F0D29D}</ProjectGuid>
     <RootNamespace>sfPong</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <!--<VcpkgTriplet Condition="'$(Platform)'=='x64'">sfpong</VcpkgTriplet>-->
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -126,7 +125,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(VcpkgRoot)debug/lib/manual-link;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-main-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
@@ -171,7 +170,7 @@ copy resources\* $(OutputPath)resources</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VcpkgRoot)lib/manual-link;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if not exist $(OutputPath)game.cfg  copy game.cfg $(OutputPath)

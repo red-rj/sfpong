@@ -41,5 +41,7 @@ namespace player_id {
 
     config_t load_config();
 
+    boost::program_options::variables_map load_config_variables(std::filesystem::path file);
+
     void save_config_file(config_t cfg, std::filesystem::path filepath = "game.cfg");
 }

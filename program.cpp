@@ -7,10 +7,11 @@
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "boost/program_options.hpp"
+#include <imgui.h>
+#include "imgui-SFML.h"
 
 #include "common.h"
 #include "game.h"
-#include "menu.h"
 #include "ci_string.h"
 #include "game_config.h"
 
@@ -19,9 +20,6 @@ namespace po = boost::program_options;
 int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
-    atexit([] {
-        std::puts("exit trap");
-    });
 
     red::pong::config_t config;
     try
@@ -96,42 +94,19 @@ int main()
     ball.serve_speed = config.ball.base_speed;
     ball.accel = config.ball.accel;
 
-    // menu
-    auto mainMenu = red::pong::menu(800, 600, { "Jogar", "Opções", "Sair" });
-    mainMenu.setFont(score_font);
-
-    // ajustes WIP
-
-    // WIP: velocidade da bola depende da taxa de frames :/
     window.setFramerateLimit(config.framerate);
     auto& playable_bounds = win_bounds;
 
-    // -------
-
-    auto onMainMenuItem = [&](int i) {
-        switch (i)
-        {
-        case 0: // Jogar
-            logger->info("Jogar");
-            isPlaying = !isPlaying;
-            break;
-        case 1: // Opções
-            logger->info("Opções");
-            logger->warn("Não implementado...");
-            // WIP
-            break;
-        case 2: // Sair
-            window.close();
-            break;
-        }
-    };
-	
-    // padrao
+    // padroes
 	const auto def_players = std::make_pair(p1, p2);
 	const auto def_ball = ball;
 
-
+    // imgui menu (branch imguifix no vcpkg)
     sf::Clock clock;
+    ImGui::SFML::Init(window);
+    auto& gui_io = ImGui::GetIO();
+    gui_io.IniFilename = nullptr;
+
 
 	red::pong::game_objs go = {
 		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
@@ -142,16 +117,16 @@ int main()
         sf::Event event;
         while(window.pollEvent(event)) {
             
+            ImGui::SFML::ProcessEvent(event);
+
             switch (event.type)
             {
                 case sf::Event::Closed:
                     window.close();
                     break;
 				
-                case sf::Event::KeyPressed:
+                case sf::Event::KeyReleased:
 				{
-                    if (!isPlaying) break;
-
 					switch (event.key.code)
 					{
 						case sf::Keyboard::F1:
@@ -176,26 +151,11 @@ int main()
 							break;
                         case sf::Keyboard::Escape:
                             isPlaying = !isPlaying;
+                            gui_io.WantCaptureKeyboard = !isPlaying;
+                            gui_io.WantCaptureMouse = !isPlaying;
                             break;
 					}
 				} break;
-
-                case sf::Event::KeyReleased:
-                {
-                    if (isPlaying) break;
-
-                    switch (event.key.code)
-                    {
-                    case sf::Keyboard::Up:
-                        mainMenu.moveUp();
-                        break;
-                    case sf::Keyboard::Down:
-                        mainMenu.moveDown();
-                        break;
-                    case::sf::Keyboard::Return:
-                        onMainMenuItem(mainMenu.selected());
-                    }
-                } break;
 
 				case sf::Event::Resized:
                 {
@@ -205,38 +165,22 @@ int main()
 
                 case sf::Event::MouseMoved:
                 {
-                    if (!isPlaying)
-                    {
-                        mainMenu.deselect();
-                        int idx = 0;
-                        
-                        for (auto& i : mainMenu)
-                        {
-                            if (i.getGlobalBounds().contains((float)event.mouseMove.x, (float)event.mouseMove.y))
-                            {
-                                mainMenu.select(idx);
-                                break;
-                            }
-                            
-                            idx++;
-                        }
-                    }
                 } break;
 
                 case sf::Event::MouseButtonReleased:
                 {
-                    if (!isPlaying)
-                    {
-                        if (event.mouseButton.button == sf::Mouse::Left)
-                        {
-                            onMainMenuItem(mainMenu.selected());
-                        }
-                    }
                 } break;
             }            
         }
 
         window.clear(sf::Color::Black);
+        window.draw(court);
+        window.draw(ball);
+        window.draw(p1);
+        window.draw(p2);
+        window.draw(scores);
+
+        ImGui::SFML::Update(window, clock.restart());
 
         if (isPlaying)
         {
@@ -266,21 +210,33 @@ int main()
                     ball.setPosition(playable_bounds.width / 2, playable_bounds.height / 2);
                 }
             }
-
-            window.draw(court);
-            window.draw(ball);
-            window.draw(p1);
-            window.draw(p2);
-            window.draw(scores);
             go.tickcount++;
         }
         else
         {
-            window.draw(mainMenu);
+            // menu
+            ImGui::Begin("sfPong menu");
+            ImGui::SetWindowSize({150, 0}, ImGuiCond_FirstUseEver);
+            ImGui::PushItemWidth(ImGui::GetFontSize() * -15);
+
+            if (ImGui::Button("Jogar")) {
+                isPlaying = true;
+            }
+            if (ImGui::Button("Opcoes")) {
+                logger->warn("Nao implementado...");
+            }
+            if (ImGui::Button("Sair")) {
+                window.close();
+            }
+            ImGui::End();
         }
-     
+
+
+        ImGui::SFML::Render(window);
         window.display();
     }
+
+    ImGui::SFML::Shutdown();
 
     return EXIT_SUCCESS;
 }
