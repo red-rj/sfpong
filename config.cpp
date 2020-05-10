@@ -16,128 +16,13 @@
 #include "ci_string.h"
 #include "common.h"
 #include "serial_map.h"
+#include "game_config.h"
 
 
-using KbKey = sf::Keyboard::Key;
-using serial_key_map = red::serial_map<red::ci_string_view, int>;
 
 template<typename E>
-using enum_name_table = red::serial_map<red::ci_string_view, E>;
+using enum_names_table = red::serial_map<red::ci_string_view, E>;
 
-static const serial_key_map kb_serialmap {
-    {"[", KbKey::LBracket}, 
-    {"]", KbKey::RBracket},
-    {";", KbKey::Semicolon},
-    {",", KbKey::Comma},
-    {".", KbKey::Period},
-    {"'", KbKey::Quote},
-    {"/", KbKey::Slash},
-    {"\\", KbKey::BackSlash},
-    {"~", KbKey::Tilde},
-    {"=", KbKey::Equal},
-    {"-", KbKey::Hyphen},
-    {"+", KbKey::Add},
-    {"*", KbKey::Multiply},
-    
-    {"Escape", KbKey::Escape}, {"Esc", KbKey::Escape},
-    {"LControl", KbKey::LControl},{"LCtrl", KbKey::LControl},
-    {"LAlt", KbKey::LAlt},
-    {"LShift", KbKey::LShift},
-    {"RControl", KbKey::RControl}, {"RCtrl", KbKey::RControl},
-    {"RAlt", KbKey::RAlt},
-    {"RShift", KbKey::RShift},
-
-    {"Menu", KbKey::Menu},
-    {"Space", KbKey::Space},
-    {"Enter", KbKey::Enter},
-    {"Backspace", KbKey::Backspace},
-    {"Tab", KbKey::Tab},
-
-    {"PageUp", KbKey::PageUp},
-    {"PageDown", KbKey::PageDown},
-    {"End", KbKey::End},
-    {"Home", KbKey::Home},
-    {"Insert", KbKey::Insert},
-    {"Delete", KbKey::Delete},
-
-    {"Left", KbKey::Left},   {"LeftArrow", KbKey::Left},
-    {"Right", KbKey::Right}, {"RightArrow", KbKey::Right},
-    {"Up", KbKey::Up},       {"UpArrow", KbKey::Up},
-    {"Down", KbKey::Down},   {"DownArrow", KbKey::Down},
-
-    {"Pause", KbKey::Pause},
-
-    // autogen
-    // ----------------
-    {"0", KbKey::Num0},
-    {"Num0", KbKey::Num0},
-    {"Numpad0", KbKey::Numpad0},
-    {"1", KbKey::Num1},
-    {"Num1", KbKey::Num1},
-    {"Numpad1", KbKey::Numpad1},
-    {"2", KbKey::Num2},
-    {"Num2", KbKey::Num2},
-    {"Numpad2", KbKey::Numpad2},
-    {"3", KbKey::Num3},
-    {"Num3", KbKey::Num3},
-    {"Numpad3", KbKey::Numpad3},
-    {"4", KbKey::Num4},
-    {"Num4", KbKey::Num4},
-    {"Numpad4", KbKey::Numpad4},
-    {"5", KbKey::Num5},
-    {"Num5", KbKey::Num5},
-    {"Numpad5", KbKey::Numpad5},
-    {"6", KbKey::Num6},
-    {"Num6", KbKey::Num6},
-    {"Numpad6", KbKey::Numpad6},
-    {"7", KbKey::Num7},
-    {"Num7", KbKey::Num7},
-    {"Numpad7", KbKey::Numpad7},
-    {"8", KbKey::Num8},
-    {"Num8", KbKey::Num8},
-    {"Numpad8", KbKey::Numpad8},
-    {"9", KbKey::Num9},
-    {"Num9", KbKey::Num9},
-    {"Numpad9", KbKey::Numpad9},
-    {"A", KbKey::A},
-    {"B", KbKey::B},
-    {"C", KbKey::C},
-    {"D", KbKey::D},
-    {"E", KbKey::E},
-    {"F", KbKey::F},
-    {"G", KbKey::G},
-    {"H", KbKey::H},
-    {"I", KbKey::I},
-    {"J", KbKey::J},
-    {"K", KbKey::K},
-    {"L", KbKey::L},
-    {"M", KbKey::M},
-    {"N", KbKey::N},
-    {"O", KbKey::O},
-    {"P", KbKey::P},
-    {"Q", KbKey::Q},
-    {"R", KbKey::R},
-    {"S", KbKey::S},
-    {"T", KbKey::T},
-    {"U", KbKey::U},
-    {"V", KbKey::V},
-    {"W", KbKey::W},
-    {"X", KbKey::X},
-    {"Y", KbKey::Y},
-    {"Z", KbKey::Z}
-};
-
-static const serial_key_map mouse_serialmap {
-    {"MouseLeft", sf::Mouse::Left}, {"Mouse1", sf::Mouse::Left},
-    {"MouseRight", sf::Mouse::Right}, {"Mouse2", sf::Mouse::Right},
-    {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Right},
-    {"Mouse4", sf::Mouse::XButton1},
-    {"Mouse5", sf::Mouse::XButton2},
-    {"MouseWheel", sf::Mouse::VerticalWheel},
-    {"MouseHWheel", sf::Mouse::HorizontalWheel}
-};
-
-#include "game_config.h"
 
 // config keys
 constexpr auto
@@ -175,13 +60,16 @@ static void lippincott()
 
 struct enum_translator
 {
-    auto get_value(std::string const& v) -> boost::optional<sf::Keyboard::Key>
+    using internal_type = std::string;
+    using external_type = sf::Keyboard::Key;
+
+    auto get_value(internal_type const& v) -> boost::optional<external_type>
     {
         try
         {
             auto vv = red::ci_string_view(v.data(), v.size());
-            auto value = (sf::Keyboard::Key) kb_serialmap[vv];
-            return value;
+            auto value = table[vv];
+            return (sf::Keyboard::Key)value;
         }
         catch (const std::exception&)
         {
@@ -189,11 +77,11 @@ struct enum_translator
         }
     }
 
-    auto put_value(sf::Keyboard::Key const& v) -> boost::optional<std::string>
+    auto put_value(external_type const& v) -> boost::optional<internal_type>
     {
         try
         {
-            auto value = kb_serialmap[v];
+            auto value = table[v];
             return std::string{ value.data(), value.size() };
         }
         catch (const std::exception&)
@@ -202,12 +90,20 @@ struct enum_translator
         }
     }
 
+private:
+    using nametable = enum_names_table<int>;
+    static nametable init_table();
+
+    nametable table = init_table();
 };
 
+template<typename T>
 struct sfVec_translator
 {
-    template<typename T>
-    auto get_value(std::string const& v)->boost::optional<sf::Vector2<T>>
+    using internal_type = std::string;
+    using external_type = sf::Vector2<T>;
+
+    auto get_value(internal_type const& v)->boost::optional<external_type>
     {
         sf::Vector2<T> value;
 
@@ -225,8 +121,7 @@ struct sfVec_translator
         }
     }
 
-    template<typename T>
-    auto put_value(sf::Vector2<T> const& v)->boost::optional<std::string>
+    auto put_value(external_type const& v)->boost::optional<internal_type>
     {
         std::ostringstream ss;
         ss.imbue(std::locale::classic());
@@ -254,7 +149,30 @@ void red::pong::config_t::load(std::filesystem::path filepath)
         return;
     }
 
-    ;
+    { // controls
+        using Key = sf::Keyboard::Key;
+        enum_translator tr;
+        
+        controls[0].up = tree.get<Key>(CFG_P1_UP, tr);
+        controls[0].down = tree.get<Key>(CFG_P1_DOWN, tr);
+        controls[0].fast = tree.get<Key>(CFG_P1_FAST, tr);
+        controls[1].up = tree.get<Key>(CFG_P2_UP, tr);
+        controls[1].down = tree.get<Key>(CFG_P2_DOWN, tr);
+        controls[1].fast = tree.get<Key>(CFG_P2_FAST, tr);
+    }
+
+    // paddle
+    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL);
+    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED);
+    paddle.size = tree.get<sf::Vector2f>(CFG_PADDLE_SIZE, sfVec_translator<float>{});
+
+    // ball
+    ball.accel = tree.get<float>(CFG_BALL_ACCEL);
+    ball.base_speed = tree.get<float>(CFG_BALL_SPEED);
+    ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED);
+    ball.radius = tree.get<float>(CFG_BALL_RADIUS);
+
+    framerate = tree.get<unsigned>(CFG_FRAMERATE, 60);
 }
 
 void red::pong::config_t::save(std::filesystem::path filepath)
@@ -275,13 +193,15 @@ void red::pong::config_t::save(std::filesystem::path filepath)
     // paddle
     tree.put(CFG_PADDLE_SPEED, paddle.base_speed);
     tree.put(CFG_PADDLE_ACCEL, paddle.accel);
-    tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator{});
+    tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator<float>{});
 
     // ball
     tree.put(CFG_BALL_MAXSPEED, ball.max_speed);
     tree.put(CFG_BALL_SPEED, ball.base_speed);
     tree.put(CFG_BALL_ACCEL, ball.accel);
     tree.put(CFG_BALL_RADIUS, ball.radius);
+
+    tree.put(CFG_FRAMERATE, framerate);
 
     auto file = std::ofstream(filepath, std::ios::trunc);
     file << "# sfPong configuration\n\n";
@@ -295,4 +215,121 @@ void red::pong::config_t::save(std::filesystem::path filepath)
         lippincott();
     }
 
+}
+
+// ---
+using KbKey = sf::Keyboard::Key;
+
+auto enum_translator::init_table()->nametable
+{
+    return {
+        // keyboard
+        {"[", KbKey::LBracket},
+        {"]", KbKey::RBracket},
+        {";", KbKey::Semicolon},
+        {",", KbKey::Comma},
+        {".", KbKey::Period},
+        {"'", KbKey::Quote},
+        {"/", KbKey::Slash},
+        {"\\", KbKey::BackSlash},
+        {"~", KbKey::Tilde},
+        {"=", KbKey::Equal},
+        {"-", KbKey::Hyphen},
+        {"+", KbKey::Add},
+        {"*", KbKey::Multiply},
+
+        {"Escape", KbKey::Escape}, {"Esc", KbKey::Escape},
+        {"LControl", KbKey::LControl},{"LCtrl", KbKey::LControl},
+        {"LAlt", KbKey::LAlt},
+        {"LShift", KbKey::LShift},
+        {"RControl", KbKey::RControl}, {"RCtrl", KbKey::RControl},
+        {"RAlt", KbKey::RAlt},
+        {"RShift", KbKey::RShift},
+
+        {"Menu", KbKey::Menu},
+        {"Space", KbKey::Space},
+        {"Enter", KbKey::Enter},
+        {"Backspace", KbKey::Backspace},
+        {"Tab", KbKey::Tab},
+
+        {"PageUp", KbKey::PageUp},
+        {"PageDown", KbKey::PageDown},
+        {"End", KbKey::End},
+        {"Home", KbKey::Home},
+        {"Insert", KbKey::Insert},
+        {"Delete", KbKey::Delete},
+
+        {"Left", KbKey::Left},   {"LeftArrow", KbKey::Left},
+        {"Right", KbKey::Right}, {"RightArrow", KbKey::Right},
+        {"Up", KbKey::Up},       {"UpArrow", KbKey::Up},
+        {"Down", KbKey::Down},   {"DownArrow", KbKey::Down},
+
+        {"Pause", KbKey::Pause},
+
+        {"0", KbKey::Num0},
+        {"Num0", KbKey::Num0},
+        {"Numpad0", KbKey::Numpad0},
+        {"1", KbKey::Num1},
+        {"Num1", KbKey::Num1},
+        {"Numpad1", KbKey::Numpad1},
+        {"2", KbKey::Num2},
+        {"Num2", KbKey::Num2},
+        {"Numpad2", KbKey::Numpad2},
+        {"3", KbKey::Num3},
+        {"Num3", KbKey::Num3},
+        {"Numpad3", KbKey::Numpad3},
+        {"4", KbKey::Num4},
+        {"Num4", KbKey::Num4},
+        {"Numpad4", KbKey::Numpad4},
+        {"5", KbKey::Num5},
+        {"Num5", KbKey::Num5},
+        {"Numpad5", KbKey::Numpad5},
+        {"6", KbKey::Num6},
+        {"Num6", KbKey::Num6},
+        {"Numpad6", KbKey::Numpad6},
+        {"7", KbKey::Num7},
+        {"Num7", KbKey::Num7},
+        {"Numpad7", KbKey::Numpad7},
+        {"8", KbKey::Num8},
+        {"Num8", KbKey::Num8},
+        {"Numpad8", KbKey::Numpad8},
+        {"9", KbKey::Num9},
+        {"Num9", KbKey::Num9},
+        {"Numpad9", KbKey::Numpad9},
+        {"A", KbKey::A},
+        {"B", KbKey::B},
+        {"C", KbKey::C},
+        {"D", KbKey::D},
+        {"E", KbKey::E},
+        {"F", KbKey::F},
+        {"G", KbKey::G},
+        {"H", KbKey::H},
+        {"I", KbKey::I},
+        {"J", KbKey::J},
+        {"K", KbKey::K},
+        {"L", KbKey::L},
+        {"M", KbKey::M},
+        {"N", KbKey::N},
+        {"O", KbKey::O},
+        {"P", KbKey::P},
+        {"Q", KbKey::Q},
+        {"R", KbKey::R},
+        {"S", KbKey::S},
+        {"T", KbKey::T},
+        {"U", KbKey::U},
+        {"V", KbKey::V},
+        {"W", KbKey::W},
+        {"X", KbKey::X},
+        {"Y", KbKey::Y},
+        {"Z", KbKey::Z},
+        // mouse
+        {"MouseLeft", sf::Mouse::Left}, {"Mouse1", sf::Mouse::Left},
+        {"MouseRight", sf::Mouse::Right}, {"Mouse2", sf::Mouse::Right},
+        {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Right},
+        {"Mouse4", sf::Mouse::XButton1},
+        {"Mouse5", sf::Mouse::XButton2},
+        {"MouseWheel", sf::Mouse::VerticalWheel},
+        {"MouseHWheel", sf::Mouse::HorizontalWheel}
+
+    };
 }
