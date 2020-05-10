@@ -22,7 +22,7 @@ int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
 
-    red::pong::config_t config;
+    pong::config_t config;
     try
     {
         config.load("game.cfg");
@@ -30,7 +30,6 @@ int main()
     catch (const std::exception& e)
     {
         logger->error("Failed to load config '{}', using defaults", e.what());
-        config = red::pong::config_t{};
     }
 
     // ----
@@ -42,7 +41,7 @@ int main()
     sf::RenderWindow window({ win_size.x, win_size.y }, "Sf Pong!");
 
 	// pong court
-	red::pong::court court{ { (float)win_size.x - margin.x * 2, 25.f } };
+	pong::court court{ { (float)win_size.x - margin.x * 2, 25.f } };
 
 	court.top.setPosition(margin);
 	court.bottom.setOrigin(0, 25.f);
@@ -62,11 +61,11 @@ int main()
     score_txt.setCharacterSize(55);
     score_txt.setFillColor(sf::Color::Red);
     
-	red::pong::score scores{ score_txt };
+	pong::score scores{ score_txt };
 	scores.setPosition(win_size.x / 2 - 100.f, margin.y + 30);
 
     // jogadores
-    red::pong::paddle p1;
+    pong::paddle p1;
 
     p1.setSize(config.paddle.size);
     p1.setOrigin(config.paddle.size.x / 2, config.paddle.size.y / 2);
@@ -80,7 +79,7 @@ int main()
 	p1.setPosition(margin.x, win_size.y / 2.f);
 	p2.setPosition(win_size.x - margin.x, win_size.y / 2.f);
 
-    using namespace red::pong::player_id;
+    using namespace pong::player_id;
     p1.up_key   = config.controls[player_1].up;
 	p1.down_key = config.controls[player_1].down;
 	p1.fast_key = config.controls[player_1].fast;
@@ -89,7 +88,7 @@ int main()
 	p2.fast_key = config.controls[player_2].fast;
 
 
-    red::pong::ball ball{ config.ball.radius };
+    pong::ball ball{ config.ball.radius };
 	ball.setPosition(win_size.x / 2.f, win_size.y / 2.f);
     ball.max_speed = config.ball.max_speed;
     ball.serve_speed = config.ball.base_speed;
@@ -109,7 +108,7 @@ int main()
     gui_io.IniFilename = nullptr;
 
 
-	red::pong::game_objs go = {
+	pong::game_objs go = {
 		{ &p1, &p2 }, &ball, &scores, &court, &win_bounds
 	};
 

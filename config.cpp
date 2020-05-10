@@ -133,7 +133,7 @@ struct sfVec_translator
 
 
 
-void red::pong::config_t::load(std::filesystem::path filepath)
+void pong::config_t::load(std::filesystem::path filepath)
 {
     using namespace boost::property_tree;
 
@@ -175,7 +175,7 @@ void red::pong::config_t::load(std::filesystem::path filepath)
     framerate = tree.get<unsigned>(CFG_FRAMERATE, 60);
 }
 
-void red::pong::config_t::save(std::filesystem::path filepath)
+void pong::config_t::save(std::filesystem::path filepath)
 {
     using namespace boost::property_tree;
 

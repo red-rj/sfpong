@@ -12,20 +12,20 @@ namespace
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 }
 
-int red::random_num(int min, int max)
+int pong::random_num(int min, int max)
 {
 	auto dist = std::uniform_int_distribution(min, max);
 	return dist(rnd_eng);
 }
 
-bool red::coin_flip()
+bool pong::coin_flip()
 {
 	static std::bernoulli_distribution dist;
 	return dist(rnd_eng);
 }
 
 
-void red::pong::score::set_padding(short p)
+void pong::score::set_padding(short p)
 {
 	if (p != m_padding)
 	{
@@ -34,13 +34,13 @@ void red::pong::score::set_padding(short p)
 	}
 }
 
-void red::pong::score::format_score_txt()
+void pong::score::format_score_txt()
 {
 	auto str = std::to_string(m_p1_score) + std::string(m_padding, ' ') + std::to_string(m_p2_score);
 	m_text.setString(str);
 }
 
-void red::pong::paddle::update(game_objs& go)
+void pong::paddle::update(game_objs& go)
 {
 
 	if (ai)
@@ -107,7 +107,7 @@ void red::pong::paddle::update(game_objs& go)
     }
 }
 
-void red::pong::ball::update(game_objs& go)
+void pong::ball::update(game_objs& go)
 {
 	paddle* paddle = nullptr;
 	auto bounds = getGlobalBounds();
@@ -148,7 +148,7 @@ void red::pong::ball::update(game_objs& go)
 	move(velocity);
 }
 
-red::pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
+pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
 {
 	m_net.clear();
 
@@ -173,7 +173,7 @@ red::pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_siz
 	setOrigin(piece_size.x / 2, 0);
 }
 
-bool red::pong::check_collision(const sf::Shape * a, const sf::Shape * b)
+bool pong::check_collision(const sf::Shape * a, const sf::Shape * b)
 {
     return a->getGlobalBounds().intersects(b->getGlobalBounds());
 }

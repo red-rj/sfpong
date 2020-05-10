@@ -5,7 +5,7 @@
 #include <SFML/Window/Keyboard.hpp>
 
 
-namespace red::pong
+namespace pong
 {
 
 namespace player_id {

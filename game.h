@@ -3,7 +3,7 @@
 #include <utility>
 #include "SFML/Graphics.hpp"
 
-namespace red::pong
+namespace pong
 {
 	struct score : public sf::Drawable, public sf::Transformable
 	{
