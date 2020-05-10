@@ -2,8 +2,9 @@
 #include <string_view>
 #include <filesystem>
 
-#include "SFML/Window/Keyboard.hpp"
-#include "boost/program_options/variables_map.hpp"
+#include <SFML/Window/Keyboard.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
+
 
 namespace red::pong
 {
@@ -39,9 +40,8 @@ namespace player_id {
         unsigned framerate;
     };
 
-    config_t load_config();
+    auto load_settings(std::filesystem::path filepath)->boost::property_tree::ptree;
 
-    boost::program_options::variables_map load_config_variables(std::filesystem::path file);
+    void save_settings(boost::property_tree::ptree const& cfg, std::filesystem::path filepath);
 
-    void save_config_file(config_t cfg, std::filesystem::path filepath = "game.cfg");
 }

@@ -3,10 +3,13 @@
 #include <sstream>
 #include <fstream>
 
-#include "SFML/Window/Keyboard.hpp"
-#include "SFML/Window/Joystick.hpp"
-#include "SFML/Window/Mouse.hpp"
-#include "fmt/ostream.h"
+#include <SFML/Window/Keyboard.hpp>
+#include <SFML/Window/Joystick.hpp>
+#include <SFML/Window/Mouse.hpp>
+#include <fmt/ostream.h>
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include "ci_string.h"
 #include "common.h"
@@ -130,9 +133,6 @@ static const serial_key_map mouse_serialmap {
 };
 
 #include "game_config.h"
-#include "boost/program_options.hpp"
-
-namespace po = boost::program_options;
 
 // config keys
 constexpr auto 
@@ -151,85 +151,57 @@ constexpr auto
     CFG_FRAMERATE      = "game.framerate"
 ;
 
-po::variables_map red::pong::load_config_variables(std::filesystem::path file)
+static void lippincott()
 {
-    using std::string;
+    using red::gamelog;
+    using boost::property_tree::ini_parser_error;
+
+    try { throw; }
+    catch (const ini_parser_error& e)
+    {
+        gamelog()->error("ini_parser_error {}:{} - '{}'", e.filename(), e.line(), e.what());
+    }
+    catch (const std::exception& e)
+    {
+        gamelog()->error("{}", e.what());
+    }
+}
 
 
-    po::options_description cfg_desc;
-    cfg_desc.add_options()
-        (CFG_P1_UP, po::value<string>()->default_value("w"))
-        (CFG_P1_DOWN, po::value<string>()->default_value("s"))
-        (CFG_P1_FAST, po::value<string>()->default_value("Lshift"))
-        (CFG_P2_UP, po::value<string>()->default_value("upArrow"))
-        (CFG_P2_DOWN, po::value<string>()->default_value("downArrow"))
-        (CFG_P2_FAST, po::value<string>()->default_value("RCtrl"))
-
-        (CFG_PADDLE_SPEED, po::value<float>())
-        (CFG_PADDLE_ACCEL, po::value<float>())
-
-        (CFG_BALL_MAXSPEED, po::value<float>())
-        (CFG_BALL_SPEED, po::value<float>())
-        (CFG_BALL_ACCEL, po::value<float>())
-        (CFG_BALL_RADIUS, po::value<float>())   
-        (CFG_FRAMERATE, po::value<unsigned>()->default_value(60))
-    ;
-
-    po::variables_map cfg_vm;
-
-    auto filecontents = std::ifstream(file);
-    auto parsed = po::parse_config_file(filecontents, cfg_desc);
-    po::store(parsed, cfg_vm); po::notify(cfg_vm);
+auto red::pong::load_settings(std::filesystem::path filepath) -> boost::property_tree::ptree
+{
+    using namespace boost::property_tree;
     
-    return cfg_vm;
+    gamelog()->info("Carregando config.");
+    ptree tree;
+    std::ifstream file{ filepath };
+    try
+    {
+        read_ini(file, tree);
+    }
+    catch (...)
+    {
+        lippincott();
+    }
+
+    return tree;
 }
 
-red::pong::config_t red::pong::load_config()
+
+void red::pong::save_settings(boost::property_tree::ptree const& cfg, std::filesystem::path filepath)
 {
-    using std::string;
-    using namespace red::pong::player_id;
+    using namespace boost::property_tree;
+    gamelog()->info("Salvando config.");
 
-    gamelog()->info("Loading config file.");
-
-    config_t config;
-
-    auto vmap = load_config_variables("game.cfg");
-
-    config.controls[player_1].up    = (KbKey) kb_serialmap[vmap[CFG_P1_UP].as<string>()];
-    config.controls[player_1].down  = (KbKey) kb_serialmap[vmap[CFG_P1_DOWN].as<string>()];
-    config.controls[player_1].fast  = (KbKey) kb_serialmap[vmap[CFG_P1_FAST].as<string>()];
-    config.controls[player_2].up    = (KbKey) kb_serialmap[vmap[CFG_P2_UP].as<string>()];
-    config.controls[player_2].down  = (KbKey) kb_serialmap[vmap[CFG_P2_DOWN].as<string>()];
-    config.controls[player_2].fast  = (KbKey) kb_serialmap[vmap[CFG_P2_FAST].as<string>()];
-
-    config.paddle.base_speed = vmap[CFG_PADDLE_SPEED].as<float>();
-    config.paddle.accel = vmap[CFG_PADDLE_ACCEL].as<float>();
-    config.ball.base_speed = vmap[CFG_BALL_SPEED].as<float>();
-    config.ball.accel = vmap[CFG_BALL_ACCEL].as<float>();
-    config.ball.max_speed = vmap[CFG_BALL_MAXSPEED].as<float>();
-    config.ball.radius = vmap[CFG_BALL_RADIUS].as<float>();
-    config.framerate = vmap[CFG_FRAMERATE].as<unsigned>();
-
-    return config;
-}
-
-void red::pong::save_config_file(config_t cfg, std::filesystem::path filepath)
-{
-    using namespace red::pong::player_id;
-    auto file = std::ofstream(filepath, std::ios::trunc);
-
+    auto file = std::ofstream(filepath);
     file << "# sfPong configuration\n\n";
-    fmt::print(file, "{} = {}\n", CFG_P1_UP, kb_serialmap[cfg.controls[player_1].up]);
-    fmt::print(file, "{} = {}\n", CFG_P1_DOWN, kb_serialmap[cfg.controls[player_1].down]);
-    fmt::print(file, "{} = {}\n", CFG_P1_FAST, kb_serialmap[cfg.controls[player_1].fast]);
-    fmt::print(file, "{} = {}\n", CFG_P2_UP, kb_serialmap[cfg.controls[player_2].up]);
-    fmt::print(file, "{} = {}\n", CFG_P2_DOWN, kb_serialmap[cfg.controls[player_2].down]);
-    fmt::print(file, "{} = {}\n", CFG_P2_FAST, kb_serialmap[cfg.controls[player_2].fast]);
-    fmt::print(file, "{} = {:.1}\n", CFG_PADDLE_SPEED, cfg.paddle.base_speed);
-    fmt::print(file, "{} = {:.1}\n", CFG_PADDLE_ACCEL, cfg.paddle.accel);
-    fmt::print(file, "{} = {:.1}\n", CFG_BALL_SPEED, cfg.ball.base_speed);
-    fmt::print(file, "{} = {:.1}\n", CFG_BALL_MAXSPEED, cfg.ball.max_speed);
-    fmt::print(file, "{} = {:.1}\n", CFG_BALL_ACCEL, cfg.ball.accel);
-    fmt::print(file, "{} = {:.1}\n", CFG_BALL_RADIUS, cfg.ball.radius);
-    fmt::print(file, "{} = {}\n", CFG_FRAMERATE, cfg.framerate);
+    
+    try
+    {
+        write_ini(file, cfg);
+    }
+    catch (...)
+    {
+        lippincott();
+    }
 }
