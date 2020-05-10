@@ -36,11 +36,6 @@
       <FileType>Font</FileType>
     </Font>
   </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="game.cfg">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{C5EE35BC-FAFE-48A8-A198-A52C06F0D29D}</ProjectGuid>

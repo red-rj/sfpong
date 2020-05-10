@@ -5,32 +5,25 @@
 #include <iostream>
 #include <fstream>
 
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "boost/program_options.hpp"
+#include <boost/property_tree/ptree.hpp>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <imgui.h>
-#include "imgui-SFML.h"
+#include <imgui-SFML.h>
 
 #include "common.h"
 #include "game.h"
 #include "ci_string.h"
 #include "game_config.h"
 
-namespace po = boost::program_options;
+
+
 
 int main()
 {
     auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
 
+    //auto cfg_tree = red::pong::load_settings("game.cfg");
     red::pong::config_t config;
-    try
-    {
-        config = red::pong::load_config();
-    }
-    catch (const std::exception& err)
-    {
-        logger->error("failed to load game config: {}", err.what());
-        return 5;
-    }
 
     // ----
     auto win_size = sf::Vector2u(1280, 1024);

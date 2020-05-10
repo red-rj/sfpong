@@ -23,7 +23,4 @@
       <Filter>resources</Filter>
     </Font>
   </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="game.cfg" />
-  </ItemGroup>
 </Project>

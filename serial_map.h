@@ -1,7 +1,6 @@
 #pragma once
 #include <utility>
 #include <map>
-#include <string_view>
 
 namespace red 
 {
@@ -25,10 +24,6 @@ namespace red
         auto parse(const string_type& key) const -> value_type {
             return m_name_to_value.at(key);
         }
-        auto parse(std::string_view key) const -> value_type {
-            return parse(string_type{ key.data(), key.size() });
-        }
-
         auto serialize(const value_type& key) const -> string_type {
             return m_value_to_name.at(key);
         }
@@ -36,11 +31,7 @@ namespace red
         auto operator[] (const value_type& key) const {
             return serialize(key);
         }
-
         auto operator[] (const string_type& key) const {
-            return parse(key);
-        }
-        auto operator[] (std::string_view key) const {
             return parse(key);
         }
 

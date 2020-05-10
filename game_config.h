@@ -3,7 +3,6 @@
 #include <filesystem>
 
 #include <SFML/Window/Keyboard.hpp>
-#include <boost/property_tree/ptree_fwd.hpp>
 
 
 namespace red::pong
@@ -15,11 +14,14 @@ namespace player_id {
     };
 }
 
+    struct kb_controls { sf::Keyboard::Key up, down, fast; };
+
     struct config_t
     {
         using Keyboard = sf::Keyboard;
 
-        struct kb_controls { Keyboard::Key up, down, fast; };
+        void load(std::filesystem::path filepath);
+        void save(std::filesystem::path filepath);
 
         // ----
         kb_controls controls[2] = {
@@ -40,8 +42,11 @@ namespace player_id {
         unsigned framerate;
     };
 
-    auto load_settings(std::filesystem::path filepath)->boost::property_tree::ptree;
 
-    void save_settings(boost::property_tree::ptree const& cfg, std::filesystem::path filepath);
+    //auto load_settings(std::filesystem::path filepath)->boost::property_tree::ptree;
+
+    //void save_settings(boost::property_tree::ptree const& cfg, std::filesystem::path filepath);
+
+
 
 }

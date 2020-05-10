@@ -1,4 +1,5 @@
 #include <string>
+#include <string_view>
 #include <map>
 #include <sstream>
 #include <fstream>
@@ -6,6 +7,7 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Joystick.hpp>
 #include <SFML/Window/Mouse.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <fmt/ostream.h>
 
 #include <boost/property_tree/ptree.hpp>
@@ -18,6 +20,9 @@
 
 using KbKey = sf::Keyboard::Key;
 using serial_key_map = red::serial_map<red::ci_string_view, int>;
+
+template<typename E>
+using enum_name_table = red::serial_map<red::ci_string_view, E>;
 
 static const serial_key_map kb_serialmap {
     {"[", KbKey::LBracket}, 
@@ -135,20 +140,21 @@ static const serial_key_map mouse_serialmap {
 #include "game_config.h"
 
 // config keys
-constexpr auto 
-    CFG_P1_UP          = "controls.player1.up", 
-    CFG_P1_DOWN        = "controls.player1.down",
-    CFG_P1_FAST        = "controls.player1.fast",
-    CFG_P2_UP          = "controls.player2.up", 
-    CFG_P2_DOWN        = "controls.player2.down",
-    CFG_P2_FAST        = "controls.player2.fast",
-    CFG_PADDLE_SPEED   = "game.paddle.base_speed",
-    CFG_PADDLE_ACCEL   = "game.paddle.accel",
-    CFG_BALL_SPEED     = "game.ball.base_speed",
-    CFG_BALL_MAXSPEED  = "game.ball.max_speed",
-    CFG_BALL_ACCEL     = "game.ball.accel",
-    CFG_BALL_RADIUS    = "game.ball.radius",
-    CFG_FRAMERATE      = "game.framerate"
+constexpr auto
+    CFG_P1_UP = "controls.player1.up",
+    CFG_P1_DOWN = "controls.player1.down",
+    CFG_P1_FAST = "controls.player1.fast",
+    CFG_P2_UP = "controls.player2.up",
+    CFG_P2_DOWN = "controls.player2.down",
+    CFG_P2_FAST = "controls.player2.fast",
+    CFG_PADDLE_SPEED = "game.paddle.base_speed",
+    CFG_PADDLE_ACCEL = "game.paddle.accel",
+    CFG_PADDLE_SIZE = "game.paddle.size",
+    CFG_BALL_SPEED = "game.ball.base_speed",
+    CFG_BALL_MAXSPEED = "game.ball.max_speed",
+    CFG_BALL_ACCEL = "game.ball.accel",
+    CFG_BALL_RADIUS = "game.ball.radius",
+    CFG_FRAMERATE = "game.framerate"
 ;
 
 static void lippincott()
@@ -167,14 +173,77 @@ static void lippincott()
     }
 }
 
+struct enum_translator
+{
+    auto get_value(std::string const& v) -> boost::optional<sf::Keyboard::Key>
+    {
+        try
+        {
+            auto vv = red::ci_string_view(v.data(), v.size());
+            auto value = (sf::Keyboard::Key) kb_serialmap[vv];
+            return value;
+        }
+        catch (const std::exception&)
+        {
+            return boost::none;
+        }
+    }
 
-auto red::pong::load_settings(std::filesystem::path filepath) -> boost::property_tree::ptree
+    auto put_value(sf::Keyboard::Key const& v) -> boost::optional<std::string>
+    {
+        try
+        {
+            auto value = kb_serialmap[v];
+            return std::string{ value.data(), value.size() };
+        }
+        catch (const std::exception&)
+        {
+            return boost::none;
+        }
+    }
+
+};
+
+struct sfVec_translator
+{
+    template<typename T>
+    auto get_value(std::string const& v)->boost::optional<sf::Vector2<T>>
+    {
+        sf::Vector2<T> value;
+
+        try
+        {
+            std::istringstream ss{ v };
+            ss.imbue(std::locale::classic());
+
+            ss >> value.x >> value.y;
+            return value;
+        }
+        catch (const std::exception&)
+        {
+            return boost::none;
+        }
+    }
+
+    template<typename T>
+    auto put_value(sf::Vector2<T> const& v)->boost::optional<std::string>
+    {
+        std::ostringstream ss;
+        ss.imbue(std::locale::classic());
+
+        ss << v.x << ", " << v.y;
+        return ss.str();
+    }
+};
+
+
+
+void red::pong::config_t::load(std::filesystem::path filepath)
 {
     using namespace boost::property_tree;
-    
-    gamelog()->info("Carregando config.");
-    ptree tree;
+
     std::ifstream file{ filepath };
+    ptree tree;
     try
     {
         read_ini(file, tree);
@@ -182,26 +251,48 @@ auto red::pong::load_settings(std::filesystem::path filepath) -> boost::property
     catch (...)
     {
         lippincott();
+        return;
     }
 
-    return tree;
+    ;
 }
 
-
-void red::pong::save_settings(boost::property_tree::ptree const& cfg, std::filesystem::path filepath)
+void red::pong::config_t::save(std::filesystem::path filepath)
 {
     using namespace boost::property_tree;
-    gamelog()->info("Salvando config.");
 
-    auto file = std::ofstream(filepath);
-    file << "# sfPong configuration\n\n";
+    ptree tree;
+    { // controls
+        enum_translator tr;
+        tree.put(CFG_P1_UP, controls[0].up, tr);
+        tree.put(CFG_P1_DOWN, controls[0].down, tr);
+        tree.put(CFG_P1_FAST, controls[0].fast, tr);
+        tree.put(CFG_P2_UP, controls[1].up, tr);
+        tree.put(CFG_P2_DOWN, controls[1].down, tr);
+        tree.put(CFG_P2_FAST, controls[1].fast, tr);
+    }
     
+    // paddle
+    tree.put(CFG_PADDLE_SPEED, paddle.base_speed);
+    tree.put(CFG_PADDLE_ACCEL, paddle.accel);
+    tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator{});
+
+    // ball
+    tree.put(CFG_BALL_MAXSPEED, ball.max_speed);
+    tree.put(CFG_BALL_SPEED, ball.base_speed);
+    tree.put(CFG_BALL_ACCEL, ball.accel);
+    tree.put(CFG_BALL_RADIUS, ball.radius);
+
+    auto file = std::ofstream(filepath, std::ios::trunc);
+    file << "# sfPong configuration\n\n";
+
     try
     {
-        write_ini(file, cfg);
+        write_ini(file, tree);
     }
     catch (...)
     {
         lippincott();
     }
+
 }
