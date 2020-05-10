@@ -123,8 +123,8 @@
       <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
-copy resources\* $(OutputPath)resources</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>

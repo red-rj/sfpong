@@ -24,14 +24,11 @@ namespace player_id {
         void save(std::filesystem::path filepath);
 
         // ----
-        kb_controls controls[2] = {
-            { Keyboard::W, Keyboard::S, Keyboard::LShift },
-            { Keyboard::Up, Keyboard::Down, Keyboard::RControl }
-        };
+        kb_controls controls[2];
 
         struct paddle_cfg {
             float base_speed, accel;
-            sf::Vector2f size = { 25.f, 150.f };
+            sf::Vector2f size;
         } paddle;
 
         struct ball_cfg {

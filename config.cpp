@@ -153,24 +153,24 @@ void red::pong::config_t::load(std::filesystem::path filepath)
         using Key = sf::Keyboard::Key;
         enum_translator tr;
         
-        controls[0].up = tree.get<Key>(CFG_P1_UP, tr);
-        controls[0].down = tree.get<Key>(CFG_P1_DOWN, tr);
-        controls[0].fast = tree.get<Key>(CFG_P1_FAST, tr);
-        controls[1].up = tree.get<Key>(CFG_P2_UP, tr);
-        controls[1].down = tree.get<Key>(CFG_P2_DOWN, tr);
-        controls[1].fast = tree.get<Key>(CFG_P2_FAST, tr);
+        controls[0].up = tree.get<Key>(CFG_P1_UP, Key::W, tr);
+        controls[0].down = tree.get<Key>(CFG_P1_DOWN, Key::S, tr);
+        controls[0].fast = tree.get<Key>(CFG_P1_FAST, Key::LShift, tr);
+        controls[1].up = tree.get<Key>(CFG_P2_UP, Key::Up, tr);
+        controls[1].down = tree.get<Key>(CFG_P2_DOWN, Key::Down, tr);
+        controls[1].fast = tree.get<Key>(CFG_P2_FAST, Key::RControl, tr);
     }
 
     // paddle
-    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL);
-    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED);
-    paddle.size = tree.get<sf::Vector2f>(CFG_PADDLE_SIZE, sfVec_translator<float>{});
+    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, 0.1);
+    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, 10);
+    paddle.size = tree.get<sf::Vector2f>(CFG_PADDLE_SIZE, { 25.f, 150.f }, sfVec_translator<float>{});
 
     // ball
-    ball.accel = tree.get<float>(CFG_BALL_ACCEL);
-    ball.base_speed = tree.get<float>(CFG_BALL_SPEED);
-    ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED);
-    ball.radius = tree.get<float>(CFG_BALL_RADIUS);
+    ball.accel = tree.get<float>(CFG_BALL_ACCEL, 0.1);
+    ball.base_speed = tree.get<float>(CFG_BALL_SPEED, 5);
+    ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, 20);
+    ball.radius = tree.get<float>(CFG_BALL_RADIUS, 10);
 
     framerate = tree.get<unsigned>(CFG_FRAMERATE, 60);
 }

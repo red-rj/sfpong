@@ -6,10 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sfPong", "sfPong.vcxproj", "{C5EE35BC-FAFE-48A8-A198-A52C06F0D29D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{460A6298-E45F-4AA3-A17E-6B0BC9B019BE}"
-	ProjectSection(SolutionItems) = preProject
-		game.cfg = game.cfg
-		..\..\..\Programas\vcpkg\triplets\community\sfpong.cmake = ..\..\..\Programas\vcpkg\triplets\community\sfpong.cmake
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

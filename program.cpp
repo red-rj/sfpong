@@ -50,7 +50,7 @@ int main()
 	court.net.setPosition({ win_size.x / 2.f, margin.y });
 
     sf::Font score_font;
-	if (!score_font.loadFromFile("resources/LiberationMono-Regular.ttf"))
+	if (!score_font.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf"))
 	{
 		logger->error("Font not found");
 		return EXIT_FAILURE;
