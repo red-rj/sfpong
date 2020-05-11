@@ -23,6 +23,7 @@
 template<typename E>
 using enum_names_table = red::serial_map<red::ci_string_view, E>;
 
+static auto sf_enums_table()->enum_names_table<int> const&;
 
 // config keys
 constexpr auto
@@ -91,10 +92,9 @@ struct enum_translator
     }
 
 private:
-    using nametable = enum_names_table<int>;
-    static nametable init_table();
+    using nametable = enum_names_table<int> const&;
 
-    nametable table = init_table();
+    nametable table = sf_enums_table();
 };
 
 template<typename T>
@@ -217,12 +217,41 @@ void pong::config_t::save(std::filesystem::path filepath)
 
 }
 
+bool pong::config_t::operator==(const config_t& rhs) const noexcept
+{
+    return controls == rhs.controls &&
+           paddle == rhs.paddle &&
+           ball == rhs.ball &&
+           framerate == rhs.framerate;
+}
+
+std::string_view pong::nameof(sf::Keyboard::Key k) noexcept
+{
+    auto const& table = sf_enums_table();
+    auto ci_str = table[k];
+    return { ci_str.data(), ci_str.size() };
+}
+
+sf::Keyboard::Key pong::parseKey(std::string_view txt) noexcept
+{
+    auto const& table = sf_enums_table();
+    try
+    {
+        auto val = table.parse({ txt.data(), txt.size() });
+        return (sf::Keyboard::Key)val;
+    }
+    catch (const std::exception&)
+    {
+        return sf::Keyboard::Unknown;
+    }
+}
+
 // ---
 using KbKey = sf::Keyboard::Key;
 
-auto enum_translator::init_table()->nametable
+auto sf_enums_table() -> enum_names_table<int> const&
 {
-    return {
+    static enum_names_table<int> names{
         // keyboard
         {"[", KbKey::LBracket},
         {"]", KbKey::RBracket},
@@ -330,6 +359,8 @@ auto enum_translator::init_table()->nametable
         {"Mouse5", sf::Mouse::XButton2},
         {"MouseWheel", sf::Mouse::VerticalWheel},
         {"MouseHWheel", sf::Mouse::HorizontalWheel}
-
     };
+
+    return names;
 }
+

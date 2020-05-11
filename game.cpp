@@ -1,10 +1,17 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <array>
+#include <stack>
+#include <optional>
 
+#include "common.h"
 #include "game.h"
 #include "rng.h"
-#include "common.h"
+#include "serial_map.h"
+
+using namespace std::literals;
+using pong::gamelog;
 
 namespace
 {
@@ -25,20 +32,6 @@ bool pong::coin_flip()
 }
 
 
-void pong::score::set_padding(short p)
-{
-	if (p != m_padding)
-	{
-		m_padding = p;
-		format_score_txt();
-	}
-}
-
-void pong::score::format_score_txt()
-{
-	auto str = std::to_string(m_p1_score) + std::string(m_padding, ' ') + std::to_string(m_p2_score);
-	m_text.setString(str);
-}
 
 void pong::paddle::update(game_objs& go)
 {
@@ -181,8 +174,7 @@ bool pong::check_collision(const sf::Shape * a, const sf::Shape * b)
 #include <imgui.h>
 #include <imgui-SFML.h>
 
-
-pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg), ball(cfg.ball.radius)
+pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 {
 	//auto margin = sf::Vector2f(15, 20);
 
@@ -211,6 +203,7 @@ pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 	p2.setPosition(playable_area.width - 15, playable_area.height / 2);
 
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
+	ball.setRadius(config.ball.radius);
 
 	// imgui menu (branch imguifix no vcpkg)
 	ImGui::SFML::Init(window);
@@ -224,7 +217,47 @@ int pong::game::run()
 	{
 		pollEvents();
 
+		if (!paused)
+		{
+			ball.update();
+			p1.update();
+			p2.update();
 
+			// check score
+			if (tickcount % 30 == 0)
+			{
+				if (!playable_area.intersects(ball.getGlobalBounds()))
+				{
+					// ponto!
+					if (ball.getPosition().x < 0)
+					{
+						// indo p/ direita, ponto player 1
+						score.first++;
+						ball.velocity = { -config.ball.accel, 0 };
+					}
+					else
+					{
+						// indo p/ esquerda, ponto player 2
+						score.second++;
+						ball.velocity = { config.ball.accel, 0 };
+					}
+
+					ball.setPosition(playable_area.width / 2, playable_area.height / 2);
+				}
+			}
+
+			drawGame();
+			tickcount++;
+		}
+		else
+		{
+			ImGui::SFML::Update(window, deltaClock.restart());
+			drawGui();
+		}
+
+		// display
+		ImGui::SFML::Render(window);
+		window.display();
 	}
 
 	return 0;
@@ -254,7 +287,8 @@ void pong::game::pollEvents()
 				p2.ai = !p2.ai;
 				break;
 			case sf::Keyboard::Enter:
-				serve();
+				serve(dir::left);
+				gamelog()->info("manual ball serve");
 				break;
 			case sf::Keyboard::F12:
 				resetState();
@@ -279,12 +313,148 @@ void pong::game::pollEvents()
 
 }
 
-void pong::game::draw()
+void pong::game::drawGame()
 {
+	window.clear(sf::Color::Black);
+	window.draw(net);
+	window.draw(topBorder);
+	window.draw(bottomBorder);
+	window.draw(ball);
+	window.draw(p1);
+	window.draw(p2);
+	window.draw(txtScore);
+}
+
+
+static auto keyfrominput(const char* label, char* buff) {
+	auto key = sf::Keyboard::Unknown;
+	if (ImGui::InputText(label, buff, 32)) {
+		key = pong::parseKey(buff);
+		if (key == sf::Keyboard::Unknown) {
+			gamelog()->warn("Unknown key '{}'", buff);
+		}
+	}
+	return key;
+}
+
+static void showOptionsApp(bool* p_open, pong::config_t& cfg)
+{
+	namespace im = ImGui;
+
+	// cópia de trabalho
+	static pong::config_t config;
+	static bool apply = false, firstrun=true;
+
+	if (firstrun) {
+		config = cfg;
+	}
+
+	auto isDirty = [&] { return config != cfg; };
+	
+	ImGuiWindowFlags wflags = isDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
+
+	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
+	if (!ImGui::Begin("Config.", p_open, wflags)) {
+		ImGui::End();
+		return;
+	}
+
+	im::BeginTabBar("##Tabs");
+	if (im::BeginTabItem("Game"))
+	{
+		im::Text("Paddle vars");
+		
+		im::InputFloat("Base speed", &config.paddle.base_speed);
+		im::InputFloat("Acceleration", &config.paddle.accel);
+
+		static float vec[2] = { config.paddle.size.x, config.paddle.size.y };
+		if (im::InputFloat2("Size", vec)) {
+			config.paddle.size.x = vec[0];
+			config.paddle.size.y = vec[1];
+		}
+
+		im::Text("Ball vars");
+		im::InputFloat("Base speed", &config.ball.base_speed);
+		im::InputFloat("Acceleration", &config.ball.accel);
+		im::InputFloat("Max speed", &config.ball.max_speed);
+		im::InputFloat("Radius", &config.ball.radius);
+
+		im::Text("Misc");
+		static int fr = (int)config.framerate;
+		if (im::SliderInt("Framerate", &fr, 10, 144)) {
+			config.framerate = (unsigned)fr;
+		}
+	}
+	if (im::BeginTabItem("Controls"))
+	{
+		static char temp[32];
+
+		im::Text("Player 1");
+
+		if (keyfrominput("Up", temp) != sf::Keyboard::Unknown)
+		{
+		}
+		if (keyfrominput("Down", temp) != sf::Keyboard::Unknown)
+		{
+		}
+		if (keyfrominput("Fast", temp) != sf::Keyboard::Unknown)
+		{
+		}
+
+		im::Spacing();
+
+		im::Text("Player 2");
+
+		if (keyfrominput("Up", temp) != sf::Keyboard::Unknown)
+		{
+		}
+		if (keyfrominput("Down", temp) != sf::Keyboard::Unknown)
+		{
+		}
+		if (keyfrominput("Fast", temp) != sf::Keyboard::Unknown)
+		{
+		}
+
+	}
+
+	im::EndTabBar();
+	im::Separator();
+
+	if (im::Button("Discard")) {
+		config = cfg;
+	}
+	im::SameLine();
+	if (im::Button("Save") && isDirty()) {
+		cfg = config;
+	}
+
+	ImGui::End();
 }
 
 void pong::game::drawGui()
 {
+	// sub items primeiro
+	if (menu.show_options) {
+		showOptionsApp(&menu.show_options, config);
+	}
+
+	// main menu
+	ImGui::SetNextWindowSize({ 250, 0 }, ImGuiCond_FirstUseEver);
+	ImGui::Begin("Main Menu", &paused);
+	ImGui::PushItemWidth(ImGui::GetFontSize() * -15);
+
+	if (ImGui::Button("Jogar")) {
+		paused = false;
+	}
+	if (ImGui::Button("Opcoes")) {
+		menu.show_options = true;
+		gamelog()->warn("Nao implementado...");
+	}
+	if (ImGui::Button("Sair")) {
+		window.close();
+		gamelog()->info("ate a proxima! ;D");
+	}
+	ImGui::End();
 }
 
 void pong::game::resetState()
@@ -293,11 +463,15 @@ void pong::game::resetState()
 	gamelog()->info("State reset");
 }
 
-void pong::game::serve()
+void pong::game::serve(dir direction)
 {
+	auto mov = config.ball.base_speed;
+	if (direction == dir::left) {
+		mov = -mov;
+	}
+
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
-	ball.velocity = { -config.ball.base_speed, 0 };
-	gamelog()->info("Ball serve");
+	ball.velocity = { mov, 0 };
 }
 
 void pong::game::swap(game& other)
@@ -309,15 +483,17 @@ void pong::game::swap(game& other)
 	swap(deltaClock, other.deltaClock);
 	swap(tickcount, other.tickcount);
 
-	//swap(ftScore, other.ftScore);
-	//swap(txtScore, other.txtScore);
+	swap(ftScore, other.ftScore);
+	swap(txtScore, other.txtScore);
 	swap(score, other.score);
 
-	//swap(topBorder, other.topBorder);
-	//swap(bottomBorder, other.bottomBorder);
+	swap(topBorder, other.topBorder);
+	swap(bottomBorder, other.bottomBorder);
+	swap(net, other.net);
 
 	swap(config, other.config);
 	swap(p1, other.p1);
 	swap(p2, other.p2);
 	swap(ball, other.ball);
+	swap(menu, other.menu);
 }
