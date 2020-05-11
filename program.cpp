@@ -20,7 +20,7 @@
 
 int main()
 {
-    auto logger = spdlog::stderr_color_st(red::LOGGER_NAME);
+    auto logger = spdlog::stderr_color_st(pong::LOGGER_NAME);
 
     pong::config_t config;
     try

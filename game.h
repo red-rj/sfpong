@@ -1,7 +1,8 @@
 #pragma once
-
 #include <utility>
-#include "SFML/Graphics.hpp"
+#include <SFML/Graphics.hpp>
+
+#include "game_config.h"
 
 namespace pong
 {
@@ -91,31 +92,26 @@ namespace pong
 		}
 	};
 	
-	
-	struct game_objs;
+
+	struct Icontrol
+	{
+		virtual bool up() const = 0;
+		virtual bool down() const = 0;
+		virtual bool fast() const = 0;
+	};
+
 	
 	struct game_entity
 	{
-		virtual void update(game_objs& go) = 0;
-
-		virtual ~game_entity() = default;
-		
 		sf::Vector2f velocity = {};
 	};
 
 	struct paddle : sf::RectangleShape, game_entity
 	{
-
-		void update(game_objs& go) override;
-
-		sf::Keyboard::Key up_key, down_key, fast_key;
+		void update();
 
 
 		bool ai = false;
-        float accel = 1.f;
-        float base_speed = 500.f;
-
-	private:
 	};
 
 	struct ball : sf::CircleShape, game_entity
@@ -125,9 +121,8 @@ namespace pong
 			setFillColor(sf::Color::Red);
 		}
 
-		virtual void update(game_objs& go) override;
+		void update();
 
-        float max_speed, serve_speed, accel;
 	};
 
 
@@ -145,4 +140,48 @@ namespace pong
     inline bool check_collision(const sf::Shape* a, const court* court) {
         return check_collision(a, &court->top) || check_collision(a, &court->bottom);
     }
+
+
+	struct game
+	{
+		game(sf::RenderWindow& win, config_t cfg);
+		
+		game(game&& rhs) = default;
+
+		int run();
+
+		void pollEvents();
+
+		void draw();
+
+		void drawGui();
+
+		void resetState();
+
+		void serve();
+
+		void swap(game& other);
+
+	private:
+		sf::RenderWindow& window;
+		bool paused = true;
+		sf::Clock deltaClock;
+		sf::FloatRect playable_area;
+		uint64_t tickcount = 0;
+
+		// score
+		sf::Font ftScore;
+		sf::Text txtScore;
+		std::pair<short, short> score;
+
+		// court
+		sf::RectangleShape topBorder, bottomBorder;
+		net_shape net;
+
+		config_t config;
+		//std::pair<paddle, paddle> pl;
+		paddle p1, p2;
+		ball ball;
+	};
+
 }

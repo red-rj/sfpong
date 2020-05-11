@@ -4,7 +4,7 @@
 
 #include "game.h"
 #include "rng.h"
-
+#include "common.h"
 
 namespace
 {
@@ -176,4 +176,148 @@ pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pie
 bool pong::check_collision(const sf::Shape * a, const sf::Shape * b)
 {
     return a->getGlobalBounds().intersects(b->getGlobalBounds());
+}
+
+#include <imgui.h>
+#include <imgui-SFML.h>
+
+
+pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg), ball(cfg.ball.radius)
+{
+	//auto margin = sf::Vector2f(15, 20);
+
+	playable_area = sf::FloatRect(0, 0, 1280, 1024);
+	
+	// pong court
+	topBorder = bottomBorder = sf::RectangleShape({ playable_area.width - 15 * 2, 25 });
+	topBorder.setPosition(15, 20);
+	bottomBorder.setOrigin(0, 25.f);
+	bottomBorder.setPosition(sf::Vector2f(15, 20) + sf::Vector2f(0, playable_area.height - 40));
+	net.setPosition(playable_area.width / 2.f, 20);
+
+	// score
+	ftScore.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
+	txtScore.setFont(ftScore);
+	txtScore.setCharacterSize(55);
+	txtScore.setFillColor(sf::Color::Red);
+	txtScore.setPosition(playable_area.width / 2 - 100, 50);
+
+	p1.setSize(config.paddle.size);
+	p1.setOrigin(config.paddle.size.x / 2, config.paddle.size.y / 2);
+	p1.setPosition(15, playable_area.height / 2);
+
+	p2 = p1;
+	p2.ai = true;
+	p2.setPosition(playable_area.width - 15, playable_area.height / 2);
+
+	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
+
+	// imgui menu (branch imguifix no vcpkg)
+	ImGui::SFML::Init(window);
+	auto& io = ImGui::GetIO();
+	io.IniFilename = nullptr;
+}
+
+int pong::game::run()
+{
+	while (window.isOpen())
+	{
+		pollEvents();
+
+
+	}
+
+	return 0;
+}
+
+void pong::game::pollEvents()
+{
+	sf::Event event;
+	while (window.pollEvent(event)) {
+
+		ImGui::SFML::ProcessEvent(event);
+
+		switch (event.type)
+		{
+		case sf::Event::Closed:
+			window.close();
+			break;
+
+		case sf::Event::KeyReleased:
+		{
+			switch (event.key.code)
+			{
+			case sf::Keyboard::F1:
+				p1.ai = !p1.ai;
+				break;
+			case sf::Keyboard::F2:
+				p2.ai = !p2.ai;
+				break;
+			case sf::Keyboard::Enter:
+				serve();
+				break;
+			case sf::Keyboard::F12:
+				resetState();
+				break;
+			case sf::Keyboard::Escape:
+				paused = !paused;
+				auto& io = ImGui::GetIO();
+				io.WantCaptureKeyboard = paused;
+				io.WantCaptureMouse = paused;
+				break;
+			}
+		} break;
+
+		case sf::Event::Resized:
+		{
+			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
+			window.setView(sf::View(visibleArea));
+		} break;
+
+		}
+	}
+
+}
+
+void pong::game::draw()
+{
+}
+
+void pong::game::drawGui()
+{
+}
+
+void pong::game::resetState()
+{
+	game{ window, config }.swap(*this);
+	gamelog()->info("State reset");
+}
+
+void pong::game::serve()
+{
+	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
+	ball.velocity = { -config.ball.base_speed, 0 };
+	gamelog()->info("Ball serve");
+}
+
+void pong::game::swap(game& other)
+{
+	using std::swap;
+
+	swap(paused, other.paused);
+	swap(playable_area, other.playable_area);
+	swap(deltaClock, other.deltaClock);
+	swap(tickcount, other.tickcount);
+
+	//swap(ftScore, other.ftScore);
+	//swap(txtScore, other.txtScore);
+	swap(score, other.score);
+
+	//swap(topBorder, other.topBorder);
+	//swap(bottomBorder, other.bottomBorder);
+
+	swap(config, other.config);
+	swap(p1, other.p1);
+	swap(p2, other.p2);
+	swap(ball, other.ball);
 }

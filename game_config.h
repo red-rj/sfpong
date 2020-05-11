@@ -14,7 +14,7 @@ namespace player_id {
     };
 }
 
-    struct kb_controls { sf::Keyboard::Key up, down, fast; };
+    struct kb_keys { sf::Keyboard::Key up, down, fast; };
 
     struct config_t
     {
@@ -24,7 +24,7 @@ namespace player_id {
         void save(std::filesystem::path filepath);
 
         // ----
-        kb_controls controls[2];
+        kb_keys controls[2];
 
         struct paddle_cfg {
             float base_speed, accel;

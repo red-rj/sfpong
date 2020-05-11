@@ -7,7 +7,7 @@
     __red_tu_main_t__::__red_tu_main_t__()
 
 
-namespace red
+namespace pong
 {
     inline auto LOGGER_NAME = "sfPong";
     inline auto gamelog() { return spdlog::get(LOGGER_NAME); }

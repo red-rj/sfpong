@@ -44,7 +44,7 @@ constexpr auto
 
 static void lippincott()
 {
-    using red::gamelog;
+    using pong::gamelog;
     using boost::property_tree::ini_parser_error;
 
     try { throw; }
