@@ -59,7 +59,8 @@ namespace pong
 	struct menu_state
 	{
 		bool show_options = false;
-
+		config_t tmp_config;
+		config_t* active_config;
 	};
 
 	struct game

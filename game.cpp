@@ -1,9 +1,6 @@
 #include <string>
 #include <algorithm>
 #include <random>
-#include <array>
-#include <stack>
-#include <optional>
 
 #include <fmt/format.h>
 
@@ -19,8 +16,6 @@ namespace
 {
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
-
-	pong::config_t g_tmp_config; // cópia de trabalho para menu opções
 }
 
 
@@ -216,6 +211,9 @@ pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
 	ball.setRadius(config.ball.radius);
+
+	menu.tmp_config = cfg;
+	menu.active_config = &config;
 }
 
 int pong::game::run()
@@ -223,6 +221,8 @@ int pong::game::run()
 	while (window.isOpen())
 	{
 		pollEvents();
+
+		drawGame();
 
 		if (!paused)
 		{
@@ -253,17 +253,16 @@ int pong::game::run()
 				}
 			}
 
-			drawGame();
 			tickcount++;
 		}
 		else
 		{
 			ImGui::SFML::Update(window, deltaClock.restart());
 			drawGui();
+			ImGui::SFML::Render(window);
 		}
 
 		// display
-		ImGui::SFML::Render(window);
 		window.display();
 	}
 
@@ -333,13 +332,13 @@ void pong::game::drawGame()
 	window.draw(txtScore);
 }
 
-static void showOptionsApp(bool* p_open, pong::config_t& cfg);
+static void showOptionsApp(pong::menu_state& st);
 
 void pong::game::drawGui()
 {
 	// sub items primeiro
 	if (menu.show_options) {
-		showOptionsApp(&menu.show_options, config);
+		showOptionsApp(menu);
 	}
 
 	// main menu
@@ -352,7 +351,6 @@ void pong::game::drawGui()
 	}
 	if (ImGui::Button("Opcoes")) {
 		menu.show_options = true;
-		gamelog()->warn("Nao implementado...");
 	}
 	if (ImGui::Button("Sair")) {
 		window.close();
@@ -403,30 +401,20 @@ void pong::game::swap(game& other) noexcept
 }
 
 // --- imgui funcs
-static auto keyfrominput(const char* label, char* buff) {
-	auto key = sf::Keyboard::Unknown;
-	if (ImGui::InputText(label, buff, 32)) {
-		key = pong::parseKey(buff);
-		if (key == sf::Keyboard::Unknown) {
-			gamelog()->warn("Unknown key '{}'", buff);
-		}
-	}
-	return key;
-}
 
-
-static void showOptionsApp(bool* p_open, pong::config_t& cfg)
+static void showOptionsApp(pong::menu_state& st)
 {
 	namespace im = ImGui;
 
-	static bool apply = false;
-
-	auto& config = g_tmp_config;
-	auto isDirty = [&] { return g_tmp_config != cfg; };
+	auto& config = st.tmp_config;
+	auto p_open = &st.show_options;
+	auto isDirty = [&] { return *st.active_config != config; };
 
 	ImGuiWindowFlags wflags = isDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 
 	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
+	auto lastPos = im::GetWindowPos();
+	im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 	if (!ImGui::Begin("Config.", p_open, wflags)) {
 		ImGui::End();
 		return;
@@ -435,71 +423,80 @@ static void showOptionsApp(bool* p_open, pong::config_t& cfg)
 	im::BeginTabBar("##Tabs");
 	if (im::BeginTabItem("Game"))
 	{
+		im::PushID("paddle");
 		im::Text("Paddle vars");
 
 		im::InputFloat("Base speed", &config.paddle.base_speed);
 		im::InputFloat("Acceleration", &config.paddle.accel);
-
 		static float vec[2] = { config.paddle.size.x, config.paddle.size.y };
 		if (im::InputFloat2("Size", vec)) {
 			config.paddle.size.x = vec[0];
 			config.paddle.size.y = vec[1];
 		}
+		im::PopID();
 
+		im::PushID("ball");
 		im::Text("Ball vars");
 		im::InputFloat("Base speed", &config.ball.base_speed);
 		im::InputFloat("Acceleration", &config.ball.accel);
 		im::InputFloat("Max speed", &config.ball.max_speed);
 		im::InputFloat("Radius", &config.ball.radius);
+		im::PopID();
 
 		im::Text("Misc");
 		static int fr = (int)config.framerate;
 		if (im::SliderInt("Framerate", &fr, 10, 144)) {
 			config.framerate = (unsigned)fr;
 		}
+
+		im::EndTabItem();
 	}
 	if (im::BeginTabItem("Controls"))
 	{
 		// TODO
-		static char temp[32];
+		static char temp[32] = "TODO";
 
 		im::Text("Player 1");
+		im::PushID("p1");
 
-		if (keyfrominput("Up", temp) != sf::Keyboard::Unknown)
+		if (im::InputText("Up", temp, 32))
 		{
 		}
-		if (keyfrominput("Down", temp) != sf::Keyboard::Unknown)
+		if (im::InputText("Down", temp, 32))
 		{
 		}
-		if (keyfrominput("Fast", temp) != sf::Keyboard::Unknown)
+		if (im::InputText("Fast", temp, 32))
 		{
 		}
 
+		im::PopID();
 		im::Spacing();
 
+		im::PushID("p2");
 		im::Text("Player 2");
+		if (im::InputText("Up", temp, 32))
+		{
+		}
+		if (im::InputText("Down", temp, 32))
+		{
+		}
+		if (im::InputText("Fast", temp, 32))
+		{
+		}
+		im::PopID();
 
-		if (keyfrominput("Up", temp) != sf::Keyboard::Unknown)
-		{
-		}
-		if (keyfrominput("Down", temp) != sf::Keyboard::Unknown)
-		{
-		}
-		if (keyfrominput("Fast", temp) != sf::Keyboard::Unknown)
-		{
-		}
-
+		im::EndTabItem();
 	}
 
 	im::EndTabBar();
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		config = cfg;
+		config = *st.active_config;
 	}
 	im::SameLine();
 	if (im::Button("Save") && isDirty()) {
-		cfg = config;
+		*st.active_config = config;
 	}
 
 	ImGui::End();
