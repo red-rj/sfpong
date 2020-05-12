@@ -5,6 +5,8 @@
 #include <stack>
 #include <optional>
 
+#include <fmt/format.h>
+
 #include "common.h"
 #include "game.h"
 #include "rng.h"
@@ -31,114 +33,117 @@ bool pong::coin_flip()
 	return dist(rnd_eng);
 }
 
-
-
-void pong::paddle::update(game_objs& go)
+void pong::game::updatePlayers()
 {
+	auto players = std::array<paddle&, 2>{ p1, p2 };
+	auto const& cfg = config.paddle;
 
-	if (ai)
+	for (auto& p : players)
 	{
-        auto reaction = random_num(20, 250);
-        auto ballPos = go.ball->getPosition();
-        auto paddlePos = getPosition();
-        auto d = (paddlePos - ballPos).y;
-        auto diff = d < 0 ? -d + reaction : d - reaction;
+		auto& velocity = p.velocity;
 
-        auto ySpeed = diff / 100.0f;
-
-        if (diff > go.ball->getGlobalBounds().height)
-        {
-            if (ballPos.y < paddlePos.y)
-            {
-                velocity.y = std::clamp(-ySpeed, -base_speed * 2, 0.f);
-            }
-            else if (ballPos.y > paddlePos.y)
-            {
-                velocity.y = std::clamp(ySpeed, 0.f, base_speed * 2);
-            }
-        }
-        else
-        {
-            velocity.y = 0;
-        }
-    }
-	else // player
-	{
-		auto offset = base_speed * accel;
-
-
-		if (sf::Keyboard::isKeyPressed(up_key))
+		if (p.ai)
 		{
-            velocity.y -= offset;
+			auto reaction = random_num(20, 250);
+			auto ballPos = ball.getPosition();
+			auto paddlePos = p.getPosition();
+			auto d = (paddlePos - ballPos).y;
+			auto diff = d < 0 ? -d + reaction : d - reaction;
+
+			auto ySpeed = diff / 100.0f;
+
+			if (diff > ball.getGlobalBounds().height)
+			{
+				if (ballPos.y < paddlePos.y)
+				{
+					velocity.y = std::clamp(-ySpeed, -cfg.base_speed * 2, 0.f);
+				}
+				else if (ballPos.y > paddlePos.y)
+				{
+					velocity.y = std::clamp(ySpeed, 0.f, cfg.base_speed * 2);
+				}
+			}
+			else
+			{
+				velocity.y = 0;
+			}
 		}
-		else if (sf::Keyboard::isKeyPressed(down_key))
+		else // player
 		{
-            velocity.y += offset;
-        }
-        else
-        {
-            velocity.y *= 0.5f;
-        }
+			auto offset = cfg.base_speed * cfg.accel;
+			auto const& c = config.controls[p.id];
 
-		bool moving = velocity != sf::Vector2f();
+			if (sf::Keyboard::isKeyPressed(c.up))
+			{
+				velocity.y -= offset;
+			}
+			else if (sf::Keyboard::isKeyPressed(c.down))
+			{
+				velocity.y += offset;
+			}
+			else
+			{
+				velocity.y *= 0.5f;
+			}
 
-        if (moving && sf::Keyboard::isKeyPressed(fast_key))
-        {
-            velocity.y *= 1.25f;
-        }
+			bool moving = velocity != sf::Vector2f();
+			if (moving && sf::Keyboard::isKeyPressed(c.fast))
+			{
+				velocity.y *= 1.25f;
+			}
+		}
+
+
+		p.move(velocity);
+
+		if (!p.ai)
+		{
+			// check colisão com bordas
+			if (check_collision(&p, &topBorder) || check_collision(&p, &bottomBorder))
+			{
+				p.move(-velocity);
+				velocity.y = 0;
+			}
+		}
 	}
 
-    auto oldPos = getPosition();
-
-    move(velocity);
-
-    // check colisão com bordas
-    if (check_collision(this, go.court))
-    {
-        velocity.y = 0;
-        setPosition(oldPos);
-    }
 }
 
-void pong::ball::update(game_objs& go)
+void pong::game::updateBall()
 {
 	paddle* paddle = nullptr;
-	auto bounds = getGlobalBounds();
+	auto bounds = ball.getGlobalBounds();
+	auto& velocity = ball.velocity;
+	auto const& cfg = config.ball;
 
-	if (bounds.intersects(go.players.first->getGlobalBounds()))
-	{
-		paddle = go.players.first;
-	}
-	else if (bounds.intersects(go.players.second->getGlobalBounds()))
-	{
-		paddle = go.players.second;
-	}
 	
-	if (bounds.intersects(go.court->top.getGlobalBounds()) || bounds.intersects(go.court->bottom.getGlobalBounds()))
+	if (bounds.intersects(topBorder.getGlobalBounds()) || bounds.intersects(bottomBorder.getGlobalBounds()))
 	{
 		velocity.y = -velocity.y;
 	}
 
+	if (bounds.intersects(p1.getGlobalBounds()))
+		paddle = &p1;
+	else if (bounds.intersects(p2.getGlobalBounds()))
+		paddle = &p2;
+
 	if (paddle)
 	{
-		const auto vX = velocity.x * (1.f + accel);
+		const auto vX = velocity.x * (1.f + cfg.accel);
 		const auto vY = (paddle->velocity.y != 0 ? paddle->velocity.y*0.75f : velocity.y) + random_num(-2, 2);
 
 		velocity = {
-			-std::clamp(vX, -max_speed, max_speed),
-			 std::clamp(vY, -max_speed, max_speed)
+			-std::clamp(vX, -cfg.max_speed, cfg.max_speed),
+			 std::clamp(vY, -cfg.max_speed, cfg.max_speed)
 		};
-		
-		const auto desloc = (velocity.x < 0 ? -paddle->getSize().x : paddle->getSize().x) * 0.15f;
-
-		// mover bola até não intersectar mais no paddle, isso evita q
-		// ela fique presa
-		while (check_collision(paddle, this)) {
-			move(desloc, 0);
-		}
 	}
 
-	move(velocity);
+	ball.move(velocity);
+
+	while (paddle && check_collision(paddle, &ball))
+	{
+		ball.move(velocity);
+	}
 }
 
 pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
@@ -194,12 +199,14 @@ pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 	txtScore.setFillColor(sf::Color::Red);
 	txtScore.setPosition(playable_area.width / 2 - 100, 50);
 
+	p1.id = 0;
 	p1.setSize(config.paddle.size);
 	p1.setOrigin(config.paddle.size.x / 2, config.paddle.size.y / 2);
 	p1.setPosition(15, playable_area.height / 2);
 
 	p2 = p1;
 	p2.ai = true;
+	p2.id = 1;
 	p2.setPosition(playable_area.width - 15, playable_area.height / 2);
 
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
@@ -219,9 +226,8 @@ int pong::game::run()
 
 		if (!paused)
 		{
-			ball.update();
-			p1.update();
-			p2.update();
+			updatePlayers();
+			updateBall();
 
 			// check score
 			if (tickcount % 30 == 0)
@@ -233,16 +239,17 @@ int pong::game::run()
 					{
 						// indo p/ direita, ponto player 1
 						score.first++;
-						ball.velocity = { -config.ball.accel, 0 };
+						serve(dir::left);
 					}
 					else
 					{
 						// indo p/ esquerda, ponto player 2
 						score.second++;
-						ball.velocity = { config.ball.accel, 0 };
+						serve(dir::right);
 					}
 
-					ball.setPosition(playable_area.width / 2, playable_area.height / 2);
+					auto Str = fmt::format("{}    {}", score.first, score.second);
+					txtScore.setString(Str);
 				}
 			}
 

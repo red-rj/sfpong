@@ -4,19 +4,10 @@
 #include <array>
 
 #include <SFML/Window/Keyboard.hpp>
-#include <boost/operators.hpp>
 
 
 namespace pong
 {
-
-
-namespace player_id {
-    enum : uint8_t {
-        player_1, player_2
-    };
-}
-
     struct kb_keys { sf::Keyboard::Key up, down, fast; };
 
     struct config_t

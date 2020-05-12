@@ -267,11 +267,11 @@ auto sf_enums_table() -> enum_names_table<int> const&
         {"+", KbKey::Add},
         {"*", KbKey::Multiply},
 
-        {"Escape", KbKey::Escape}, {"Esc", KbKey::Escape},
-        {"LControl", KbKey::LControl},{"LCtrl", KbKey::LControl},
+        {"Esc", KbKey::Escape}, {"Escape", KbKey::Escape},
+        {"LCtrl", KbKey::LControl},{"LControl", KbKey::LControl},
         {"LAlt", KbKey::LAlt},
         {"LShift", KbKey::LShift},
-        {"RControl", KbKey::RControl}, {"RCtrl", KbKey::RControl},
+        {"RCtrl", KbKey::RControl},{"RControl", KbKey::RControl},
         {"RAlt", KbKey::RAlt},
         {"RShift", KbKey::RShift},
 

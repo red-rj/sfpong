@@ -19,8 +19,8 @@ namespace pong
 		}
 
 		
-		float m_piece_size = 20.f;
-		int m_piece_count = 50;
+		float m_piece_size;
+		int m_piece_count;
 		sf::VertexArray m_net{ sf::Quads };
 	};
 	
@@ -40,10 +40,8 @@ namespace pong
 
 	struct paddle : sf::RectangleShape, game_entity
 	{
-		void update();
-
-
 		bool ai = false;
+		int id = -1;
 	};
 
 	struct ball : sf::CircleShape, game_entity
@@ -52,9 +50,6 @@ namespace pong
 			setOrigin(radius / 2, radius / 2);
 			setFillColor(sf::Color::Red);
 		}
-
-		void update();
-
 	};
 
 
@@ -75,11 +70,12 @@ namespace pong
 		void pollEvents();
 
 		void drawGame();
-
 		void drawGui();
 
-
 		void resetState();
+
+		void updatePlayers();
+		void updateBall();
 
 		enum class dir
 		{
@@ -88,7 +84,7 @@ namespace pong
 
 		void serve(dir direction);
 
-		void swap(game& other);
+		void swap(game& other) noexcept;
 
 	private:
 		sf::RenderWindow& window;
