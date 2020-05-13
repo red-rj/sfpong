@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="at_scope.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="common.h" />

@@ -146,6 +146,7 @@ void pong::game::updateBall()
 	}
 }
 
+
 pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
 {
 	m_net.clear();
@@ -171,7 +172,7 @@ pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pie
 	setOrigin(piece_size.x / 2, 0);
 }
 
-bool pong::check_collision(const sf::Shape * a, const sf::Shape * b)
+bool pong::check_collision(const sf::Shape *a, const sf::Shape *b)
 {
     return a->getGlobalBounds().intersects(b->getGlobalBounds());
 }
@@ -198,6 +199,7 @@ pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 	txtScore.setCharacterSize(55);
 	txtScore.setFillColor(sf::Color::Red);
 	txtScore.setPosition(playable_area.width / 2 - 100, 50);
+	drawScore();
 
 	p1.id = 0;
 	p1.setSize(config.paddle.size);
@@ -248,8 +250,7 @@ int pong::game::run()
 						serve(dir::right);
 					}
 
-					auto Str = fmt::format("{}    {}", score.first, score.second);
-					txtScore.setString(Str);
+					drawScore();
 				}
 			}
 
@@ -359,6 +360,12 @@ void pong::game::drawGui()
 	ImGui::End();
 }
 
+void pong::game::drawScore()
+{
+	auto Str = fmt::format("{}    {}", score.first, score.second);
+	txtScore.setString(Str);
+}
+
 void pong::game::resetState()
 {
 	game{ window, config }.swap(*this);
@@ -402,93 +409,104 @@ void pong::game::swap(game& other) noexcept
 
 // --- imgui funcs
 
+// helpers
+#include "at_scope.h"
+
+
 static void showOptionsApp(pong::menu_state& st)
 {
 	namespace im = ImGui;
 
 	auto& config = st.tmp_config;
 	auto p_open = &st.show_options;
-	auto isDirty = [&] { return *st.active_config != config; };
+	auto isDirty = [&] { return *st.active_config != st.tmp_config; };
 
 	ImGuiWindowFlags wflags = isDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 
 	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
 	auto lastPos = im::GetWindowPos();
 	im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
+
+	AT_SCOPE(im::End());
 	if (!ImGui::Begin("Config.", p_open, wflags)) {
-		ImGui::End();
 		return;
 	}
 
-	im::BeginTabBar("##Tabs");
-	if (im::BeginTabItem("Game"))
+	if (im::BeginTabBar("##Tabs"))
 	{
-		im::PushID("paddle");
-		im::Text("Paddle vars");
+		AT_SCOPE(im::EndTabBar());
 
-		im::InputFloat("Base speed", &config.paddle.base_speed);
-		im::InputFloat("Acceleration", &config.paddle.accel);
-		static float vec[2] = { config.paddle.size.x, config.paddle.size.y };
-		if (im::InputFloat2("Size", vec)) {
-			config.paddle.size.x = vec[0];
-			config.paddle.size.y = vec[1];
+		if (im::BeginTabItem("Game"))
+		{
+			AT_SCOPE(im::EndTabItem());
+
+			im::PushID("paddle"); {
+				AT_SCOPE(im::PopID());
+
+				im::Text("Paddle vars");
+				im::InputFloat("Base speed", &config.paddle.base_speed);
+				im::InputFloat("Acceleration", &config.paddle.accel);
+				static float vec[2] = { config.paddle.size.x, config.paddle.size.y };
+				if (im::InputFloat2("Size", vec)) {
+					config.paddle.size.x = vec[0];
+					config.paddle.size.y = vec[1];
+				}
+			}
+
+			im::PushID("ball"); {
+				AT_SCOPE(im::PopID());
+
+				im::Text("Ball vars");
+				im::InputFloat("Base speed", &config.ball.base_speed);
+				im::InputFloat("Acceleration", &config.ball.accel);
+				im::InputFloat("Max speed", &config.ball.max_speed);
+				im::InputFloat("Radius", &config.ball.radius);
+			}
+
+			im::Text("Misc");
+			static int fr = (int)config.framerate;
+			if (im::SliderInt("Framerate", &fr, 10, 144)) {
+				config.framerate = (unsigned)fr;
+			}
 		}
-		im::PopID();
+		if (im::BeginTabItem("Controls"))
+		{
+			AT_SCOPE(im::EndTabItem());
 
-		im::PushID("ball");
-		im::Text("Ball vars");
-		im::InputFloat("Base speed", &config.ball.base_speed);
-		im::InputFloat("Acceleration", &config.ball.accel);
-		im::InputFloat("Max speed", &config.ball.max_speed);
-		im::InputFloat("Radius", &config.ball.radius);
-		im::PopID();
+			// TODO
+			static char temp[32] = "TODO";
 
-		im::Text("Misc");
-		static int fr = (int)config.framerate;
-		if (im::SliderInt("Framerate", &fr, 10, 144)) {
-			config.framerate = (unsigned)fr;
+			im::Text("Player 1");
+			im::PushID("p1");
+
+			if (im::InputText("Up", temp, 32))
+			{
+			}
+			if (im::InputText("Down", temp, 32))
+			{
+			}
+			if (im::InputText("Fast", temp, 32))
+			{
+			}
+
+			im::PopID();
+			im::Spacing();
+
+			im::PushID("p2");
+			im::Text("Player 2");
+			if (im::InputText("Up", temp, 32))
+			{
+			}
+			if (im::InputText("Down", temp, 32))
+			{
+			}
+			if (im::InputText("Fast", temp, 32))
+			{
+			}
+			im::PopID();
 		}
-
-		im::EndTabItem();
 	}
-	if (im::BeginTabItem("Controls"))
-	{
-		// TODO
-		static char temp[32] = "TODO";
 
-		im::Text("Player 1");
-		im::PushID("p1");
-
-		if (im::InputText("Up", temp, 32))
-		{
-		}
-		if (im::InputText("Down", temp, 32))
-		{
-		}
-		if (im::InputText("Fast", temp, 32))
-		{
-		}
-
-		im::PopID();
-		im::Spacing();
-
-		im::PushID("p2");
-		im::Text("Player 2");
-		if (im::InputText("Up", temp, 32))
-		{
-		}
-		if (im::InputText("Down", temp, 32))
-		{
-		}
-		if (im::InputText("Fast", temp, 32))
-		{
-		}
-		im::PopID();
-
-		im::EndTabItem();
-	}
-
-	im::EndTabBar();
 	im::Separator();
 
 	if (im::Button("Discard")) {
@@ -499,5 +517,5 @@ static void showOptionsApp(pong::menu_state& st)
 		*st.active_config = config;
 	}
 
-	ImGui::End();
+	//ImGui::End();
 }

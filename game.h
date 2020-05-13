@@ -72,6 +72,7 @@ namespace pong
 
 		void drawGame();
 		void drawGui();
+		void drawScore();
 
 		void resetState();
 
