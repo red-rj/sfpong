@@ -15,15 +15,13 @@
 
 #include "ci_string.h"
 #include "common.h"
-#include "serial_map.h"
+#include "symbol_table.h"
 #include "game_config.h"
 
 
 
-template<typename E>
-using enum_names_table = red::serial_map<red::ci_string_view, E>;
 
-static auto sf_enums_table()->enum_names_table<int> const&;
+static auto sf_enums_table()->symbol_table<red::ci_string_view, int> const&;
 
 // config keys
 constexpr auto
@@ -59,42 +57,33 @@ static void lippincott()
     }
 }
 
-struct enum_translator
+struct keyboardkey_translator
 {
     using internal_type = std::string;
     using external_type = sf::Keyboard::Key;
 
-    auto get_value(internal_type const& v) -> boost::optional<external_type>
+    auto get_value(std::string const& v) -> boost::optional<sf::Keyboard::Key>
+    {
+        try {
+            return pong::valueof(v);
+        }
+        catch (const std::exception&) {
+            return boost::none;
+        }
+    }
+
+    auto put_value(sf::Keyboard::Key const& v) -> boost::optional<std::string>
     {
         try
         {
-            auto vv = red::ci_string_view(v.data(), v.size());
-            auto value = table[vv];
-            return (sf::Keyboard::Key)value;
+            auto sv = pong::nameof(v);
+            return std::string(sv);
         }
         catch (const std::exception&)
         {
             return boost::none;
         }
     }
-
-    auto put_value(external_type const& v) -> boost::optional<internal_type>
-    {
-        try
-        {
-            auto value = table[v];
-            return std::string{ value.data(), value.size() };
-        }
-        catch (const std::exception&)
-        {
-            return boost::none;
-        }
-    }
-
-private:
-    using nametable = enum_names_table<int> const&;
-
-    nametable table = sf_enums_table();
 };
 
 template<typename T>
@@ -151,7 +140,7 @@ void pong::config_t::load(std::filesystem::path filepath)
 
     { // controls
         using Key = sf::Keyboard::Key;
-        enum_translator tr;
+        keyboardkey_translator tr;
         
         controls[0].up = tree.get<Key>(CFG_P1_UP, Key::W, tr);
         controls[0].down = tree.get<Key>(CFG_P1_DOWN, Key::S, tr);
@@ -181,7 +170,7 @@ void pong::config_t::save(std::filesystem::path filepath)
 
     ptree tree;
     { // controls
-        enum_translator tr;
+        keyboardkey_translator tr;
         tree.put(CFG_P1_UP, controls[0].up, tr);
         tree.put(CFG_P1_DOWN, controls[0].down, tr);
         tree.put(CFG_P1_FAST, controls[0].fast, tr);
@@ -225,33 +214,26 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
            framerate == rhs.framerate;
 }
 
-std::string_view pong::nameof(sf::Keyboard::Key k) noexcept
+std::string_view pong::nameof(sf::Keyboard::Key k)
 {
     auto const& table = sf_enums_table();
     auto ci_str = table[k];
     return { ci_str.data(), ci_str.size() };
 }
 
-sf::Keyboard::Key pong::parseKey(std::string_view txt) noexcept
+sf::Keyboard::Key pong::valueof(std::string_view txt)
 {
     auto const& table = sf_enums_table();
-    try
-    {
-        auto val = table.parse({ txt.data(), txt.size() });
-        return (sf::Keyboard::Key)val;
-    }
-    catch (const std::exception&)
-    {
-        return sf::Keyboard::Unknown;
-    }
+    auto val = table.get_value({ txt.data(), txt.size() });
+    return static_cast<sf::Keyboard::Key>(val);
 }
 
 // ---
 using KbKey = sf::Keyboard::Key;
 
-auto sf_enums_table() -> enum_names_table<int> const&
+auto sf_enums_table() ->symbol_table<red::ci_string_view, int> const&
 {
-    static enum_names_table<int> names{
+    static symbol_table<red::ci_string_view, int> names{
         // keyboard
         {"[", KbKey::LBracket},
         {"]", KbKey::RBracket},

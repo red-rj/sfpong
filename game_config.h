@@ -57,6 +57,6 @@ namespace pong
     }
 
 
-    std::string_view nameof(sf::Keyboard::Key k) noexcept;
-    sf::Keyboard::Key parseKey(std::string_view txt) noexcept;
+    std::string_view nameof(sf::Keyboard::Key k);
+    sf::Keyboard::Key valueof(std::string_view txt);
 }

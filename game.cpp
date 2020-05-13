@@ -7,7 +7,6 @@
 #include "common.h"
 #include "game.h"
 #include "rng.h"
-#include "serial_map.h"
 
 using namespace std::literals;
 using pong::gamelog;
@@ -184,7 +183,7 @@ pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 {
 	//auto margin = sf::Vector2f(15, 20);
 
-	playable_area = sf::FloatRect(0,0,win.getSize().x,win.getSize().y);
+	playable_area = sf::FloatRect(0,0, (float)win.getSize().x, (float)win.getSize().y);
 	
 	// pong court
 	topBorder = bottomBorder = sf::RectangleShape({ playable_area.width - 30, 25 });
