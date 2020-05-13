@@ -412,6 +412,11 @@ void pong::game::swap(game& other) noexcept
 // helpers
 #include "at_scope.h"
 
+#define IMGUI_AREA(begin, end, ...) begin; __VA_ARGS__  end
+
+#define UI_ID(id, ...) IMGUI_AREA(ImGui::PushID(id), ImGui::PopID(), __VA_ARGS__)
+#define UI_GROUP(...) IMGUI_AREA(ImGui::BeginGroup(), ImGui::EndGroup(), __VA_ARGS__)
+
 
 static void showOptionsApp(pong::menu_state& st)
 {
@@ -439,10 +444,8 @@ static void showOptionsApp(pong::menu_state& st)
 		if (im::BeginTabItem("Game"))
 		{
 			AT_SCOPE(im::EndTabItem());
-
-			im::PushID("paddle"); {
-				AT_SCOPE(im::PopID());
-
+			
+			UI_ID("paddle", {
 				im::Text("Paddle vars");
 				im::InputFloat("Base speed", &config.paddle.base_speed);
 				im::InputFloat("Acceleration", &config.paddle.accel);
@@ -451,21 +454,19 @@ static void showOptionsApp(pong::menu_state& st)
 					config.paddle.size.x = vec[0];
 					config.paddle.size.y = vec[1];
 				}
-			}
+			});
 
-			im::PushID("ball"); {
-				AT_SCOPE(im::PopID());
-
+			UI_ID("ball", {
 				im::Text("Ball vars");
 				im::InputFloat("Base speed", &config.ball.base_speed);
 				im::InputFloat("Acceleration", &config.ball.accel);
 				im::InputFloat("Max speed", &config.ball.max_speed);
 				im::InputFloat("Radius", &config.ball.radius);
-			}
+			});
 
 			im::Text("Misc");
 			static int fr = (int)config.framerate;
-			if (im::SliderInt("Framerate", &fr, 10, 144)) {
+			if (im::SliderInt("Framerate", &fr, 15, 144)) {
 				config.framerate = (unsigned)fr;
 			}
 		}
@@ -476,34 +477,33 @@ static void showOptionsApp(pong::menu_state& st)
 			// TODO
 			static char temp[32] = "TODO";
 
-			im::Text("Player 1");
-			im::PushID("p1");
+			UI_ID("p1", {
+				im::Text("Player 1");
+				if (im::InputText("Up", temp, 32))
+				{
+				}
+				if (im::InputText("Down", temp, 32))
+				{
+				}
+				if (im::InputText("Fast", temp, 32))
+				{
+				}
+			});
 
-			if (im::InputText("Up", temp, 32))
-			{
-			}
-			if (im::InputText("Down", temp, 32))
-			{
-			}
-			if (im::InputText("Fast", temp, 32))
-			{
-			}
-
-			im::PopID();
 			im::Spacing();
 
-			im::PushID("p2");
-			im::Text("Player 2");
-			if (im::InputText("Up", temp, 32))
-			{
-			}
-			if (im::InputText("Down", temp, 32))
-			{
-			}
-			if (im::InputText("Fast", temp, 32))
-			{
-			}
-			im::PopID();
+			UI_ID("p2", {
+				im::Text("Player 2");
+				if (im::InputText("Up", temp, 32))
+				{
+				}
+				if (im::InputText("Down", temp, 32))
+				{
+				}
+				if (im::InputText("Fast", temp, 32))
+				{
+				}
+			});
 		}
 	}
 
@@ -516,6 +516,4 @@ static void showOptionsApp(pong::menu_state& st)
 	if (im::Button("Save") && isDirty()) {
 		*st.active_config = config;
 	}
-
-	//ImGui::End();
 }

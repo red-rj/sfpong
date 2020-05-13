@@ -24,14 +24,6 @@ namespace pong
 		sf::VertexArray m_net{ sf::Quads };
 	};
 	
-
-	struct Icontrol
-	{
-		virtual bool up() const = 0;
-		virtual bool down() const = 0;
-		virtual bool fast() const = 0;
-	};
-
 	
 	struct game_entity
 	{
