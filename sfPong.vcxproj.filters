@@ -8,6 +8,7 @@
     <ClInclude Include="game_config.h" />
     <ClInclude Include="ci_string.h" />
     <ClInclude Include="at_scope.h" />
+    <ClInclude Include="symbol_table.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />

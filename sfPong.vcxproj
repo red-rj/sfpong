@@ -26,6 +26,7 @@
     <ClInclude Include="serial_map.h" />
     <ClInclude Include="ci_string.h" />
     <ClInclude Include="rng.h" />
+    <ClInclude Include="symbol_table.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />
