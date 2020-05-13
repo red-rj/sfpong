@@ -56,7 +56,4 @@ namespace pong
                std::tie(rhs.accel, rhs.base_speed, rhs.max_speed, rhs.radius);
     }
 
-
-    std::string_view nameof(sf::Keyboard::Key k);
-    sf::Keyboard::Key valueof(std::string_view txt);
 }

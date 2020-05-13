@@ -8,6 +8,7 @@
     <ClInclude Include="ci_string.h" />
     <ClInclude Include="at_scope.h" />
     <ClInclude Include="symbol_table.h" />
+    <ClInclude Include="convert.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />

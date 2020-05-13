@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
 #include <string_view>
+#include <iostream>
 
-#include "fmt/format.h"
+#include <fmt/core.h>
 
 
 namespace red
@@ -11,11 +12,8 @@ namespace red
     struct ci_char_traits : public std::char_traits<T> {
         using typename std::char_traits<T>::char_type;
 
-        static char to_upper(char ch) {
-            return static_cast<char>(toupper(static_cast<unsigned char>(ch)));
-        }
-        static wchar_t to_upper(wchar_t ch) {
-            return towupper(ch);
+        static char_type to_upper(char_type ch) {
+            return toupper(ch, std::locale{});
         }
 
         static bool eq(char_type c1, char_type c2) {
@@ -46,12 +44,16 @@ namespace red
 
     using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
     using ci_string = std::basic_string<char, ci_char_traits<char>>;
-}
 
-template<>
-struct fmt::formatter<red::ci_string_view> : fmt::formatter<std::string_view> {
-    template <typename FormatContext>
-    auto format(red::ci_string_view view, FormatContext &ctx) {
-        return formatter<std::string_view>::format({ view.data(), view.size() }, ctx);
+    constexpr ci_string_view to_ci(std::string_view sv) {
+        return { sv.data(), sv.size() };
     }
-};
+    constexpr std::string_view to_string_view(ci_string_view sv) {
+        return { sv.data(), sv.size() };
+    }
+
+    inline auto& operator<< (std::ostream& os, ci_string_view ciview) noexcept {
+        return os << to_string_view(ciview);
+    }
+
+}

@@ -5,7 +5,6 @@
 #include <fstream>
 
 #include <SFML/Window/Keyboard.hpp>
-#include <SFML/Window/Joystick.hpp>
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <fmt/ostream.h>
@@ -13,15 +12,12 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#include "ci_string.h"
 #include "common.h"
+#include "ci_string.h"
 #include "symbol_table.h"
 #include "game_config.h"
+#include "convert.h"
 
-
-
-
-static auto sf_enums_table()->symbol_table<red::ci_string_view, int> const&;
 
 // config keys
 constexpr auto
@@ -57,6 +53,75 @@ static void lippincott()
     }
 }
 
+// converters
+using red::to_ci;
+using enum_name_table = symbol_table<red::ci_string_view, int>;
+static auto sf_enums_table()->enum_name_table const&;
+
+
+std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
+{
+    auto const& table = sf_enums_table();
+    try
+    {
+        auto name = table.get_name(key);
+        return os << name;
+    }
+    catch (const std::out_of_range&)
+    {
+        return os << "unknown";
+    }
+}
+std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
+{
+    auto const& table = sf_enums_table();
+    try
+    {
+        auto name = table.get_name(btn);
+        return os << name;
+    }
+    catch (const std::out_of_range&)
+    {
+        os << "unknown";
+        os.setstate(std::ios::failbit);
+        return os;
+    }
+}
+
+std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
+{
+    auto const& table = sf_enums_table();
+    std::string token; is >> token;
+    try
+    {
+        auto val = static_cast<sf::Keyboard::Key>(table[to_ci(token)]);
+        key = val;
+    }
+    catch (const std::out_of_range&)
+    {
+        is.setstate(std::ios::failbit);
+        key = sf::Keyboard::Unknown;
+    }
+
+    return is;
+}
+std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
+{
+    auto const& table = sf_enums_table();
+    std::string token; is >> token;
+    try
+    {
+        auto val = table[to_ci(token)];
+        btn = static_cast<sf::Mouse::Button>(val);
+    }
+    catch (const std::out_of_range&)
+    {
+        is.setstate(std::ios::failbit);
+    }
+
+    return is;
+}
+
 struct keyboardkey_translator
 {
     using internal_type = std::string;
@@ -64,20 +129,23 @@ struct keyboardkey_translator
 
     auto get_value(std::string const& v) -> boost::optional<sf::Keyboard::Key>
     {
+        auto const& table = sf_enums_table();
         try {
-            return pong::valueof(v);
+            auto i = table[to_ci(v)];
+            return static_cast<sf::Keyboard::Key>(i);
         }
-        catch (const std::exception&) {
+        catch (const std::out_of_range&) {
             return boost::none;
         }
     }
 
     auto put_value(sf::Keyboard::Key const& v) -> boost::optional<std::string>
     {
+        auto const& table = sf_enums_table();
         try
         {
-            auto sv = pong::nameof(v);
-            return std::string(sv);
+            auto sv = table[v];
+            return std::string(sv.begin(), sv.end());
         }
         catch (const std::exception&)
         {
@@ -119,7 +187,6 @@ struct sfVec_translator
         return ss.str();
     }
 };
-
 
 
 void pong::config_t::load(std::filesystem::path filepath)
@@ -214,19 +281,7 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
            framerate == rhs.framerate;
 }
 
-std::string_view pong::nameof(sf::Keyboard::Key k)
-{
-    auto const& table = sf_enums_table();
-    auto ci_str = table[k];
-    return { ci_str.data(), ci_str.size() };
-}
 
-sf::Keyboard::Key pong::valueof(std::string_view txt)
-{
-    auto const& table = sf_enums_table();
-    auto val = table.get_value({ txt.data(), txt.size() });
-    return static_cast<sf::Keyboard::Key>(val);
-}
 
 // ---
 using KbKey = sf::Keyboard::Key;

@@ -26,6 +26,7 @@
     <ClInclude Include="ci_string.h" />
     <ClInclude Include="rng.h" />
     <ClInclude Include="symbol_table.h" />
+    <ClInclude Include="convert.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />
