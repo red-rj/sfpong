@@ -57,7 +57,7 @@ namespace pong
 
 	struct game
 	{
-		game(sf::RenderWindow& win, config_t cfg);
+		game(sf::RenderWindow& win, config_t& cfg);
 
 		int run();
 		void pollEvents();
@@ -97,7 +97,7 @@ namespace pong
 		sf::RectangleShape topBorder, bottomBorder;
 		net_shape net;
 
-		config_t config;
+		config_t& config;
 		menu_state menu;
 		paddle p1, p2;
 		ball ball;

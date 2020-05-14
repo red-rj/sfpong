@@ -179,7 +179,7 @@ bool pong::check_collision(const sf::Shape *a, const sf::Shape *b)
 #include <imgui.h>
 #include <imgui-SFML.h>
 
-pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
+pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg)
 {
 	//auto margin = sf::Vector2f(15, 20);
 
@@ -215,6 +215,8 @@ pong::game::game(sf::RenderWindow& win, config_t cfg) : window(win), config(cfg)
 
 	menu.tmp_config = cfg;
 	menu.active_config = &config;
+	// tmp
+	menu.show_options = true;
 }
 
 int pong::game::run()
@@ -410,16 +412,46 @@ void pong::game::swap(game& other) noexcept
 
 // helpers
 #include "at_scope.h"
+#include "convert.h"
+#include <sstream>
 
 #define IMGUI_AREA(begin, end, ...) begin; __VA_ARGS__  end
 
 #define UI_ID(id, ...) IMGUI_AREA(ImGui::PushID(id), ImGui::PopID(), __VA_ARGS__)
 #define UI_GROUP(...) IMGUI_AREA(ImGui::BeginGroup(), ImGui::EndGroup(), __VA_ARGS__)
 
+// https://github.com/ocornut/imgui/blob/master/misc/cpp/imgui_stdlib.cpp
+struct InputTextUserData_string
+{
+	std::string* Str;
+	ImGuiInputTextCallback ChainCallback;
+	void* ChainCallbackUserData;
+};
+
+static int InputTextStrCB(ImGuiInputTextCallbackData* data)
+{
+	auto userdata = (InputTextUserData_string*)data->UserData;
+	if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+	{
+		auto* str = userdata->Str;
+		str->resize(data->BufTextLen);
+		data->Buf = (char*)str->c_str();
+	}
+	else if (userdata->ChainCallback) {
+		data->UserData = userdata->ChainCallbackUserData;
+		return userdata->ChainCallback(data);
+	}
+	return 0;
+}
+
 
 static void showOptionsApp(pong::menu_state& st)
 {
 	namespace im = ImGui;
+
+	struct {
+		bool bind = false;
+	} static app;
 
 	auto& config = st.tmp_config;
 	auto p_open = &st.show_options;
@@ -435,6 +467,12 @@ static void showOptionsApp(pong::menu_state& st)
 	if (!ImGui::Begin("Config.", p_open, wflags)) {
 		return;
 	}
+
+	//auto InputTextStr = [](const char* label, InputTextUserData_string* cb_user) {
+	//	auto* str = cb_user->Str;
+	//	return im::InputText(label, str->data(), str->capacity() + 1,
+	//		ImGuiInputTextFlags_CallbackResize, InputTextStrCB, cb_user);
+	//};
 
 	if (im::BeginTabBar("##Tabs"))
 	{
@@ -474,17 +512,62 @@ static void showOptionsApp(pong::menu_state& st)
 			AT_SCOPE(im::EndTabItem());
 
 			// TODO
-			static char temp[32] = "TODO";
 
+			auto controlInput = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable {
+				std::stringstream ss;
+				ss << std::setw(8) << label << ":\t" << curKey;
+				auto str = ss.str();
+
+				im::PushID(id++);
+				AT_SCOPE(im::PopID())
+
+				im::Text("%s", str.c_str()); 
+				im::SameLine(200);
+				if (im::Button("trocar"))
+				{
+					im::OpenPopup("Rebind");
+					app.bind = true;
+				}
+
+				const auto flags = ImGuiWindowFlags_NoMove;
+				if (im::BeginPopupModal("Rebind", &app.bind, flags))
+				{
+					AT_SCOPE(im::EndPopup());
+
+					im::Text("Pressione uma tecla, ou Esc para cancelar.");
+					
+					for (int k = 0; k < sf::Keyboard::KeyCount; k++)
+					{
+						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) { // cancelar
+							im::CloseCurrentPopup();
+							break;
+						}
+						
+						auto key = sf::Keyboard::Key(k);
+						if (sf::Keyboard::isKeyPressed(key) && key != sf::Keyboard::Escape) {
+							curKey = key;
+							im::CloseCurrentPopup();
+							break;
+						}
+					}
+				}
+			};
+
+			auto& ctrls = config.controls[0];
+			controlInput("P1 Up", ctrls.up);
+			controlInput("P1 Down", ctrls.down);
+			controlInput("P1 Fast", ctrls.fast);
+			
+			/*
 			UI_ID("p1", {
 				im::Text("Player 1");
-				if (im::InputText("Up", temp, 32))
+				if (InputTextStr("Up", &cb_data[0]))
 				{
 				}
-				if (im::InputText("Down", temp, 32))
+				if (InputTextStr("Down", &cb_data[1]))
 				{
 				}
-				if (im::InputText("Fast", temp, 32))
+				if (InputTextStr("Fast", &cb_data[2]))
 				{
 				}
 			});
@@ -493,16 +576,17 @@ static void showOptionsApp(pong::menu_state& st)
 
 			UI_ID("p2", {
 				im::Text("Player 2");
-				if (im::InputText("Up", temp, 32))
+				if (InputTextStr("Up", &cb_data[3]))
 				{
 				}
-				if (im::InputText("Down", temp, 32))
+				if (InputTextStr("Down", &cb_data[4]))
 				{
 				}
-				if (im::InputText("Fast", temp, 32))
+				if (InputTextStr("Fast", &cb_data[5]))
 				{
 				}
 			});
+		*/
 		}
 	}
 

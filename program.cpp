@@ -8,6 +8,7 @@
 #include "common.h"
 #include "game.h"
 
+namespace fs = std::filesystem;
 
 int main()
 {
@@ -22,7 +23,6 @@ int main()
     {
         logger->error("Failed to load config '{}'", e.what());
     }
-
     // ----
     sf::RenderWindow window(sf::VideoMode(1280, 1024), "Sf Pong!");
     window.setFramerateLimit(config.framerate);
@@ -30,7 +30,7 @@ int main()
     // imgui menu (branch imguifix no vcpkg)
     ImGui::SFML::Init(window);
     auto& gui_io = ImGui::GetIO();
-    gui_io.IniFilename = nullptr;
+    //gui_io.IniFilename = nullptr;
 
     pong::game vg{ window, config };
     auto result = vg.run();

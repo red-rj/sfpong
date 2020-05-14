@@ -83,7 +83,6 @@ std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
     catch (const std::out_of_range&)
     {
         os << "unknown";
-        os.setstate(std::ios::failbit);
         return os;
     }
 }
