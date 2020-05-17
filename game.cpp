@@ -16,11 +16,23 @@ namespace
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 
-	// menu stuff
-	struct {
-		bool show_options = false, binding = false, *game_paused;
-		pong::config_t tmp_config, *active_config;
-	} g_menu;
+	// globals
+	struct
+	{
+		// menu stuff
+		struct menu_state {
+			bool show_options = false, binding = false;
+			pong::config_t tmp_config, *active_config;
+
+		} menu;
+
+		bool unpauseOnEsc() noexcept {
+			return !menu.show_options;
+		}
+
+		sf::Event event;
+	} G;
+
 }
 
 
@@ -219,11 +231,10 @@ pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
 	ball.setRadius(config.ball.radius);
 
-	g_menu.tmp_config = cfg;
-	g_menu.active_config = &config;
-	g_menu.game_paused = &paused;
+	G.menu.tmp_config = cfg;
+	G.menu.active_config = &config;
 	// tmp
-	g_menu.show_options = true;
+	G.menu.show_options = true;
 }
 
 int pong::game::run()
@@ -280,7 +291,7 @@ int pong::game::run()
 
 void pong::game::pollEvents()
 {
-	sf::Event event;
+	sf::Event& event = G.event;
 	while (window.pollEvent(event)) {
 
 		ImGui::SFML::ProcessEvent(event);
@@ -293,31 +304,31 @@ void pong::game::pollEvents()
 
 		case sf::Event::KeyReleased:
 		{
-			switch (event.key.code)
+			if (!G.menu.binding)
 			{
-			case sf::Keyboard::F1:
-				p1.ai = !p1.ai;
-				break;
-			case sf::Keyboard::F2:
-				p2.ai = !p2.ai;
-				break;
-			case sf::Keyboard::Enter:
-				serve(dir::left);
-				gamelog()->info("manual ball serve");
-				break;
-			case sf::Keyboard::F12:
-				resetState();
-				break;
-			case sf::Keyboard::Escape:
-				if (!g_menu.binding)
+				switch (event.key.code)
 				{
+				case sf::Keyboard::F1:
+					p1.ai = !p1.ai;
+					break;
+				case sf::Keyboard::F2:
+					p2.ai = !p2.ai;
+					break;
+				case sf::Keyboard::Enter:
+					serve(dir::left);
+					gamelog()->info("manual ball serve");
+					break;
+				case sf::Keyboard::F12:
+					resetState();
+					break;
+				case sf::Keyboard::Escape:
 					paused = !paused;
 					// imgui deve capturar input só com o jogo pausado
 					auto& io = ImGui::GetIO();
 					io.WantCaptureKeyboard = paused;
 					io.WantCaptureMouse = paused;
+					break;
 				}
-				break;
 			}
 		} break;
 
@@ -349,7 +360,7 @@ static void showOptionsApp();
 void pong::game::drawGui()
 {
 	// sub items primeiro
-	if (g_menu.show_options) {
+	if (G.menu.show_options) {
 		showOptionsApp();
 	}
 
@@ -362,7 +373,7 @@ void pong::game::drawGui()
 		paused = false;
 	}
 	if (ImGui::Button("Opcoes")) {
-		g_menu.show_options = true;
+		G.menu.show_options = true;
 	}
 	if (ImGui::Button("Sair")) {
 		window.close();
@@ -421,6 +432,7 @@ void pong::game::swap(game& other) noexcept
 
 // helpers
 #include "at_scope.h"
+#include "imgui_scoped.h"
 #include "convert.h"
 #include <sstream>
 
@@ -460,10 +472,10 @@ static bool InputTextStr(const char* label, InputTextUserData_string* cb_user) {
 static void showOptionsApp()
 {
 	namespace im = ImGui;
+	using namespace ImScoped;
 
-	auto& config = g_menu.tmp_config;
-	auto p_open = &g_menu.show_options;
-	auto isDirty = [] { return *g_menu.active_config != g_menu.tmp_config; };
+	auto& config = G.menu.tmp_config;
+	auto isDirty = [] { return *G.menu.active_config != G.menu.tmp_config; };
 
 	ImGuiWindowFlags wflags = isDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 
@@ -471,20 +483,17 @@ static void showOptionsApp()
 	auto lastPos = im::GetWindowPos();
 	im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 
-	AT_SCOPE(im::End());
-	if (!ImGui::Begin("Config.", p_open, wflags)) {
+	Window window("Config.", &G.menu.show_options, wflags);
+	if (!window)
 		return;
-	}
 
-	if (im::BeginTabBar("##Tabs"))
+
+	if (auto tabbar = TabBar("##Tabs"))
 	{
-		AT_SCOPE(im::EndTabBar());
-
-		if (im::BeginTabItem("Game"))
+		if (auto gametab = TabBarItem("Game"))
 		{
-			AT_SCOPE(im::EndTabItem());
-			
-			UI_ID("paddle", {
+			{
+				ID _id_ = "paddle";
 				im::Text("Paddle vars");
 				im::InputFloat("Base speed", &config.paddle.base_speed);
 				im::InputFloat("Acceleration", &config.paddle.accel);
@@ -493,64 +502,53 @@ static void showOptionsApp()
 					config.paddle.size.x = vec[0];
 					config.paddle.size.y = vec[1];
 				}
-			});
-
-			UI_ID("ball", {
+			}
+			{
+				ID _id_ = "ball";
 				im::Text("Ball vars");
 				im::InputFloat("Base speed", &config.ball.base_speed);
 				im::InputFloat("Acceleration", &config.ball.accel);
 				im::InputFloat("Max speed", &config.ball.max_speed);
 				im::InputFloat("Radius", &config.ball.radius);
-			});
-
+			}
+			
 			im::Text("Misc");
 			static int fr = (int)config.framerate;
 			if (im::SliderInt("Framerate", &fr, 15, 144)) {
 				config.framerate = (unsigned)fr;
 			}
 		}
-		if (im::BeginTabItem("Controls"))
+		if (auto ctrltab=TabBarItem("Controls"))
 		{
-			AT_SCOPE(im::EndTabItem());
-
-			// TODO
-
 			auto controlInput = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable {
 				std::stringstream ss;
 				ss << std::setw(8) << label << ":\t" << curKey;
 				auto str = ss.str();
 
-				im::PushID(id++);
-				AT_SCOPE(im::PopID())
+				ID _id_ = id++;
+				auto constexpr popup_id = "Rebind";
 
 				im::Text("%s", str.c_str()); 
 				im::SameLine(200);
 				if (im::Button("trocar"))
 				{
-					im::OpenPopup("Rebind");
-					g_menu.binding = true;
+					im::OpenPopup(popup_id);
+					G.menu.binding = true;
 				}
 
 				const auto flags = ImGuiWindowFlags_NoMove;
-				if (im::BeginPopupModal("Rebind", &g_menu.binding, flags))
+				if (auto popup=PopupModal(popup_id, &G.menu.binding, flags))
 				{
-					AT_SCOPE(im::EndPopup());
-
 					im::Text("Pressione uma tecla, ou Esc para cancelar.");
-					
-					for (int k = 0; k < sf::Keyboard::KeyCount; k++)
+
+					if (G.event.type == sf::Event::KeyReleased)
 					{
-						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) { // cancelar
-							im::CloseCurrentPopup();
-							break;
+						if (G.event.key.code != sf::Keyboard::Escape)
+						{
+							curKey = G.event.key.code;
 						}
-						
-						auto key = sf::Keyboard::Key(k);
-						if (sf::Keyboard::isKeyPressed(key) && key != sf::Keyboard::Escape) {
-							curKey = key;
-							im::CloseCurrentPopup();
-							break;
-						}
+
+						im::CloseCurrentPopup();
 					}
 				}
 			};
@@ -565,10 +563,10 @@ static void showOptionsApp()
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		config = *g_menu.active_config;
+		config = *G.menu.active_config;
 	}
 	im::SameLine();
 	if (im::Button("Save") && isDirty()) {
-		*g_menu.active_config = config;
+		*G.menu.active_config = config;
 	}
 }
