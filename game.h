@@ -48,13 +48,6 @@ namespace pong
     bool check_collision(const sf::Shape* a, const sf::Shape* b);
 	//---
 
-	struct menu_state
-	{
-		bool show_options = false;
-		config_t tmp_config;
-		config_t* active_config;
-	};
-
 	struct game
 	{
 		game(sf::RenderWindow& win, config_t& cfg);
@@ -98,7 +91,6 @@ namespace pong
 		net_shape net;
 
 		config_t& config;
-		menu_state menu;
 		paddle p1, p2;
 		ball ball;
 	};

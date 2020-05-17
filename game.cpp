@@ -15,6 +15,12 @@ namespace
 {
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
+
+	// menu stuff
+	struct {
+		bool show_options = false, binding = false, *game_paused;
+		pong::config_t tmp_config, *active_config;
+	} g_menu;
 }
 
 
@@ -213,10 +219,11 @@ pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
 	ball.setRadius(config.ball.radius);
 
-	menu.tmp_config = cfg;
-	menu.active_config = &config;
+	g_menu.tmp_config = cfg;
+	g_menu.active_config = &config;
+	g_menu.game_paused = &paused;
 	// tmp
-	menu.show_options = true;
+	g_menu.show_options = true;
 }
 
 int pong::game::run()
@@ -302,11 +309,14 @@ void pong::game::pollEvents()
 				resetState();
 				break;
 			case sf::Keyboard::Escape:
-				paused = !paused;
-				// imgui deve capturar input só com o jogo pausado
-				auto& io = ImGui::GetIO();
-				io.WantCaptureKeyboard = paused;
-				io.WantCaptureMouse = paused;
+				if (!g_menu.binding)
+				{
+					paused = !paused;
+					// imgui deve capturar input só com o jogo pausado
+					auto& io = ImGui::GetIO();
+					io.WantCaptureKeyboard = paused;
+					io.WantCaptureMouse = paused;
+				}
 				break;
 			}
 		} break;
@@ -334,13 +344,13 @@ void pong::game::drawGame()
 	window.draw(txtScore);
 }
 
-static void showOptionsApp(pong::menu_state& st);
+static void showOptionsApp();
 
 void pong::game::drawGui()
 {
 	// sub items primeiro
-	if (menu.show_options) {
-		showOptionsApp(menu);
+	if (g_menu.show_options) {
+		showOptionsApp();
 	}
 
 	// main menu
@@ -352,7 +362,7 @@ void pong::game::drawGui()
 		paused = false;
 	}
 	if (ImGui::Button("Opcoes")) {
-		menu.show_options = true;
+		g_menu.show_options = true;
 	}
 	if (ImGui::Button("Sair")) {
 		window.close();
@@ -405,7 +415,6 @@ void pong::game::swap(game& other) noexcept
 	swap(p1, other.p1);
 	swap(p2, other.p2);
 	swap(ball, other.ball);
-	swap(menu, other.menu);
 }
 
 // --- imgui funcs
@@ -428,34 +437,33 @@ struct InputTextUserData_string
 	void* ChainCallbackUserData;
 };
 
-static int InputTextStrCB(ImGuiInputTextCallbackData* data)
-{
-	auto userdata = (InputTextUserData_string*)data->UserData;
-	if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
-	{
-		auto* str = userdata->Str;
-		str->resize(data->BufTextLen);
-		data->Buf = (char*)str->c_str();
-	}
-	else if (userdata->ChainCallback) {
-		data->UserData = userdata->ChainCallbackUserData;
-		return userdata->ChainCallback(data);
-	}
-	return 0;
+static bool InputTextStr(const char* label, InputTextUserData_string* cb_user) {
+	auto callback = [](ImGuiInputTextCallbackData* data) {
+		auto userdata = (InputTextUserData_string*)data->UserData;
+		if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+		{
+			auto str = userdata->Str;
+			str->resize(data->BufTextLen);
+			data->Buf = (char*)str->c_str();
+		}
+		else if (userdata->ChainCallback) {
+			data->UserData = userdata->ChainCallbackUserData;
+			return userdata->ChainCallback(data);
+		}
+		return 0;
+	};
+	auto* str = cb_user->Str;
+	return ImGui::InputText(label, str->data(), str->capacity() + 1,
+		ImGuiInputTextFlags_CallbackResize, callback, cb_user);
 }
 
-
-static void showOptionsApp(pong::menu_state& st)
+static void showOptionsApp()
 {
 	namespace im = ImGui;
 
-	struct {
-		bool bind = false;
-	} static app;
-
-	auto& config = st.tmp_config;
-	auto p_open = &st.show_options;
-	auto isDirty = [&] { return *st.active_config != st.tmp_config; };
+	auto& config = g_menu.tmp_config;
+	auto p_open = &g_menu.show_options;
+	auto isDirty = [] { return *g_menu.active_config != g_menu.tmp_config; };
 
 	ImGuiWindowFlags wflags = isDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 
@@ -467,12 +475,6 @@ static void showOptionsApp(pong::menu_state& st)
 	if (!ImGui::Begin("Config.", p_open, wflags)) {
 		return;
 	}
-
-	//auto InputTextStr = [](const char* label, InputTextUserData_string* cb_user) {
-	//	auto* str = cb_user->Str;
-	//	return im::InputText(label, str->data(), str->capacity() + 1,
-	//		ImGuiInputTextFlags_CallbackResize, InputTextStrCB, cb_user);
-	//};
 
 	if (im::BeginTabBar("##Tabs"))
 	{
@@ -526,11 +528,11 @@ static void showOptionsApp(pong::menu_state& st)
 				if (im::Button("trocar"))
 				{
 					im::OpenPopup("Rebind");
-					app.bind = true;
+					g_menu.binding = true;
 				}
 
 				const auto flags = ImGuiWindowFlags_NoMove;
-				if (im::BeginPopupModal("Rebind", &app.bind, flags))
+				if (im::BeginPopupModal("Rebind", &g_menu.binding, flags))
 				{
 					AT_SCOPE(im::EndPopup());
 
@@ -557,46 +559,16 @@ static void showOptionsApp(pong::menu_state& st)
 			controlInput("P1 Up", ctrls.up);
 			controlInput("P1 Down", ctrls.down);
 			controlInput("P1 Fast", ctrls.fast);
-			
-			/*
-			UI_ID("p1", {
-				im::Text("Player 1");
-				if (InputTextStr("Up", &cb_data[0]))
-				{
-				}
-				if (InputTextStr("Down", &cb_data[1]))
-				{
-				}
-				if (InputTextStr("Fast", &cb_data[2]))
-				{
-				}
-			});
-
-			im::Spacing();
-
-			UI_ID("p2", {
-				im::Text("Player 2");
-				if (InputTextStr("Up", &cb_data[3]))
-				{
-				}
-				if (InputTextStr("Down", &cb_data[4]))
-				{
-				}
-				if (InputTextStr("Fast", &cb_data[5]))
-				{
-				}
-			});
-		*/
 		}
 	}
 
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		config = *st.active_config;
+		config = *g_menu.active_config;
 	}
 	im::SameLine();
 	if (im::Button("Save") && isDirty()) {
-		*st.active_config = config;
+		*g_menu.active_config = config;
 	}
 }

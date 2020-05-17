@@ -22,6 +22,7 @@ int main()
     catch (const std::exception& e)
     {
         logger->error("Failed to load config '{}'", e.what());
+        return 5;
     }
     // ----
     sf::RenderWindow window(sf::VideoMode(1280, 1024), "Sf Pong!");
