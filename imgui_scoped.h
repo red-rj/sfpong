@@ -1,20 +1,22 @@
+// baseado em https://github.com/sethk/imgui/blob/raii/misc/cpp/imgui_scoped.h
 #pragma once
-
 #include <imgui.h>
 
 namespace ImScoped
 {
+    using ImGuiEndFunc = void(*)();
+
     /* Move and copy are not allowed */
     struct BaseGui
     {
         BaseGui(BaseGui&&) = delete;
         BaseGui& operator=(BaseGui&&) = delete;
 
+    protected:
         BaseGui() = default;
-        virtual ~BaseGui() = default;
     };
     // Common
-    struct VisableGui : BaseGui
+    struct VisibleGui : BaseGui
     {
         bool IsContentVisible;
         explicit operator bool() const { return IsContentVisible; }
@@ -26,7 +28,7 @@ namespace ImScoped
     };
 
 
-    struct Window : VisableGui
+    struct Window : VisibleGui
     {
         Window(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) {
             IsContentVisible = ImGui::Begin(name, p_open, flags);
@@ -34,7 +36,7 @@ namespace ImScoped
         ~Window() { ImGui::End(); }
     };
 
-    struct Child : VisableGui
+    struct Child : VisibleGui
     {
         Child(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags flags = 0) {
             IsContentVisible = ImGui::BeginChild(str_id, size, border, flags);
@@ -248,7 +250,9 @@ namespace ImScoped
 
     struct ClipRect
     {
-        ClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect) { ImGui::PushClipRect(clip_rect_min, clip_rect_max, intersect_with_current_clip_rect); }
+        ClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect) { 
+            ImGui::PushClipRect(clip_rect_min, clip_rect_max, intersect_with_current_clip_rect);
+        }
         ~ClipRect() { ImGui::PopClipRect(); }
     };
 
@@ -258,4 +262,24 @@ namespace ImScoped
         ~ChildFrame() { ImGui::EndChildFrame(); }
     };
 
+
+    struct TabBarItem : OpenableGui
+    {
+        TabBarItem(const char* label, bool* p_open = nullptr, ImGuiTabBarFlags flags = 0)
+        {
+            IsOpen = ImGui::BeginTabItem(label, p_open, flags);
+        }
+        ~TabBarItem() { if (IsOpen) ImGui::EndTabItem(); }
+    };
+
+    struct TabBar : VisibleGui
+    {
+        using Item = TabBarItem;
+
+        TabBar(const char* str_id, ImGuiTabBarFlags flags = 0)
+        {
+            IsContentVisible = ImGui::BeginTabBar(str_id, flags);
+        }
+        ~TabBar() { ImGui::EndTabBar(); }
+    };
 } // namespace ImScoped
