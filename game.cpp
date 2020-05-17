@@ -15,28 +15,6 @@ namespace
 {
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
-
-	// globals
-	struct
-	{
-		// menu stuff
-		struct menu_state {
-			bool show_options = false, binding = false;
-			pong::config_t tmp_config, *active_config;
-
-		} menu;
-
-		bool unpauseOnEsc() noexcept {
-			return !menu.show_options;
-		}
-		bool config_dirty() noexcept {
-			return menu.tmp_config != *menu.active_config;
-		}
-
-
-		sf::Event event;
-	} G;
-
 }
 
 
@@ -68,10 +46,10 @@ void pong::game::updatePlayers()
 			auto reaction = random_num(20, 250);
 			auto ballPos = ball.getPosition();
 			auto paddlePos = p.getPosition();
-			auto d = (paddlePos - ballPos).y;
-			auto diff = d < 0 ? -d + reaction : d - reaction;
+			auto diff = (paddlePos - ballPos).y;
+			auto spd = diff < 0 ? -diff + reaction : diff - reaction;
 
-			auto ySpeed = diff / 100.0f;
+			auto ySpeed = spd / 100.0f;
 
 			if (diff > ball.getGlobalBounds().height)
 			{
@@ -167,7 +145,6 @@ void pong::game::updateBall()
 	}
 }
 
-
 pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
 {
 	m_net.clear();
@@ -201,7 +178,8 @@ bool pong::check_collision(const sf::Shape *a, const sf::Shape *b)
 #include "imgui_ext.h"
 #include <imgui-SFML.h>
 
-pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg)
+pong::game::game(sf::RenderWindow& win, config_t& cfg, sf::Text const& txt)
+	: window(win), config(cfg), txtScore(txt)
 {
 	//auto margin = sf::Vector2f(15, 20);
 
@@ -215,10 +193,6 @@ pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg
 	net.setPosition(playable_area.width / 2.f, 20);
 
 	// score
-	ftScore.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
-	txtScore.setFont(ftScore);
-	txtScore.setCharacterSize(55);
-	txtScore.setFillColor(sf::Color::Red);
 	txtScore.setPosition(playable_area.width / 2 - 100, 50);
 	drawScore();
 
@@ -235,11 +209,9 @@ pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg
 	ball.setPosition(playable_area.width / 2, playable_area.height / 2);
 	ball.setRadius(config.ball.radius);
 
-	G.menu.tmp_config = cfg;
-	G.menu.active_config = &config;
-	// tmp
-	G.menu.show_options = true;
+	tmp_config = cfg;
 }
+
 
 int pong::game::run()
 {
@@ -295,7 +267,7 @@ int pong::game::run()
 
 void pong::game::pollEvents()
 {
-	sf::Event& event = G.event;
+	sf::Event& event = curEvent;
 	while (window.pollEvent(event)) {
 
 		ImGui::SFML::ProcessEvent(event);
@@ -308,7 +280,7 @@ void pong::game::pollEvents()
 
 		case sf::Event::KeyReleased:
 		{
-			if (!G.menu.binding)
+			if (!binding)
 			{
 				switch (event.key.code)
 				{
@@ -359,14 +331,12 @@ void pong::game::drawGame()
 	window.draw(txtScore);
 }
 
-static void showOptionsApp();
 
 void pong::game::drawGui()
 {
 	// sub items primeiro
-	if (G.menu.show_options) {
-		showOptionsApp();
-	}
+	if (show_options)
+		guiOptions();
 
 	// main menu
 	using namespace ImScoped;
@@ -378,7 +348,7 @@ void pong::game::drawGui()
 		paused = false;
 	}
 	if (ImGui::Button("Opcoes", btnSize)) {
-		G.menu.show_options = true;
+		show_options = true;
 	}
 	if (ImGui::Button("Sair", btnSize)) {
 		window.close();
@@ -394,7 +364,7 @@ void pong::game::drawScore()
 
 void pong::game::resetState()
 {
-	game{ window, config }.swap(*this);
+	game(window, config, txtScore).swap(*this);
 	gamelog()->info("State reset");
 }
 
@@ -418,7 +388,6 @@ void pong::game::swap(game& other) noexcept
 	swap(deltaClock, other.deltaClock);
 	swap(tickcount, other.tickcount);
 
-	swap(ftScore, other.ftScore);
 	swap(txtScore, other.txtScore);
 	swap(score, other.score);
 
@@ -439,58 +408,19 @@ void pong::game::swap(game& other) noexcept
 #include <sstream>
 
 
-class RebindKeyUi
-{
-	int id = 0;
-public:
-	std::string_view BtnText = "trocar";
-
-	void operator() (const char* label, sf::Keyboard::Key& curKey) {
-		std::stringstream ss;
-		ss << std::setw(8) << label << ":\t" << curKey;
-		auto str = ss.str();
-
-		ImScoped::ID _id_ = id++;
-		auto constexpr popup_id = "Rebind popup";
-
-		ImGui::Text("%s", str.c_str());
-		ImGui::SameLine(200);
-		if (ImGui::Button(BtnText.data())) {
-			ImGui::OpenPopup(popup_id);
-			G.menu.binding = true;
-		}
-
-		if (auto popup = ImScoped::PopupModal(popup_id, &G.menu.binding, ImGuiWindowFlags_NoMove))
-		{
-			ImGui::Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
-			if (G.event.type == sf::Event::KeyReleased)
-			{
-				if (G.event.key.code != sf::Keyboard::Escape)
-				{
-					curKey = G.event.key.code;
-				}
-
-				ImGui::CloseCurrentPopup();
-			}
-		}
-	}
-};
-
-
-static void showOptionsApp()
+void pong::game::guiOptions()
 {
 	namespace im = ImGui;
 	using namespace ImScoped;
 
-	auto& config = G.menu.tmp_config;
 
-	ImGuiWindowFlags wflags = G.config_dirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
+	ImGuiWindowFlags wflags = config_dirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 
 	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
 	auto lastPos = im::GetWindowPos();
 	im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 
-	Window window("Config.", &G.menu.show_options, wflags);
+	Window window("Config.", &show_options, wflags);
 	if (!window)
 		return;
 
@@ -501,36 +431,63 @@ static void showOptionsApp()
 			{
 				ID _id_ = "paddle";
 				im::Text("Paddle vars");
-				im::InputFloat("Base speed", &config.paddle.base_speed);
-				im::InputFloat("Acceleration", &config.paddle.accel);
+				im::InputFloat("Base speed", &tmp_config.paddle.base_speed);
+				im::InputFloat("Acceleration", &tmp_config.paddle.accel);
 
-				static float vec[2] = { config.paddle.size.x, config.paddle.size.y };
+				static float vec[2] = { tmp_config.paddle.size.x, tmp_config.paddle.size.y };
 				if (im::InputFloat2("Size", vec)) {
-					config.paddle.size.x = vec[0];
-					config.paddle.size.y = vec[1];
+					tmp_config.paddle.size.x = vec[0];
+					tmp_config.paddle.size.y = vec[1];
 				}
 			}
 			{
 				ID _id_ = "ball";
 				im::Text("Ball vars");
-				im::InputFloat("Base speed", &config.ball.base_speed);
-				im::InputFloat("Acceleration", &config.ball.accel);
-				im::InputFloat("Max speed", &config.ball.max_speed);
-				im::InputFloat("Radius", &config.ball.radius);
+				im::InputFloat("Base speed", &tmp_config.ball.base_speed);
+				im::InputFloat("Acceleration", &tmp_config.ball.accel);
+				im::InputFloat("Max speed", &tmp_config.ball.max_speed);
+				im::InputFloat("Radius", &tmp_config.ball.radius);
 			}
 			
 			im::Text("Misc");
-			static int fr = (int)config.framerate;
+			static int fr;
 			if (im::SliderInt("Framerate", &fr, 15, 144)) {
-				config.framerate = (unsigned)fr;
+				tmp_config.framerate = (unsigned)fr;
 			}
 			else {
-				fr = (int)config.framerate;
+				fr = (int)tmp_config.framerate;
 			}
 		}
 		if (auto ctrltab=TabBarItem("Controls"))
 		{
-			auto controlInput = RebindKeyUi();
+			auto controlInput = [&,id=0](const char* label, sf::Keyboard::Key& curKey) mutable {
+				std::stringstream ss;
+				ss << std::setw(8) << label << ":\t" << curKey;
+				auto str = ss.str();
+
+				ID _id_ = id++;
+				auto constexpr popup_id = "Rebind popup";
+				ImGui::Text("%s", str.c_str());
+				ImGui::SameLine(200);
+				if (ImGui::Button("trocar")) {
+					ImGui::OpenPopup(popup_id);
+					binding = true;
+				}
+
+				if (auto popup = PopupModal(popup_id, &binding, ImGuiWindowFlags_NoMove))
+				{
+					ImGui::Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
+					if (curEvent.type == sf::Event::KeyReleased)
+					{
+						if (curEvent.key.code != sf::Keyboard::Escape)
+						{
+							curKey = curEvent.key.code;
+						}
+
+						ImGui::CloseCurrentPopup();
+					}
+				}
+			};
 			auto playerInputUI = [&](const char* player, pong::kb_keys& keys) {
 				im::Text("%s:", player);
 				ID _id_ = player;
@@ -540,8 +497,8 @@ static void showOptionsApp()
 				controlInput("Down", keys.down);
 				controlInput("Fast", keys.fast);
 			};
-
-			auto& ctrls = config.controls;
+			// ---
+			auto& ctrls = tmp_config.controls;
 			playerInputUI("Player 1", ctrls[0]);
 			playerInputUI("Player 2", ctrls[1]);
 		}
@@ -551,10 +508,10 @@ static void showOptionsApp()
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		config = *G.menu.active_config;
+		tmp_config = config;
 	}
 	im::SameLine();
-	if (im::Button("Save") && G.config_dirty()) {
-		*G.menu.active_config = config;
+	if (im::Button("Save") && config_dirty()) {
+		config = tmp_config;
 	}
 }

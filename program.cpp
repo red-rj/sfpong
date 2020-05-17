@@ -25,6 +25,10 @@ int main()
         return 5;
     }
     // ----
+    auto scoreFont = sf::Font();
+    scoreFont.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
+    auto scoreTxt = sf::Text("", scoreFont, 55);
+
     sf::RenderWindow window(sf::VideoMode(1280, 1024), "Sf Pong!");
     window.setFramerateLimit(config.framerate);
 
@@ -33,7 +37,7 @@ int main()
     auto& gui_io = ImGui::GetIO();
     //gui_io.IniFilename = nullptr;
 
-    pong::game vg{ window, config };
+    pong::game vg{ window, config, scoreTxt };
     auto result = vg.run();
 
     ImGui::SFML::Shutdown();

@@ -50,7 +50,7 @@ namespace pong
 
 	struct game
 	{
-		game(sf::RenderWindow& win, config_t& cfg);
+		game(sf::RenderWindow& win, config_t& cfg, sf::Text const& txt);
 		void swap(game& other) noexcept;
 		int run();
 
@@ -68,9 +68,6 @@ namespace pong
 		void updatePlayers();
 		void updateBall();
 
-
-
-
 	private:
 		sf::RenderWindow& window;
 
@@ -80,7 +77,6 @@ namespace pong
 		uint64_t tickcount = 0;
 
 		// score
-		sf::Font ftScore;
 		sf::Text txtScore;
 		std::pair<short, short> score;
 
@@ -88,9 +84,20 @@ namespace pong
 		sf::RectangleShape topBorder, bottomBorder;
 		net_shape net;
 
-		config_t& config;
+		config_t &config;
 		paddle p1, p2;
 		ball ball;
+
+		// menu
+		config_t tmp_config;
+		sf::Event curEvent;
+		bool show_options = false, binding = false;
+
+		bool unpauseOnEsc() noexcept { return !show_options; }
+		bool config_dirty() noexcept { return tmp_config != config; }
+
+		void guiMainmenu();
+		void guiOptions();
 	};
 
 }
