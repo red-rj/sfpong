@@ -1,331 +1,261 @@
 #pragma once
 
-#include "imgui.h"
+#include <imgui.h>
 
 namespace ImScoped
 {
-    #define IMGUI_DELETE_MOVE_COPY(Base)                             \
-        Base(Base&&) = delete;                /* Move not allowed */ \
-        Base &operator=(Base&&) = delete;     /* "" */               \
-        Base(const Base&) = delete;           /* Copy not allowed */ \
-        Base& operator=(const Base&) = delete /* "" */
+    /* Move and copy are not allowed */
+    struct BaseGui
+    {
+        BaseGui(BaseGui&&) = delete;
+        BaseGui& operator=(BaseGui&&) = delete;
 
-    struct Window
+        BaseGui() = default;
+        virtual ~BaseGui() = default;
+    };
+    // Common
+    struct VisableGui : BaseGui
     {
         bool IsContentVisible;
+        explicit operator bool() const { return IsContentVisible; }
+    };
+    struct OpenableGui : BaseGui
+    {
+        bool IsOpen;
+        explicit operator bool() const { return IsOpen; }
+    };
 
-        Window(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) { IsContentVisible = ImGui::Begin(name, p_open, flags); }
+
+    struct Window : VisableGui
+    {
+        Window(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) {
+            IsContentVisible = ImGui::Begin(name, p_open, flags);
+        }
         ~Window() { ImGui::End(); }
-
-        explicit operator bool() const { return IsContentVisible; }
-
-        IMGUI_DELETE_MOVE_COPY(Window);
     };
 
-    struct Child
+    struct Child : VisableGui
     {
-        bool IsContentVisible;
-
-        Child(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags flags = 0) { IsContentVisible = ImGui::BeginChild(str_id, size, border, flags); }
-        Child(ImGuiID id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags flags = 0) { IsContentVisible = ImGui::BeginChild(id, size, border, flags); }
+        Child(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags flags = 0) {
+            IsContentVisible = ImGui::BeginChild(str_id, size, border, flags);
+        }
+        Child(ImGuiID id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags flags = 0) {
+            IsContentVisible = ImGui::BeginChild(id, size, border, flags);
+        }
         ~Child() { ImGui::EndChild(); }
-
-        explicit operator bool() const { return IsContentVisible; }
-
-        IMGUI_DELETE_MOVE_COPY(Child);
     };
 
-    struct Font
+    struct Font : BaseGui
     {
         Font(ImFont* font) { ImGui::PushFont(font); }
         ~Font() { ImGui::PopFont(); }
-
-        IMGUI_DELETE_MOVE_COPY(Font);
     };
 
-    struct StyleColor
+    struct StyleColor : BaseGui
     {
         StyleColor(ImGuiCol idx, ImU32 col) { ImGui::PushStyleColor(idx, col); }
         StyleColor(ImGuiCol idx, const ImVec4& col) { ImGui::PushStyleColor(idx, col); }
         ~StyleColor() { ImGui::PopStyleColor(); }
-
-        IMGUI_DELETE_MOVE_COPY(StyleColor);
     };
 
-    struct StyleVar
+    struct StyleVar : BaseGui
     {
         StyleVar(ImGuiStyleVar idx, float val) { ImGui::PushStyleVar(idx, val); }
         StyleVar(ImGuiStyleVar idx, const ImVec2& val) { ImGui::PushStyleVar(idx, val); }
         ~StyleVar() { ImGui::PopStyleVar(); }
-
-        IMGUI_DELETE_MOVE_COPY(StyleVar);
     };
 
-    struct ItemWidth
+    struct ItemWidth : BaseGui
     {
         ItemWidth(float item_width) { ImGui::PushItemWidth(item_width); }
         ~ItemWidth() { ImGui::PopItemWidth(); }
-
-        IMGUI_DELETE_MOVE_COPY(ItemWidth);
     };
 
-    struct TextWrapPos
+    struct TextWrapPos : BaseGui
     {
         TextWrapPos(float wrap_pos_x = 0.0f) { ImGui::PushTextWrapPos(wrap_pos_x); }
         ~TextWrapPos() { ImGui::PopTextWrapPos(); }
-
-        IMGUI_DELETE_MOVE_COPY(TextWrapPos);
     };
 
-    struct AllowKeyboardFocus
+    struct AllowKeyboardFocus : BaseGui
     {
         AllowKeyboardFocus(bool allow_keyboard_focus) { ImGui::PushAllowKeyboardFocus(allow_keyboard_focus); }
         ~AllowKeyboardFocus() { ImGui::PopAllowKeyboardFocus(); }
-
-        IMGUI_DELETE_MOVE_COPY(AllowKeyboardFocus);
     };
 
-    struct ButtonRepeat
+    struct ButtonRepeat : BaseGui
     {
         ButtonRepeat(bool repeat) { ImGui::PushButtonRepeat(repeat); }
         ~ButtonRepeat() { ImGui::PopButtonRepeat(); }
-
-        IMGUI_DELETE_MOVE_COPY(ButtonRepeat);
     };
 
-    struct Group
+    struct Group : BaseGui
     {
         Group() { ImGui::BeginGroup(); }
         ~Group() { ImGui::EndGroup(); }
-
-        IMGUI_DELETE_MOVE_COPY(Group);
     };
 
-    struct ID
+    struct ID : BaseGui
     {
         ID(const char* str_id) { ImGui::PushID(str_id); }
         ID(const char* str_id_begin, const char* str_id_end) { ImGui::PushID(str_id_begin, str_id_end); }
         ID(const void* ptr_id) { ImGui::PushID(ptr_id); }
         ID(int int_id) { ImGui::PushID(int_id); }
         ~ID() { ImGui::PopID(); }
-
-        IMGUI_DELETE_MOVE_COPY(ID);
     };
 
-    struct Combo
+    struct Combo : OpenableGui
     {
-        bool IsOpen;
-
-        Combo(const char* label, const char* preview_value, ImGuiComboFlags flags = 0) { IsOpen = ImGui::BeginCombo(label, preview_value, flags); }
+        Combo(const char* label, const char* preview_value, ImGuiComboFlags flags = 0) {
+            IsOpen = ImGui::BeginCombo(label, preview_value, flags);
+        }
         ~Combo() { if (IsOpen) ImGui::EndCombo(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(Combo);
     };
 
-    struct TreeNode
+    struct TreeNode : OpenableGui
     {
-        bool IsOpen;
-
-        TreeNode(const char* label) { IsOpen = ImGui::TreeNode(label); }
-        TreeNode(const char* str_id, const char* fmt, ...) IM_FMTARGS(3) { va_list ap; va_start(ap, fmt); IsOpen = ImGui::TreeNodeV(str_id, fmt, ap); va_end(ap); }
-        TreeNode(const void* ptr_id, const char* fmt, ...) IM_FMTARGS(3) { va_list ap; va_start(ap, fmt); IsOpen = ImGui::TreeNodeV(ptr_id, fmt, ap); va_end(ap); }
+        TreeNode(const char* label) {
+            IsOpen = ImGui::TreeNode(label);
+        }
+        TreeNode(const char* str_id, const char* fmt, ...) IM_FMTARGS(3) {
+            va_list ap;
+            va_start(ap, fmt);
+            IsOpen = ImGui::TreeNodeV(str_id, fmt, ap);
+            va_end(ap);
+        }
+        TreeNode(const void* ptr_id, const char* fmt, ...) IM_FMTARGS(3) {
+            va_list ap;
+            va_start(ap, fmt);
+            IsOpen = ImGui::TreeNodeV(ptr_id, fmt, ap); va_end(ap);
+        }
         ~TreeNode() { if (IsOpen) ImGui::TreePop(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(TreeNode);
     };
 
-    struct TreeNodeV
+    struct TreeNodeV : OpenableGui
     {
-        bool IsOpen;
-
         TreeNodeV(const char* str_id, const char* fmt, va_list args) IM_FMTLIST(3) { IsOpen = ImGui::TreeNodeV(str_id, fmt, args); }
         TreeNodeV(const void* ptr_id, const char* fmt, va_list args) IM_FMTLIST(3) { IsOpen = ImGui::TreeNodeV(ptr_id, fmt, args); }
         ~TreeNodeV() { if (IsOpen) ImGui::TreePop(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(TreeNodeV);
     };
 
-    struct TreeNodeEx
+    struct TreeNodeEx : OpenableGui
     {
-        bool IsOpen;
-
-        TreeNodeEx(const char* label, ImGuiTreeNodeFlags flags = 0) { IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen)); IsOpen = ImGui::TreeNodeEx(label, flags); }
-        TreeNodeEx(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_FMTARGS(4) { va_list ap; va_start(ap, fmt); IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen)); IsOpen = ImGui::TreeNodeExV(str_id, flags, fmt, ap); va_end(ap); }
-        TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_FMTARGS(4) { va_list ap; va_start(ap, fmt); IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen)); IsOpen = ImGui::TreeNodeExV(ptr_id, flags, fmt, ap); va_end(ap); }
+        TreeNodeEx(const char* label, ImGuiTreeNodeFlags flags = 0) {
+            IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
+            IsOpen = ImGui::TreeNodeEx(label, flags);
+        }
+        TreeNodeEx(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_FMTARGS(4) {
+            va_list ap; va_start(ap, fmt);
+            IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
+            IsOpen = ImGui::TreeNodeExV(str_id, flags, fmt, ap);
+            va_end(ap);
+        }
+        TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_FMTARGS(4) { 
+            va_list ap;
+            va_start(ap, fmt);
+            IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
+            IsOpen = ImGui::TreeNodeExV(ptr_id, flags, fmt, ap); va_end(ap);
+        }
         ~TreeNodeEx() { if (IsOpen) ImGui::TreePop(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(TreeNodeEx);
     };
 
-    struct TreeNodeExV
+    struct TreeNodeExV : OpenableGui
     {
-        bool IsOpen;
-
-        TreeNodeExV(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args) IM_FMTLIST(4) { IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen)); IsOpen = ImGui::TreeNodeExV(str_id, flags, fmt, args); }
-        TreeNodeExV(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args) IM_FMTLIST(4) { IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen)); IsOpen = ImGui::TreeNodeExV(ptr_id, flags, fmt, args); }
+        TreeNodeExV(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args) IM_FMTLIST(4) {
+            IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
+            IsOpen = ImGui::TreeNodeExV(str_id, flags, fmt, args);
+        }
+        TreeNodeExV(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args) IM_FMTLIST(4) { 
+            IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
+            IsOpen = ImGui::TreeNodeExV(ptr_id, flags, fmt, args);
+        }
         ~TreeNodeExV() { if (IsOpen) ImGui::TreePop(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(TreeNodeExV);
     };
 
-    struct MainMenuBar
+    struct MainMenuBar : OpenableGui
     {
-        bool IsOpen;
-
         MainMenuBar() { IsOpen = ImGui::BeginMainMenuBar(); }
         ~MainMenuBar() { if (IsOpen) ImGui::EndMainMenuBar(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(MainMenuBar);
     };
 
-    struct MenuBar
+    struct MenuBar : OpenableGui
     {
-        bool IsOpen;
-
         MenuBar() { IsOpen = ImGui::BeginMenuBar(); }
         ~MenuBar() { if (IsOpen) ImGui::EndMenuBar(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(MenuBar);
     };
 
-    struct Menu
+    struct Menu : OpenableGui
     {
-        bool IsOpen;
-
         Menu(const char* label, bool enabled = true) { IsOpen = ImGui::BeginMenu(label, enabled); }
         ~Menu() { if (IsOpen) ImGui::EndMenu(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(Menu);
     };
 
     struct Tooltip
     {
         Tooltip() { ImGui::BeginTooltip(); }
         ~Tooltip() { ImGui::EndTooltip(); }
-
-        IMGUI_DELETE_MOVE_COPY(Tooltip);
     };
 
-    struct Popup
+    struct Popup : OpenableGui
     {
-        bool IsOpen;
-
         Popup(const char* str_id, ImGuiWindowFlags flags = 0) { IsOpen = ImGui::BeginPopup(str_id, flags); }
         ~Popup() { if (IsOpen) ImGui::EndPopup(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(Popup);
     };
 
-    struct PopupContextItem
+    struct PopupContextItem : OpenableGui
     {
-        bool IsOpen;
-
-        PopupContextItem(const char* str_id = NULL, int mouse_button = 1) { IsOpen = ImGui::BeginPopupContextItem(str_id, mouse_button); }
+        PopupContextItem(const char* str_id = NULL, int mouse_button = 1) {
+            IsOpen = ImGui::BeginPopupContextItem(str_id, mouse_button);
+        }
         ~PopupContextItem() { if (IsOpen) ImGui::EndPopup(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(PopupContextItem);
     };
 
-    struct PopupContextWindow
+    struct PopupContextWindow : OpenableGui
     {
-        bool IsOpen;
-
-        PopupContextWindow(const char* str_id = NULL, int mouse_button = 1, bool also_over_items = true) { IsOpen = ImGui::BeginPopupContextWindow(str_id, mouse_button, also_over_items); }
+        PopupContextWindow(const char* str_id = NULL, int mouse_button = 1, bool also_over_items = true) {
+            IsOpen = ImGui::BeginPopupContextWindow(str_id, mouse_button, also_over_items);
+        }
         ~PopupContextWindow() { if (IsOpen) ImGui::EndPopup(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(PopupContextWindow);
     };
 
-    struct PopupContextVoid
+    struct PopupContextVoid : OpenableGui
     {
-        bool IsOpen;
-
-        PopupContextVoid(const char* str_id = NULL, int mouse_button = 1) { IsOpen = ImGui::BeginPopupContextVoid(str_id, mouse_button); }
+        PopupContextVoid(const char* str_id = NULL, int mouse_button = 1) {
+            IsOpen = ImGui::BeginPopupContextVoid(str_id, mouse_button);
+        }
         ~PopupContextVoid() { if (IsOpen) ImGui::EndPopup(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(PopupContextVoid);
     };
 
-    struct PopupModal
+    struct PopupModal : OpenableGui
     {
-        bool IsOpen;
-
-        PopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) { IsOpen = ImGui::BeginPopupModal(name, p_open, flags); }
+        PopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) {
+            IsOpen = ImGui::BeginPopupModal(name, p_open, flags);
+        }
         ~PopupModal() { if (IsOpen) ImGui::EndPopup(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(PopupModal);
     };
 
-    struct DragDropSource
+    struct DragDropSource : OpenableGui
     {
-        bool IsOpen;
-
         DragDropSource(ImGuiDragDropFlags flags = 0) { IsOpen = ImGui::BeginDragDropSource(flags); }
         ~DragDropSource() { if (IsOpen) ImGui::EndDragDropSource(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(DragDropSource);
     };
 
-    struct DragDropTarget
+    struct DragDropTarget : OpenableGui
     {
-        bool IsOpen;
-
         DragDropTarget() { IsOpen = ImGui::BeginDragDropTarget(); }
         ~DragDropTarget() { if (IsOpen) ImGui::EndDragDropTarget(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(DragDropTarget);
     };
 
     struct ClipRect
     {
         ClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect) { ImGui::PushClipRect(clip_rect_min, clip_rect_max, intersect_with_current_clip_rect); }
         ~ClipRect() { ImGui::PopClipRect(); }
-
-        IMGUI_DELETE_MOVE_COPY(ClipRect);
     };
 
-    struct ChildFrame
+    struct ChildFrame : OpenableGui
     {
-        bool IsOpen;
-
         ChildFrame(ImGuiID id, const ImVec2& size, ImGuiWindowFlags flags = 0) { IsOpen = ImGui::BeginChildFrame(id, size, flags); }
         ~ChildFrame() { ImGui::EndChildFrame(); }
-
-        explicit operator bool() const { return IsOpen; }
-
-        IMGUI_DELETE_MOVE_COPY(ChildFrame);
     };
-
-    #undef IMGUI_DELETE_MOVE_COPY
 
 } // namespace ImScoped
