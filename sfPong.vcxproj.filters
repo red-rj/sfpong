@@ -9,6 +9,7 @@
     <ClInclude Include="at_scope.h" />
     <ClInclude Include="symbol_table.h" />
     <ClInclude Include="convert.h" />
+    <ClInclude Include="imgui_scoped.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />
