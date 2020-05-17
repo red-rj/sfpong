@@ -29,6 +29,10 @@ namespace
 		bool unpauseOnEsc() noexcept {
 			return !menu.show_options;
 		}
+		bool config_dirty() noexcept {
+			return menu.tmp_config != *menu.active_config;
+		}
+
 
 		sf::Event event;
 	} G;
@@ -194,7 +198,7 @@ bool pong::check_collision(const sf::Shape *a, const sf::Shape *b)
     return a->getGlobalBounds().intersects(b->getGlobalBounds());
 }
 
-#include <imgui.h>
+#include "imgui_ext.h"
 #include <imgui-SFML.h>
 
 pong::game::game(sf::RenderWindow& win, config_t& cfg) : window(win), config(cfg)
@@ -365,21 +369,21 @@ void pong::game::drawGui()
 	}
 
 	// main menu
+	using namespace ImScoped;
 	ImGui::SetNextWindowSize({ 250, 0 }, ImGuiCond_FirstUseEver);
-	ImGui::Begin("Main Menu", &paused);
-	ImGui::PushItemWidth(ImGui::GetFontSize() * -15);
+	Window menu("Main Menu", &paused);
+	auto btnSize = ImVec2(100, 30);
 
-	if (ImGui::Button("Jogar")) {
+	if (ImGui::Button("Jogar", btnSize)) {
 		paused = false;
 	}
-	if (ImGui::Button("Opcoes")) {
+	if (ImGui::Button("Opcoes", btnSize)) {
 		G.menu.show_options = true;
 	}
-	if (ImGui::Button("Sair")) {
+	if (ImGui::Button("Sair", btnSize)) {
 		window.close();
 		gamelog()->info("ate a proxima! ;D");
 	}
-	ImGui::End();
 }
 
 void pong::game::drawScore()
@@ -431,43 +435,47 @@ void pong::game::swap(game& other) noexcept
 // --- imgui funcs
 
 // helpers
-#include "at_scope.h"
-#include "imgui_scoped.h"
 #include "convert.h"
 #include <sstream>
 
-#define IMGUI_AREA(begin, end, ...) begin; __VA_ARGS__  end
 
-#define UI_ID(id, ...) IMGUI_AREA(ImGui::PushID(id), ImGui::PopID(), __VA_ARGS__)
-#define UI_GROUP(...) IMGUI_AREA(ImGui::BeginGroup(), ImGui::EndGroup(), __VA_ARGS__)
-
-// https://github.com/ocornut/imgui/blob/master/misc/cpp/imgui_stdlib.cpp
-struct InputTextUserData_string
+class RebindKeyUi
 {
-	std::string* Str;
-	ImGuiInputTextCallback ChainCallback;
-	void* ChainCallbackUserData;
+	int id = 0;
+public:
+	std::string_view BtnText = "trocar";
+
+	void operator() (const char* label, sf::Keyboard::Key& curKey) {
+		std::stringstream ss;
+		ss << std::setw(8) << label << ":\t" << curKey;
+		auto str = ss.str();
+
+		ImScoped::ID _id_ = id++;
+		auto constexpr popup_id = "Rebind popup";
+
+		ImGui::Text("%s", str.c_str());
+		ImGui::SameLine(200);
+		if (ImGui::Button(BtnText.data())) {
+			ImGui::OpenPopup(popup_id);
+			G.menu.binding = true;
+		}
+
+		if (auto popup = ImScoped::PopupModal(popup_id, &G.menu.binding, ImGuiWindowFlags_NoMove))
+		{
+			ImGui::Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
+			if (G.event.type == sf::Event::KeyReleased)
+			{
+				if (G.event.key.code != sf::Keyboard::Escape)
+				{
+					curKey = G.event.key.code;
+				}
+
+				ImGui::CloseCurrentPopup();
+			}
+		}
+	}
 };
 
-static bool InputTextStr(const char* label, InputTextUserData_string* cb_user) {
-	auto callback = [](ImGuiInputTextCallbackData* data) {
-		auto userdata = (InputTextUserData_string*)data->UserData;
-		if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
-		{
-			auto str = userdata->Str;
-			str->resize(data->BufTextLen);
-			data->Buf = (char*)str->c_str();
-		}
-		else if (userdata->ChainCallback) {
-			data->UserData = userdata->ChainCallbackUserData;
-			return userdata->ChainCallback(data);
-		}
-		return 0;
-	};
-	auto* str = cb_user->Str;
-	return ImGui::InputText(label, str->data(), str->capacity() + 1,
-		ImGuiInputTextFlags_CallbackResize, callback, cb_user);
-}
 
 static void showOptionsApp()
 {
@@ -475,9 +483,8 @@ static void showOptionsApp()
 	using namespace ImScoped;
 
 	auto& config = G.menu.tmp_config;
-	auto isDirty = [] { return *G.menu.active_config != G.menu.tmp_config; };
 
-	ImGuiWindowFlags wflags = isDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
+	ImGuiWindowFlags wflags = G.config_dirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 
 	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
 	auto lastPos = im::GetWindowPos();
@@ -486,7 +493,6 @@ static void showOptionsApp()
 	Window window("Config.", &G.menu.show_options, wflags);
 	if (!window)
 		return;
-
 
 	if (auto tabbar = TabBar("##Tabs"))
 	{
@@ -497,6 +503,7 @@ static void showOptionsApp()
 				im::Text("Paddle vars");
 				im::InputFloat("Base speed", &config.paddle.base_speed);
 				im::InputFloat("Acceleration", &config.paddle.accel);
+
 				static float vec[2] = { config.paddle.size.x, config.paddle.size.y };
 				if (im::InputFloat2("Size", vec)) {
 					config.paddle.size.x = vec[0];
@@ -517,56 +524,37 @@ static void showOptionsApp()
 			if (im::SliderInt("Framerate", &fr, 15, 144)) {
 				config.framerate = (unsigned)fr;
 			}
+			else {
+				fr = (int)config.framerate;
+			}
 		}
 		if (auto ctrltab=TabBarItem("Controls"))
 		{
-			auto controlInput = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable {
-				std::stringstream ss;
-				ss << std::setw(8) << label << ":\t" << curKey;
-				auto str = ss.str();
+			auto controlInput = RebindKeyUi();
+			auto playerInputUI = [&](const char* player, pong::kb_keys& keys) {
+				im::Text("%s:", player);
+				ID _id_ = player;
+				Indent _ind_{ 5.f };
 
-				ID _id_ = id++;
-				auto constexpr popup_id = "Rebind";
-
-				im::Text("%s", str.c_str()); 
-				im::SameLine(200);
-				if (im::Button("trocar"))
-				{
-					im::OpenPopup(popup_id);
-					G.menu.binding = true;
-				}
-
-				const auto flags = ImGuiWindowFlags_NoMove;
-				if (auto popup=PopupModal(popup_id, &G.menu.binding, flags))
-				{
-					im::Text("Pressione uma tecla, ou Esc para cancelar.");
-
-					if (G.event.type == sf::Event::KeyReleased)
-					{
-						if (G.event.key.code != sf::Keyboard::Escape)
-						{
-							curKey = G.event.key.code;
-						}
-
-						im::CloseCurrentPopup();
-					}
-				}
+				controlInput("Up", keys.up);
+				controlInput("Down", keys.down);
+				controlInput("Fast", keys.fast);
 			};
 
-			auto& ctrls = config.controls[0];
-			controlInput("P1 Up", ctrls.up);
-			controlInput("P1 Down", ctrls.down);
-			controlInput("P1 Fast", ctrls.fast);
+			auto& ctrls = config.controls;
+			playerInputUI("Player 1", ctrls[0]);
+			playerInputUI("Player 2", ctrls[1]);
 		}
 	}
 
+	im::Spacing();
 	im::Separator();
 
 	if (im::Button("Discard")) {
 		config = *G.menu.active_config;
 	}
 	im::SameLine();
-	if (im::Button("Save") && isDirty()) {
+	if (im::Button("Save") && G.config_dirty()) {
 		*G.menu.active_config = config;
 	}
 }

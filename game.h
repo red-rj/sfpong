@@ -51,8 +51,12 @@ namespace pong
 	struct game
 	{
 		game(sf::RenderWindow& win, config_t& cfg);
-
+		void swap(game& other) noexcept;
 		int run();
+
+		enum class dir { left, right };
+		void serve(dir direction);
+
 		void pollEvents();
 
 		void drawGame();
@@ -64,14 +68,8 @@ namespace pong
 		void updatePlayers();
 		void updateBall();
 
-		enum class dir
-		{
-			left, right
-		};
 
-		void serve(dir direction);
 
-		void swap(game& other) noexcept;
 
 	private:
 		sf::RenderWindow& window;

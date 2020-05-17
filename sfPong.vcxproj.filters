@@ -9,12 +9,13 @@
     <ClInclude Include="at_scope.h" />
     <ClInclude Include="symbol_table.h" />
     <ClInclude Include="convert.h" />
-    <ClInclude Include="imgui_scoped.h" />
+    <ClInclude Include="imgui_ext.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="config.cpp" />
+    <ClCompile Include="imgui_ext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">
