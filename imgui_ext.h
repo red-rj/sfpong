@@ -1,5 +1,6 @@
 // imgui helpers and extensions
 #pragma once
+#define IMGUI_USER_CONFIG "imconfig-sfml.h"
 #include <imgui.h>
 
 
@@ -233,6 +234,8 @@ namespace ImScoped
             IsOpen = ImGui::BeginPopupModal(name, p_open, flags);
         }
         ~PopupModal() { if (IsOpen) ImGui::EndPopup(); }
+
+        void Close() { ImGui::CloseCurrentPopup(); }
     };
 
     struct DragDropSource : OpenableGui

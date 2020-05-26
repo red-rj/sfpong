@@ -5,7 +5,6 @@
 
 #include <SFML/Window/Keyboard.hpp>
 
-
 namespace pong
 {
     struct kb_keys { sf::Keyboard::Key up, down, fast; };
@@ -54,5 +53,28 @@ namespace pong
         return std::tie(lhs.accel, lhs.base_speed, lhs.max_speed, lhs.radius) ==
                std::tie(rhs.accel, rhs.base_speed, rhs.max_speed, rhs.radius);
     }
+
+inline namespace cfgkeys
+{
+    // config keys
+    inline constexpr auto
+        CFG_P1_UP         = "player1.up",
+        CFG_P1_DOWN       = "player1.down",
+        CFG_P1_FAST       = "player1.fast",
+        CFG_P2_UP         = "player2.up",
+        CFG_P2_DOWN       = "player2.down",
+        CFG_P2_FAST       = "player2.fast",
+        CFG_PADDLE_SPEED  = "game.paddle_base_speed",
+        CFG_PADDLE_ACCEL  = "game.paddle_accel",
+        CFG_PADDLE_SIZE_X = "game.paddle_size_x",
+        CFG_PADDLE_SIZE_Y = "game.paddle_size_y",
+        CFG_BALL_SPEED    = "game.ball_base_speed",
+        CFG_BALL_MAXSPEED = "game.ball_max_speed",
+        CFG_BALL_ACCEL    = "game.ball_accel",
+        CFG_BALL_RADIUS   = "game.ball_radius",
+        CFG_FRAMERATE     = "game.framerate"
+    ;
+} // namespace cfgkeys
+
 
 }

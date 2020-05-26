@@ -339,20 +339,7 @@ void pong::game::drawGui()
 		guiOptions();
 
 	// main menu
-	using namespace ImScoped;
-	Window menu("Main Menu", &paused);
-	auto btnSize = ImVec2(100, 30);
-
-	if (ImGui::Button("Jogar", btnSize)) {
-		paused = false;
-	}
-	if (ImGui::Button("Opcoes", btnSize)) {
-		show_options = true;
-	}
-	if (ImGui::Button("Sair", btnSize)) {
-		window.close();
-		gamelog()->info("ate a proxima! ;D");
-	}
+	guiMainmenu();
 }
 
 void pong::game::drawScore()
@@ -407,20 +394,37 @@ void pong::game::swap(game& other) noexcept
 #include <sstream>
 
 
+void pong::game::guiMainmenu()
+{
+	// main menu
+	using namespace ImScoped;
+	Window menu("Main Menu", &paused);
+	auto btnSize = sf::Vector2i(100, 30);
+
+	if (ImGui::Button("Jogar", btnSize)) {
+		paused = false;
+	}
+	if (ImGui::Button("Opcoes", btnSize)) {
+		show_options = true;
+	}
+	if (ImGui::Button("Sair", btnSize)) {
+		window.close();
+		gamelog()->info("ate a proxima! ;D");
+	}
+}
+
 void pong::game::guiOptions()
 {
 	namespace im = ImGui;
 	using namespace ImScoped;
 
-
 	ImGuiWindowFlags wflags = config_dirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
-
 	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
 	auto lastPos = im::GetWindowPos();
 	im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 
-	Window window("Config.", &show_options, wflags);
-	if (!window)
+	Window guiwindow("Config.", &show_options, wflags);
+	if (!guiwindow)
 		return;
 
 	if (auto tabbar = TabBar("##Tabs"))
@@ -514,4 +518,8 @@ void pong::game::guiOptions()
 	if (im::Button("Save") && config_dirty()) {
 		config = tmp_config;
 	}
+}
+
+void pong::game::guiStats()
+{
 }

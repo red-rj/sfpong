@@ -1,6 +1,5 @@
 #include <string>
 #include <string_view>
-#include <map>
 #include <sstream>
 #include <fstream>
 
@@ -18,24 +17,6 @@
 #include "game_config.h"
 #include "convert.h"
 
-
-// config keys
-constexpr auto
-    CFG_P1_UP = "player1.up",
-    CFG_P1_DOWN = "player1.down",
-    CFG_P1_FAST = "player1.fast",
-    CFG_P2_UP = "player2.up",
-    CFG_P2_DOWN = "player2.down",
-    CFG_P2_FAST = "player2.fast",
-    CFG_PADDLE_SPEED = "game.paddle_base_speed",
-    CFG_PADDLE_ACCEL = "game.paddle_accel",
-    CFG_PADDLE_SIZE = "game.paddle_size",
-    CFG_BALL_SPEED = "game.ball_base_speed",
-    CFG_BALL_MAXSPEED = "game.ball_max_speed",
-    CFG_BALL_ACCEL = "game.ball_accel",
-    CFG_BALL_RADIUS = "game.ball_radius",
-    CFG_FRAMERATE = "game.framerate"
-;
 
 static void lippincott()
 {
@@ -153,41 +134,6 @@ struct keyboardkey_translator
     }
 };
 
-template<typename T>
-struct sfVec_translator
-{
-    using internal_type = std::string;
-    using external_type = sf::Vector2<T>;
-
-    auto get_value(internal_type const& v)->boost::optional<external_type>
-    {
-        sf::Vector2<T> value;
-
-        try
-        {
-            std::istringstream ss{ v };
-            ss.imbue(std::locale::classic());
-
-            ss >> value.x >> value.y;
-            return value;
-        }
-        catch (const std::exception&)
-        {
-            return boost::none;
-        }
-    }
-
-    auto put_value(external_type const& v)->boost::optional<internal_type>
-    {
-        std::ostringstream ss;
-        ss.imbue(std::locale::classic());
-
-        ss << v.x << "  " << v.y;
-        return ss.str();
-    }
-};
-
-
 void pong::config_t::load(std::filesystem::path filepath)
 {
     using namespace boost::property_tree;
@@ -217,12 +163,14 @@ void pong::config_t::load(std::filesystem::path filepath)
     }
 
     // paddle
-    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, 0.1);
-    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, 10);
-    paddle.size = tree.get<sf::Vector2f>(CFG_PADDLE_SIZE, { 25.f, 150.f }, sfVec_translator<float>{});
+    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, 0.1f);
+    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, 10.f);
+    paddle.size.x = tree.get(CFG_PADDLE_SIZE_X, 25.f);
+    paddle.size.y = tree.get(CFG_PADDLE_SIZE_Y, 150.f);
+
 
     // ball
-    ball.accel = tree.get<float>(CFG_BALL_ACCEL, 0.1);
+    ball.accel = tree.get<float>(CFG_BALL_ACCEL, 0.1f);
     ball.base_speed = tree.get<float>(CFG_BALL_SPEED, 5);
     ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, 20);
     ball.radius = tree.get<float>(CFG_BALL_RADIUS, 10);
@@ -248,7 +196,9 @@ void pong::config_t::save(std::filesystem::path filepath)
     // paddle
     tree.put(CFG_PADDLE_SPEED, paddle.base_speed);
     tree.put(CFG_PADDLE_ACCEL, paddle.accel);
-    tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator<float>{});
+    //tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator<float>{});
+    tree.put(CFG_PADDLE_SIZE_X, paddle.size.x);
+    tree.put(CFG_PADDLE_SIZE_Y, paddle.size.y);
 
     // ball
     tree.put(CFG_BALL_MAXSPEED, ball.max_speed);

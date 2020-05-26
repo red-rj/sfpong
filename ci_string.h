@@ -3,9 +3,6 @@
 #include <string_view>
 #include <iostream>
 
-#include <fmt/core.h>
-
-
 namespace red
 {
     template<class T>

@@ -98,6 +98,7 @@ namespace pong
 
 		void guiMainmenu();
 		void guiOptions();
+		void guiStats();
 	};
 
 }
