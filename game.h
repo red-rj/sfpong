@@ -48,57 +48,28 @@ namespace pong
     bool check_collision(const sf::Shape* a, const sf::Shape* b);
 	//---
 
-	struct game
+	struct menu_state
 	{
-		game(sf::RenderWindow& win, config_t& cfg, sf::Text const& txt);
-		void swap(game& other) noexcept;
-		int run();
-
-		enum class dir { left, right };
-		void serve(dir direction);
-
-		void pollEvents();
-
-		void drawGame();
-		void drawGui();
-		void drawScore();
-
-		void resetState();
-
-		void updatePlayers();
-		void updateBall();
-
-	private:
-		sf::RenderWindow& window;
-
-		bool paused = true;
-		sf::Clock deltaClock;
-		sf::FloatRect playable_area;
-		uint64_t tickcount = 0;
-
-		// score
-		sf::Text txtScore;
-		std::pair<short, short> score;
-
-		// court
-		sf::RectangleShape topBorder, bottomBorder;
-		net_shape net;
-
-		config_t &config;
-		paddle p1, p2;
-		ball ball;
-
-		// menu
-		config_t tmp_config;
-		sf::Event curEvent;
-		bool show_options = false, binding = false;
-
-		bool unpauseOnEsc() noexcept { return !show_options; }
-		bool config_dirty() noexcept { return tmp_config != config; }
-
-		void guiMainmenu();
-		void guiOptions();
-		void guiStats();
+		bool show_options = false, rebinding = false;
+		bool show_stats = false;
 	};
+
+	struct game_state
+	{
+		bool paused = true;
+		uint64_t tickcount = 0;
+		sf::Event lastEvent;
+		std::pair<short, short> score;
+		sf::FloatRect playable_area;
+	};
+
+	struct cmdline_options
+	{
+		// reserved
+	};
+
+	int run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const& cmdline = {});
+	
+	enum class dir { left, right };
 
 }
