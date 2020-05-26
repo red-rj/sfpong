@@ -39,7 +39,7 @@ namespace pong
 	struct ball : sf::CircleShape, game_entity
 	{
 		explicit ball(float radius = 0) : CircleShape(radius) {
-			setOrigin(radius / 2, radius / 2);
+			setOrigin(radius, radius);
 			setFillColor(sf::Color::Red);
 		}
 	};

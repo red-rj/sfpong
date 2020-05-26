@@ -18,7 +18,6 @@ namespace pong
         void save(std::filesystem::path filepath);
 
         // ----
-        //kb_keys controls[2];
         std::array<kb_keys, 2> controls;
 
         struct paddle_cfg {

@@ -34,7 +34,7 @@ int main()
 
     // imgui menu (branch imguifix no vcpkg)
     ImGui::SFML::Init(window);
-    auto& gui_io = ImGui::GetIO();
+    //auto& gui_io = ImGui::GetIO();
     //gui_io.IniFilename = nullptr;
 
     pong::game vg{ window, config, scoreTxt };

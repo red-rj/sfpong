@@ -43,7 +43,7 @@ void pong::game::updatePlayers()
 
 		if (p.ai)
 		{
-			auto reaction = random_num(20, 250);
+			auto reaction = random_num(20, 150);
 			auto ballPos = ball.getPosition();
 			auto paddlePos = p.getPosition();
 			auto diff = (paddlePos - ballPos).y;
@@ -51,7 +51,7 @@ void pong::game::updatePlayers()
 
 			auto ySpeed = spd / 100.0f;
 
-			if (diff > ball.getGlobalBounds().height)
+			if (spd > ball.getGlobalBounds().height)
 			{
 				if (ballPos.y < paddlePos.y)
 				{
@@ -340,7 +340,6 @@ void pong::game::drawGui()
 
 	// main menu
 	using namespace ImScoped;
-	ImGui::SetNextWindowSize({ 250, 0 }, ImGuiCond_FirstUseEver);
 	Window menu("Main Menu", &paused);
 	auto btnSize = ImVec2(100, 30);
 
@@ -460,7 +459,8 @@ void pong::game::guiOptions()
 		}
 		if (auto ctrltab=TabBarItem("Controls"))
 		{
-			auto controlInput = [&,id=0](const char* label, sf::Keyboard::Key& curKey) mutable {
+			auto controlInput = [this,id=0](const char* label, sf::Keyboard::Key& curKey) mutable
+			{
 				std::stringstream ss;
 				ss << std::setw(8) << label << ":\t" << curKey;
 				auto str = ss.str();

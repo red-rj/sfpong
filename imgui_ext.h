@@ -261,11 +261,11 @@ namespace ImScoped
         ~ChildFrame() { ImGui::EndChildFrame(); }
     };
 
+    // eu
 
     struct TabBarItem : OpenableGui
     {
-        TabBarItem(const char* label, bool* p_open = nullptr, ImGuiTabBarFlags flags = 0)
-        {
+        TabBarItem(const char* label, bool* p_open = nullptr, ImGuiTabBarFlags flags = 0) {
             IsOpen = ImGui::BeginTabItem(label, p_open, flags);
         }
         ~TabBarItem() { if (IsOpen) ImGui::EndTabItem(); }
@@ -275,8 +275,7 @@ namespace ImScoped
     {
         using Item = TabBarItem;
 
-        TabBar(const char* str_id, ImGuiTabBarFlags flags = 0)
-        {
+        TabBar(const char* str_id, ImGuiTabBarFlags flags = 0) {
             IsContentVisible = ImGui::BeginTabBar(str_id, flags);
         }
         ~TabBar() { ImGui::EndTabBar(); }

@@ -12,29 +12,30 @@ namespace red
     struct ci_char_traits : public std::char_traits<T> {
         using typename std::char_traits<T>::char_type;
 
-        static char_type to_upper(char_type ch) {
-            return toupper(ch, std::locale{});
-        }
-
         static bool eq(char_type c1, char_type c2) {
-            return to_upper(c1) == to_upper(c2);
+            std::locale l;
+            return toupper(c1, l) == toupper(c2, l);
         }
         static bool lt(char_type c1, char_type c2) {
-            return to_upper(c1) < to_upper(c2);
+            std::locale l;
+            return toupper(c1, l) < toupper(c2, l);
         }
         static int compare(const char_type* s1, const char_type* s2, size_t n) {
+            std::locale l;
             while (n-- != 0) {
-                if (to_upper(*s1) < to_upper(*s2)) return -1;
-                if (to_upper(*s1) > to_upper(*s2)) return 1;
+                char const uch[] = { toupper(*s1, l), toupper(*s2, l) };
+                if (uch[0] < uch[1]) return -1;
+                if (uch[0] > uch[1]) return 1;
                 ++s1; ++s2;
             }
             return 0;
         }
         static const char_type* find(const char_type* s, int n, char_type a) {
-            auto const ua = to_upper(a);
+            std::locale l;
+            auto const ua = toupper(a, l);
             while (n-- != 0)
             {
-                if (to_upper(*s) == ua)
+                if (toupper(*s, l) == ua)
                     return s;
                 s++;
             }
