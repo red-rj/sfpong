@@ -10,6 +10,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/operators.hpp>
 
 #include "common.h"
 #include "ci_string.h"
@@ -35,9 +36,36 @@ static void lippincott()
 }
 
 // converters
+
+class sf_enum : public boost::totally_ordered<sf_enum>
+{
+    int val;
+
+public:
+    sf_enum(sf::Keyboard::Key key) : val(key) {}
+    sf_enum(sf::Mouse::Button mbtn) : val(mbtn) {}
+    sf_enum(int v) : val(v) {}
+
+    operator sf::Keyboard::Key() const noexcept {
+        return static_cast<sf::Keyboard::Key>(val);
+    }
+    operator sf::Mouse::Button() const noexcept {
+        return static_cast<sf::Mouse::Button>(val);
+    }
+
+    bool operator== (sf_enum const& other) const noexcept
+    {
+        return val == other.val;
+    }
+    bool operator< (sf_enum const& other) const noexcept
+    {
+        return val < other.val;
+    }
+};
+
 using red::to_ci;
-using enum_name_table = symbol_table<red::ci_string_view, int>;
-static auto sf_enums_table()->enum_name_table const&;
+using sf_enum_table = symbol_table<red::ci_string_view, sf_enum>;
+static auto sf_enums_table()->sf_enum_table const&;
 
 
 std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
@@ -45,12 +73,14 @@ std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
     auto const& table = sf_enums_table();
     try
     {
-        auto name = table.get_name(key);
+        auto name = table[key];
         return os << name;
     }
     catch (const std::out_of_range&)
     {
-        return os << "unknown";
+        os << "unknown";
+        os.setstate(std::ios::failbit);
+        return os;
     }
 }
 std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
@@ -58,12 +88,13 @@ std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
     auto const& table = sf_enums_table();
     try
     {
-        auto name = table.get_name(btn);
+        auto name = table[btn];
         return os << name;
     }
     catch (const std::out_of_range&)
     {
         os << "unknown";
+        os.setstate(std::ios::failbit);
         return os;
     }
 }
@@ -235,9 +266,9 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
 // ---
 using KbKey = sf::Keyboard::Key;
 
-auto sf_enums_table() ->symbol_table<red::ci_string_view, int> const&
+auto sf_enums_table() ->sf_enum_table const&
 {
-    static symbol_table<red::ci_string_view, int> names{
+    static sf_enum_table names{
         // keyboard
         {"[", KbKey::LBracket},
         {"]", KbKey::RBracket},

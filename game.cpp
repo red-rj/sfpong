@@ -479,9 +479,10 @@ void guiOptions()
 		{
 			auto controlInput = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable
 			{
-				std::stringstream ss;
+				/*std::stringstream ss;
 				ss << std::setw(8) << label << ":\t" << curKey;
-				auto str = ss.str();
+				auto str = ss.str();*/
+				auto str = fmt::format("{:8}:\t{}", label, curKey);
 
 				ID _id_ = id++;
 				auto constexpr popup_id = "Rebind popup";
