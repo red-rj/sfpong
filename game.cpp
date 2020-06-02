@@ -70,9 +70,6 @@ namespace
 	pong::game_state G;
 	pong::menu_state M;
 
-	sf::RenderWindow* g_window;
-	pong::config_t* g_config;
-
 	// game entities
 	// score
 	struct {
@@ -93,7 +90,7 @@ namespace
 
 bool menu_state::configDirty() noexcept
 {
-	return config != *g_config;
+	return tmp_config != *G.config;
 }
 
 
@@ -111,64 +108,61 @@ void resetState();
 
 void checkScore() {
 	// check score
-	if (G.tickcount % 30 == 0)
+	if (!G.playable_area.intersects(Ball.getGlobalBounds()))
 	{
-		if (!G.playable_area.intersects(Ball.getGlobalBounds()))
+		// ponto!
+		if (Ball.getPosition().x < 0)
 		{
-			// ponto!
-			if (Ball.getPosition().x < 0)
-			{
-				// indo p/ direita, ponto player 1
-				G.score.first++;
-				serve(dir::left);
-			}
-			else
-			{
-				// indo p/ esquerda, ponto player 2
-				G.score.second++;
-				serve(dir::right);
-			}
-
-			auto Str = fmt::format("{}    {}", G.score.first, G.score.second);
-			Score.text.setString(Str);
+			// indo p/ direita, ponto player 1
+			G.score.first++;
+			serve(dir::left);
 		}
-	}
+		else
+		{
+			// indo p/ esquerda, ponto player 2
+			G.score.second++;
+			serve(dir::right);
+		}
 
+		auto Str = fmt::format("{}    {}", G.score.first, G.score.second);
+		Score.text.setString(Str);
+	}
 }
 // ---
 
 int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 {
 	// init globais
-	g_window = win;
-	g_config = cfg;
-	M.config = *g_config;
+	G.window = win;
+	G.config = cfg;
+	M.tmp_config = *cfg;
 
-	G.playable_area = sf::FloatRect(0, 0, (float)g_window->getSize().x, (float)g_window->getSize().y);
+	G.playable_area = sf::FloatRect(0, 0, (float)G.window->getSize().x, (float)G.window->getSize().y);
 
 	resetState();
 
 	// locais
 	sf::Clock deltaClock;
+	uint64_t tickcount = 0;
 
 	auto& io = ImGui::GetIO();
 	io.WantCaptureKeyboard = G.paused;
 	io.WantCaptureMouse = G.paused;
 
-	while (g_window->isOpen())
+	while (G.window->isOpen())
 	{
 		pollEvents();
 		
-		g_window->clear();
-		g_window->draw(Ball);
-		g_window->draw(Player1);
-		g_window->draw(Player2);
-		g_window->draw(Court.net);
-		g_window->draw(Court.top);
-		g_window->draw(Court.bottom);
-		g_window->draw(Score.text);
+		G.window->clear();
+		G.window->draw(Ball);
+		G.window->draw(Player1);
+		G.window->draw(Player2);
+		G.window->draw(Court.net);
+		G.window->draw(Court.top);
+		G.window->draw(Court.bottom);
+		G.window->draw(Score.text);
 
-		ImGui::SFML::Update(*g_window, deltaClock.restart());
+		ImGui::SFML::Update(*G.window, deltaClock.restart());
 
 		if (!G.paused)
 		{
@@ -176,8 +170,10 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 			updatePlayer(Player2);
 			updateBall();
 
-			checkScore();
-			G.tickcount++;
+			if (tickcount % 30 == 0) {
+				checkScore();
+			}
+			tickcount++;
 		}
 		else
 		{
@@ -187,9 +183,9 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 		if (M.show_stats) {
 			guiStats();
 		}
-		ImGui::SFML::Render(*g_window);
+		ImGui::SFML::Render(*G.window);
 
-		g_window->display();
+		G.window->display();
 	}
 
 	return 0;
@@ -197,7 +193,7 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 
 void updatePlayer(paddle& p)
 {
-	auto const& cfg = g_config->paddle;
+	auto const& cfg = G.config->paddle;
 	auto& velocity = p.velocity;
 
 	if (p.ai)
@@ -229,7 +225,7 @@ void updatePlayer(paddle& p)
 	else // player
 	{
 		auto offset = cfg.base_speed * cfg.accel;
-		auto const& c = g_config->controls[p.id];
+		auto const& c = G.config->controls[p.id];
 
 		if (sf::Keyboard::isKeyPressed(c.up))
 		{
@@ -273,7 +269,7 @@ void updateBall()
 	pong::paddle* paddle = nullptr;
 	auto bounds = Ball.getGlobalBounds();
 	auto& velocity = Ball.velocity;
-	auto const& cfg = g_config->ball;
+	auto const& cfg = G.config->ball;
 
 	
 	if (check_collision(&Ball, &Court.top) || check_collision(&Ball, &Court.bottom))
@@ -308,14 +304,14 @@ void updateBall()
 void pollEvents()
 {
 	sf::Event& event = G.lastEvent;
-	while (g_window->pollEvent(event)) {
+	while (G.window->pollEvent(event)) {
 
 		ImGui::SFML::ProcessEvent(event);
 
 		switch (event.type)
 		{
 		case sf::Event::Closed:
-			g_window->close();
+			G.window->close();
 			break;
 
 		case sf::Event::KeyReleased:
@@ -351,7 +347,7 @@ void pollEvents()
 		case sf::Event::Resized:
 		{
 			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
-			g_window->setView(sf::View(visibleArea));
+			G.window->setView(sf::View(visibleArea));
 		} break;
 
 		}
@@ -378,8 +374,8 @@ void resetState()
 	Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
 
 	Player1.id = 0;
-	Player1.setSize(g_config->paddle.size);
-	Player1.setOrigin(g_config->paddle.size.x / 2, g_config->paddle.size.y / 2);
+	Player1.setSize(G.config->paddle.size);
+	Player1.setOrigin(G.config->paddle.size.x / 2, G.config->paddle.size.y / 2);
 	Player1.setPosition(15, G.playable_area.height / 2);
 
 	Player2 = Player1;
@@ -388,12 +384,12 @@ void resetState()
 	Player2.setPosition(G.playable_area.width - 15, G.playable_area.height / 2);
 
 	Ball.setPosition(G.playable_area.width / 2, G.playable_area.height / 2);
-	Ball.setRadius(g_config->ball.radius);
+	Ball.setRadius(G.config->ball.radius);
 }
 
 void serve(dir direction)
 {
-	auto mov = g_config->ball.base_speed;
+	auto mov = G.config->ball.base_speed;
 	if (direction == dir::left) {
 		mov = -mov;
 	}
@@ -430,7 +426,7 @@ void drawGui()
 		M.show_stats = true;
 	}
 	if (ImGui::Button("Sair", btnSize)) {
-		g_window->close();
+		G.window->close();
 		gamelog()->info("ate a proxima! ;D");
 	}
 }
@@ -438,10 +434,12 @@ void guiOptions()
 {
 	namespace im = ImGui;
 	using namespace ImScoped;
+
 	struct {
 		float paddle_size[2]{};
 		int framerate=0;
 	} static model;
+	auto& config = M.tmp_config;
 
 	{
 		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
@@ -461,33 +459,33 @@ void guiOptions()
 			{
 				ID _id_ = "paddle";
 				im::Text("Paddle vars");
-				im::InputFloat("Base speed", &M.config.paddle.base_speed);
-				im::InputFloat("Acceleration", &M.config.paddle.accel);
+				im::InputFloat("Base speed", &config.paddle.base_speed);
+				im::InputFloat("Acceleration", &config.paddle.accel);
 
 				if (im::InputFloat2("Size", model.paddle_size)) {
-					M.config.paddle.size.x = model.paddle_size[0];
-					M.config.paddle.size.y = model.paddle_size[1];
+					config.paddle.size.x = model.paddle_size[0];
+					config.paddle.size.y = model.paddle_size[1];
 				}
 				else {
-					model.paddle_size[0] = M.config.paddle.size.x;
-					model.paddle_size[1] = M.config.paddle.size.y;
+					model.paddle_size[0] = config.paddle.size.x;
+					model.paddle_size[1] = config.paddle.size.y;
 				}
 			}
 			{
 				ID _id_ = "ball";
 				im::Text("Ball vars");
-				im::InputFloat("Base speed", &M.config.ball.base_speed);
-				im::InputFloat("Acceleration", &M.config.ball.accel);
-				im::InputFloat("Max speed", &M.config.ball.max_speed);
-				im::InputFloat("Radius", &M.config.ball.radius);
+				im::InputFloat("Base speed", &config.ball.base_speed);
+				im::InputFloat("Acceleration", &config.ball.accel);
+				im::InputFloat("Max speed", &config.ball.max_speed);
+				im::InputFloat("Radius", &config.ball.radius);
 			}
 			
 			im::Text("Misc");
 			if (im::SliderInt("Framerate", &model.framerate, 15, 144)) {
-				M.config.framerate = (unsigned)model.framerate;
+				config.framerate = (unsigned)model.framerate;
 			}
 			else {
-				model.framerate = (int)M.config.framerate;
+				model.framerate = (int)config.framerate;
 			}
 		}
 		if (auto ctrltab=TabBarItem("Controls"))
@@ -529,7 +527,7 @@ void guiOptions()
 				controlInput("Fast", keys.fast);
 			};
 			// ---
-			auto& ctrls = M.config.controls;
+			auto& ctrls = config.controls;
 			playerInputUI("Player 1", ctrls[0]);
 			playerInputUI("Player 2", ctrls[1]);
 		}
@@ -539,11 +537,11 @@ void guiOptions()
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		M.config = *g_config;
+		config = *G.config;
 	}
 	im::SameLine();
 	if (im::Button("Save") && M.configDirty()) {
-		*g_config = M.config;
+		*G.config = config;
 	}
 }
 
@@ -553,7 +551,7 @@ void guiStats()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	auto wflags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize
+	auto constexpr wflags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize
 		| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing
 		| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
 

@@ -9,7 +9,7 @@ namespace pong
 
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
-        net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
+        explicit net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
@@ -54,18 +54,19 @@ namespace pong
 		bool show_stats = false;
 
 		// options
-		config_t config;
-
+		config_t tmp_config;
 		bool configDirty() noexcept;
 	};
 
 	struct game_state
 	{
 		bool paused = true;
-		uint64_t tickcount = 0;
 		sf::Event lastEvent;
 		std::pair<short, short> score;
 		sf::FloatRect playable_area;
+
+		sf::RenderWindow* window;
+		config_t* config;
 	};
 
 	struct cmdline_options
