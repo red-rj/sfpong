@@ -73,22 +73,29 @@ namespace
 	sf::RenderWindow* g_window;
 	pong::config_t* g_config;
 
-	pong::config_t tmp_config; // for options
-	
-	bool configDirty() noexcept {
-		return *g_config != tmp_config;
-	}
-
 	// game entities
 	// score
-	sf::Text txtScore; sf::Font FtScore;
+	struct {
+		sf::Text text; sf::Font font;
+		std::pair<short, short>* const value = &G.score;
+	} Score;
+
 	// court
-	sf::RectangleShape TopBorder, BottomBorder;
-	pong::net_shape Net;
+	struct {
+		sf::RectangleShape top, bottom;
+		pong::net_shape net;
+	} Court;
+	
 	// moving parts
 	pong::paddle Player1, Player2;
 	pong::ball Ball;
 }
+
+bool menu_state::configDirty() noexcept
+{
+	return config != *g_config;
+}
+
 
 
 void pollEvents();
@@ -123,7 +130,7 @@ void checkScore() {
 			}
 
 			auto Str = fmt::format("{}    {}", G.score.first, G.score.second);
-			txtScore.setString(Str);
+			Score.text.setString(Str);
 		}
 	}
 
@@ -135,7 +142,7 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 	// init globais
 	g_window = win;
 	g_config = cfg;
-	tmp_config = *g_config;
+	M.config = *g_config;
 
 	G.playable_area = sf::FloatRect(0, 0, (float)g_window->getSize().x, (float)g_window->getSize().y);
 
@@ -156,10 +163,10 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 		g_window->draw(Ball);
 		g_window->draw(Player1);
 		g_window->draw(Player2);
-		g_window->draw(Net);
-		g_window->draw(TopBorder);
-		g_window->draw(BottomBorder);
-		g_window->draw(txtScore);
+		g_window->draw(Court.net);
+		g_window->draw(Court.top);
+		g_window->draw(Court.bottom);
+		g_window->draw(Score.text);
 
 		ImGui::SFML::Update(*g_window, deltaClock.restart());
 
@@ -250,7 +257,7 @@ void updatePlayer(paddle& p)
 	if (!p.ai)
 	{
 		// check colisão com bordas
-		if (check_collision(&p, &TopBorder) || check_collision(&p, &BottomBorder))
+		if (check_collision(&p, &Court.top) || check_collision(&p, &Court.bottom))
 		{
 			p.move(-velocity);
 			velocity.y = 0;
@@ -269,7 +276,7 @@ void updateBall()
 	auto const& cfg = g_config->ball;
 
 	
-	if (check_collision(&Ball, &TopBorder) || check_collision(&Ball, &BottomBorder))
+	if (check_collision(&Ball, &Court.top) || check_collision(&Ball, &Court.bottom))
 	{
 		velocity.y = -velocity.y;
 	}
@@ -359,16 +366,16 @@ void resetState()
 	//auto margin = sf::Vector2f(15, 20);
 
 	// pong court
-	TopBorder = BottomBorder = sf::RectangleShape({ G.playable_area.width - 30, 25 });
-	TopBorder.setPosition(15, 20);
-	BottomBorder.setOrigin(0, 25.f);
-	BottomBorder.setPosition(sf::Vector2f(15, 20) + sf::Vector2f(0, G.playable_area.height - 40));
-	Net.setPosition(G.playable_area.width / 2.f, 20);
+	Court.top = Court.bottom = sf::RectangleShape({ G.playable_area.width - 30, 25 });
+	Court.top.setPosition(15, 20);
+	Court.bottom.setOrigin(0, 25.f);
+	Court.bottom.setPosition(sf::Vector2f(15, 20) + sf::Vector2f(0, G.playable_area.height - 40));
+	Court.net.setPosition(G.playable_area.width / 2.f, 20);
 
 	// score
-	FtScore.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
-	txtScore = sf::Text("", FtScore, 55);
-	txtScore.setPosition(G.playable_area.width / 2 - 100, 50);
+	Score.font.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
+	Score.text = sf::Text("", Score.font, 55);
+	Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
 
 	Player1.id = 0;
 	Player1.setSize(g_config->paddle.size);
@@ -431,12 +438,18 @@ void guiOptions()
 {
 	namespace im = ImGui;
 	using namespace ImScoped;
+	struct {
+		float paddle_size[2]{};
+		int framerate=0;
+	} static model;
 
-	ImGuiWindowFlags wflags = configDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
-	ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
-	auto lastPos = im::GetWindowPos();
-	im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
+	{
+		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
+		auto lastPos = im::GetWindowPos();
+		im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
+	}
 
+	auto wflags = M.configDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
 	Window guiwindow("Config.", &M.show_options, wflags);
 	if (!guiwindow)
 		return;
@@ -448,40 +461,39 @@ void guiOptions()
 			{
 				ID _id_ = "paddle";
 				im::Text("Paddle vars");
-				im::InputFloat("Base speed", &tmp_config.paddle.base_speed);
-				im::InputFloat("Acceleration", &tmp_config.paddle.accel);
+				im::InputFloat("Base speed", &M.config.paddle.base_speed);
+				im::InputFloat("Acceleration", &M.config.paddle.accel);
 
-				static float vec[2] = { tmp_config.paddle.size.x, tmp_config.paddle.size.y };
-				if (im::InputFloat2("Size", vec)) {
-					tmp_config.paddle.size.x = vec[0];
-					tmp_config.paddle.size.y = vec[1];
+				if (im::InputFloat2("Size", model.paddle_size)) {
+					M.config.paddle.size.x = model.paddle_size[0];
+					M.config.paddle.size.y = model.paddle_size[1];
+				}
+				else {
+					model.paddle_size[0] = M.config.paddle.size.x;
+					model.paddle_size[1] = M.config.paddle.size.y;
 				}
 			}
 			{
 				ID _id_ = "ball";
 				im::Text("Ball vars");
-				im::InputFloat("Base speed", &tmp_config.ball.base_speed);
-				im::InputFloat("Acceleration", &tmp_config.ball.accel);
-				im::InputFloat("Max speed", &tmp_config.ball.max_speed);
-				im::InputFloat("Radius", &tmp_config.ball.radius);
+				im::InputFloat("Base speed", &M.config.ball.base_speed);
+				im::InputFloat("Acceleration", &M.config.ball.accel);
+				im::InputFloat("Max speed", &M.config.ball.max_speed);
+				im::InputFloat("Radius", &M.config.ball.radius);
 			}
 			
 			im::Text("Misc");
-			static int fr;
-			if (im::SliderInt("Framerate", &fr, 15, 144)) {
-				tmp_config.framerate = (unsigned)fr;
+			if (im::SliderInt("Framerate", &model.framerate, 15, 144)) {
+				M.config.framerate = (unsigned)model.framerate;
 			}
 			else {
-				fr = (int)tmp_config.framerate;
+				model.framerate = (int)M.config.framerate;
 			}
 		}
 		if (auto ctrltab=TabBarItem("Controls"))
 		{
 			auto controlInput = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable
 			{
-				/*std::stringstream ss;
-				ss << std::setw(8) << label << ":\t" << curKey;
-				auto str = ss.str();*/
 				auto str = fmt::format("{:8}:\t{}", label, curKey);
 
 				ID _id_ = id++;
@@ -517,7 +529,7 @@ void guiOptions()
 				controlInput("Fast", keys.fast);
 			};
 			// ---
-			auto& ctrls = tmp_config.controls;
+			auto& ctrls = M.config.controls;
 			playerInputUI("Player 1", ctrls[0]);
 			playerInputUI("Player 2", ctrls[1]);
 		}
@@ -527,11 +539,11 @@ void guiOptions()
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		tmp_config = *g_config;
+		M.config = *g_config;
 	}
 	im::SameLine();
-	if (im::Button("Save") && configDirty()) {
-		*g_config = tmp_config;
+	if (im::Button("Save") && M.configDirty()) {
+		*g_config = M.config;
 	}
 }
 

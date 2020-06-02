@@ -52,6 +52,11 @@ namespace pong
 	{
 		bool show_options = false, rebinding = false;
 		bool show_stats = false;
+
+		// options
+		config_t config;
+
+		bool configDirty() noexcept;
 	};
 
 	struct game_state
