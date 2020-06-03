@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+
 #include <SFML/Graphics.hpp>
 
 #include "game_config.h"
@@ -50,12 +51,12 @@ namespace pong
 
 	struct menu_state
 	{
-		bool show_options = false, rebinding = false;
-		bool show_stats = false;
-
 		// options
+		bool show_options = false, rebinding = false;
 		config_t tmp_config;
 		bool configDirty() noexcept;
+
+		bool show_stats = false;
 	};
 
 	struct game_state

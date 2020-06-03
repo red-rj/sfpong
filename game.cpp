@@ -75,6 +75,10 @@ namespace
 	struct {
 		sf::Text text; sf::Font font;
 		std::pair<short, short>* const value = &G.score;
+
+		void draw() {
+			text.setString(fmt::format("{}    {}", value->first, value->second));
+		}
 	} Score;
 
 	// court
@@ -124,8 +128,7 @@ void checkScore() {
 			serve(dir::right);
 		}
 
-		auto Str = fmt::format("{}    {}", G.score.first, G.score.second);
-		Score.text.setString(Str);
+		Score.draw();
 	}
 }
 // ---
@@ -137,7 +140,10 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 	G.config = cfg;
 	M.tmp_config = *cfg;
 
-	G.playable_area = sf::FloatRect(0, 0, (float)G.window->getSize().x, (float)G.window->getSize().y);
+	{
+		auto area = sf::IntRect(G.window->getPosition(), static_cast<sf::Vector2i>(G.window->getSize()));
+		G.playable_area = static_cast<sf::FloatRect>(area);
+	}
 
 	resetState();
 
@@ -263,9 +269,6 @@ void updatePlayer(paddle& p)
 
 void updateBall()
 {
-	using pong::check_collision;
-	using pong::random_num;
-
 	pong::paddle* paddle = nullptr;
 	auto bounds = Ball.getGlobalBounds();
 	auto& velocity = Ball.velocity;
@@ -348,6 +351,7 @@ void pollEvents()
 		{
 			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
 			G.window->setView(sf::View(visibleArea));
+			G.playable_area = visibleArea;
 		} break;
 
 		}
@@ -376,12 +380,12 @@ void resetState()
 	Player1.id = 0;
 	Player1.setSize(G.config->paddle.size);
 	Player1.setOrigin(G.config->paddle.size.x / 2, G.config->paddle.size.y / 2);
-	Player1.setPosition(15, G.playable_area.height / 2);
+	Player1.setPosition(20, G.playable_area.height / 2);
 
 	Player2 = Player1;
 	Player2.ai = true;
 	Player2.id = 1;
-	Player2.setPosition(G.playable_area.width - 15, G.playable_area.height / 2);
+	Player2.setPosition(G.playable_area.width - 20, G.playable_area.height / 2);
 
 	Ball.setPosition(G.playable_area.width / 2, G.playable_area.height / 2);
 	Ball.setRadius(G.config->ball.radius);
@@ -402,6 +406,7 @@ void serve(dir direction)
 
 // helpers
 #include "convert.h"
+#include <fmt/ostream.h>
 #include <sstream>
 
 

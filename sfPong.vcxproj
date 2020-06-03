@@ -35,11 +35,6 @@
     <ClCompile Include="program.cpp" />
     <ClCompile Include="config.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Font Include="resources\LiberationMono-Regular.ttf">
-      <FileType>Font</FileType>
-    </Font>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{C5EE35BC-FAFE-48A8-A198-A52C06F0D29D}</ProjectGuid>
@@ -172,9 +167,8 @@
       <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist $(OutputPath)game.cfg  copy game.cfg $(OutputPath)
-if not exist $(OutputPath)resources  mkdir $(OutputPath)resources
-copy resources\* $(OutputPath)resources</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>

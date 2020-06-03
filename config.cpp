@@ -105,7 +105,7 @@ std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
     std::string token; is >> token;
     try
     {
-        auto val = static_cast<sf::Keyboard::Key>(table[to_ci(token)]);
+        sf::Keyboard::Key val = table[to_ci(token)];
         key = val;
     }
     catch (const std::out_of_range&)
@@ -122,8 +122,8 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     std::string token; is >> token;
     try
     {
-        auto val = table[to_ci(token)];
-        btn = static_cast<sf::Mouse::Button>(val);
+        sf::Mouse::Button val = table[to_ci(token)];
+        btn = val;
     }
     catch (const std::out_of_range&)
     {
@@ -262,12 +262,10 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
 }
 
 
-
 // ---
-using KbKey = sf::Keyboard::Key;
-
 auto sf_enums_table() ->sf_enum_table const&
 {
+    using KbKey = sf::Keyboard::Key;
     static sf_enum_table names{
         // keyboard
         {"[", KbKey::LBracket},
@@ -380,4 +378,3 @@ auto sf_enums_table() ->sf_enum_table const&
 
     return names;
 }
-

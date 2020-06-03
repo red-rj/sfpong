@@ -54,8 +54,6 @@ namespace pong
                std::tie(rhs.accel, rhs.base_speed, rhs.max_speed, rhs.radius);
     }
 
-inline namespace cfgkeys
-{
     // config keys
     inline constexpr auto
         CFG_P1_UP         = "player1.up",
@@ -74,7 +72,7 @@ inline namespace cfgkeys
         CFG_BALL_RADIUS   = "game.ball_radius",
         CFG_FRAMERATE     = "game.framerate"
     ;
-} // namespace cfgkeys
+
 
 
 }
