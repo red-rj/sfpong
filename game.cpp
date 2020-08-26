@@ -140,10 +140,7 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 	G.config = cfg;
 	M.tmp_config = *cfg;
 
-	{
-		auto area = sf::IntRect(G.window->getPosition(), static_cast<sf::Vector2i>(G.window->getSize()));
-		G.playable_area = static_cast<sf::FloatRect>(area);
-	}
+	G.playable_area = { {0.f,0.f}, static_cast<sf::Vector2f>(G.window->getSize()) };
 
 	resetState();
 
@@ -410,6 +407,7 @@ void serve(dir direction)
 #include <sstream>
 
 
+//---
 void drawGui()
 {
 	// sub items primeiro
@@ -444,7 +442,9 @@ void guiOptions()
 		float paddle_size[2]{};
 		int framerate=0;
 	} static model;
+
 	auto& config = M.tmp_config;
+	auto active_config = G.config;
 
 	{
 		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
@@ -459,7 +459,58 @@ void guiOptions()
 
 	if (auto tabbar = TabBar("##Tabs"))
 	{
-		if (auto gametab = TabBarItem("Game"))
+		if (auto ctrltab = TabBarItem("Controls"))
+		{
+
+			auto InputControl = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable
+			#pragma region Block
+			{
+				using namespace ImScoped;
+				using namespace ImGui;
+
+				ID _id_ = id++;
+				auto constexpr popup_id = "Rebind popup";
+				auto keystr = fmt::format("{}", curKey);
+
+				Text("%8s:\t%s", label, keystr.c_str());
+				SameLine(200);
+				if (Button("Trocar")) {
+					OpenPopup(popup_id);
+					M.rebinding = true;
+				}
+
+				if (auto popup = PopupModal(popup_id, &M.rebinding, ImGuiWindowFlags_NoMove))
+				{
+					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
+					if (G.lastEvent.type == sf::Event::KeyReleased)
+					{
+						if (G.lastEvent.key.code != sf::Keyboard::Escape)
+						{
+							curKey = G.lastEvent.key.code;
+						}
+
+						CloseCurrentPopup();
+					}
+				}
+			};
+			#pragma endregion
+
+			auto InputPlayerCtrls = [&](const char* player, pong::kb_keys& keys) {
+				im::Text("%s:", player);
+				ID _id_ = player;
+				Indent _ind_{ 5.f };
+
+				InputControl("Up", keys.up);
+				InputControl("Down", keys.down);
+				InputControl("Fast", keys.fast);
+			};
+
+			// ---
+			auto& ctrls = config.controls;
+			InputPlayerCtrls("Player 1", ctrls[0]);
+			InputPlayerCtrls("Player 2", ctrls[1]);
+		}
+		if (auto gametab = TabBarItem("Game vars"))
 		{
 			{
 				ID _id_ = "paddle";
@@ -493,62 +544,17 @@ void guiOptions()
 				model.framerate = (int)config.framerate;
 			}
 		}
-		if (auto ctrltab=TabBarItem("Controls"))
-		{
-			auto controlInput = [id=0](const char* label, sf::Keyboard::Key& curKey) mutable
-			{
-				auto str = fmt::format("{:8}:\t{}", label, curKey);
-
-				ID _id_ = id++;
-				auto constexpr popup_id = "Rebind popup";
-				ImGui::Text("%s", str.c_str());
-				ImGui::SameLine(200);
-				if (ImGui::Button("trocar")) {
-					ImGui::OpenPopup(popup_id);
-					M.rebinding = true;
-				}
-
-				if (auto popup = PopupModal(popup_id, &M.rebinding, ImGuiWindowFlags_NoMove))
-				{
-					ImGui::Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
-					if (G.lastEvent.type == sf::Event::KeyReleased)
-					{
-						if (G.lastEvent.key.code != sf::Keyboard::Escape)
-						{
-							curKey = G.lastEvent.key.code;
-						}
-
-						ImGui::CloseCurrentPopup();
-					}
-				}
-			};
-
-			auto playerInputUI = [&](const char* player, pong::kb_keys& keys) {
-				im::Text("%s:", player);
-				ID _id_ = player;
-				Indent _ind_{ 5.f };
-
-				controlInput("Up", keys.up);
-				controlInput("Down", keys.down);
-				controlInput("Fast", keys.fast);
-			};
-
-			// ---
-			auto& ctrls = config.controls;
-			playerInputUI("Player 1", ctrls[0]);
-			playerInputUI("Player 2", ctrls[1]);
-		}
 	}
 
 	im::Spacing();
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		config = *G.config;
+		config = *active_config;
 	}
 	im::SameLine();
 	if (im::Button("Save") && M.configDirty()) {
-		*G.config = config;
+		*active_config = config;
 	}
 }
 
@@ -562,15 +568,17 @@ void guiStats()
 		| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing
 		| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
 
-	sf::Vector2f winpos = { io.DisplaySize.x - 10.f, 10.f};
-	ImGui::SetNextWindowBgAlpha(0.35f);
+	sf::Vector2f winpos = { io.DisplaySize.x - 10.f, 15.f};
+	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::SetNextWindowPos(winpos, ImGuiCond_Always, {1.f, 0});
 
 	Window overlay("Stats", &M.show_stats, wflags);
 
 	auto p1b = Player1.getPosition();
 	auto p2b = Player2.getPosition();
-	auto text = fmt::format("P1: [{}, {}]\nP2: [{}, {}]", p1b.x, p1b.y, p2b.x, p2b.y);
+	auto bb = Ball.getPosition();
+	auto text = fmt::format("P1: [{:.2f}, {:.2f}]\nP2: [{:.2f}, {:.2f}]\nBall: [{:.2f}, {:.2f}]", 
+		p1b.x, p1b.y, p2b.x, p2b.y, bb.x, bb.y);
 
 	ImGui::Text("%s:\n%s", "Game state", text.c_str());
 }

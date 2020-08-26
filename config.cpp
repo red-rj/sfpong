@@ -36,36 +36,8 @@ static void lippincott()
 }
 
 // converters
-
-class sf_enum : public boost::totally_ordered<sf_enum>
-{
-    int val;
-
-public:
-    constexpr sf_enum(sf::Keyboard::Key key) : val(key) {}
-    constexpr sf_enum(sf::Mouse::Button mbtn) : val(mbtn) {}
-    constexpr sf_enum(int v) : val(v) {}
-
-    operator sf::Keyboard::Key() const noexcept {
-        return static_cast<sf::Keyboard::Key>(val);
-    }
-    operator sf::Mouse::Button() const noexcept {
-        return static_cast<sf::Mouse::Button>(val);
-    }
-
-    constexpr bool operator== (sf_enum const& other) const noexcept
-    {
-        return val == other.val;
-    }
-    constexpr bool operator< (sf_enum const& other) const noexcept
-    {
-        return val < other.val;
-    }
-};
-
-
-using sf_enum_table = symbol_table<std::string_view, sf_enum>;
-static auto sf_enums_table()->sf_enum_table const&;
+using sf_enum_table = symbol_table<std::string_view, int>;
+auto sf_enums_table()->sf_enum_table const&;
 
 
 std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
@@ -105,7 +77,7 @@ std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
     std::string token; is >> token;
     try
     {
-        sf::Keyboard::Key val = table[token];
+        auto val = sf::Keyboard::Key(table[token]);
         key = val;
     }
     catch (const std::out_of_range&)
@@ -122,7 +94,7 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     std::string token; is >> token;
     try
     {
-        sf::Mouse::Button val = table[token];
+        auto val = sf::Mouse::Button(table[token]);
         btn = val;
     }
     catch (const std::out_of_range&)
