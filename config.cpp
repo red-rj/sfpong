@@ -35,8 +35,25 @@ static void lippincott()
     }
 }
 
-// converters
-using sf_enum_table = symbol_table<std::string_view, int>;
+
+struct ci_compare
+{
+    constexpr bool operator()(std::string_view lhs, std::string_view rhs) const
+    {
+        using red::to_ci;
+        return to_ci(lhs) < to_ci(rhs);
+    }
+    constexpr bool operator()(int lhs, int rhs) const
+    {
+        return lhs < rhs;
+    }
+};
+
+using sf_enum_table = symbol_table<std::string_view, int, ci_compare>;
+
+/*
+* enum table
+*/
 auto sf_enums_table()->sf_enum_table const&;
 
 
@@ -245,27 +262,11 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
 }
 
 
-/*
-* enum table
-*/
-using red::to_ci;
-using pair_type = sf_enum_table::pair_type;
-
-
-constexpr bool operator < (pair_type const& lhs, pair_type::first_type const& rhs)
-{
-    return to_ci(lhs.first) < to_ci(rhs);
-}
-constexpr bool operator < (pair_type::first_type const& lhs, pair_type const& rhs)
-{
-    return to_ci(lhs) < to_ci(rhs.first);
-}
-
-
 auto sf_enums_table() ->sf_enum_table const&
 {
     using KbKey = sf::Keyboard::Key;
-    static sf_enum_table names{
+    static sf_enum_table names
+    {
         // keyboard
         {"[", KbKey::LBracket},
         {"]", KbKey::RBracket},

@@ -4,6 +4,7 @@
 #include <array>
 
 #include <SFML/Window/Keyboard.hpp>
+#include "SFML/System/Vector2.hpp"
 
 namespace pong
 {

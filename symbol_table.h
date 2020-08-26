@@ -1,55 +1,38 @@
 #pragma once
 #include <algorithm>
 #include <utility>
-#include <set>
 #include <stdexcept>
+#include <map>
 
 
 template<typename Stringish, typename Value, typename Compare = std::less<>>
-class symbol_table : std::pmr::set<std::pair<Stringish, Value>, Compare>
+class symbol_table
 {
-    using base_type = std::pmr::set<std::pair<Stringish, Value>, Compare>;
+    template<class K, class V>
+    using storage_t = std::pmr::map<K, V, Compare>;
 public:
-    using typename base_type::allocator_type;
     using string_type = Stringish;
     using value_type = Value;
-    using pair_type = typename base_type::key_type;
+    using key_compare = Compare;
 
-    using base_type::set;
-    using base_type::size;
-    using base_type::empty;
-    using base_type::swap;
-    using base_type::begin;
-    using base_type::end;
     //---
-
-    auto find(value_type const& val) const {
-        return std::find_if(begin(), end(), [&](pair_type const& item) {
-            return item.second == val;
-        });
-    }
-    auto find(string_type const& name) const {
-        return base_type::find(name);
+    symbol_table(std::initializer_list<std::pair<string_type, value_type>> init)
+        : m_keys_to_values(init.begin(), init.end())
+    {
+        for (auto& [key, value] : init)
+        {
+            m_values_to_keys[value] = key;
+        }
     }
 
     auto get_name(value_type const& val) const -> string_type const&
     {
-        auto it = find(val);
-        if (it != end()) {
-            return it->first;
-        }
-        // not found
-        throw std::out_of_range("no name associated with this value");
+        return m_values_to_keys.at(val);
     }
 
     auto get_value(string_type const& name) const -> value_type const&
     {
-        auto it = find(name);
-        if (it != end()) {
-            return it->second;
-        }
-        // not found
-        throw std::out_of_range("no value associated with this name");
+        return m_keys_to_values.at(name);
     }
 
     auto& operator[] (value_type const& val) const {
@@ -60,5 +43,6 @@ public:
     }
 
 private:
+    storage_t<string_type, value_type> m_keys_to_values;
+    storage_t<value_type, string_type> m_values_to_keys;
 };
-
