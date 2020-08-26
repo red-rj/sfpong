@@ -27,7 +27,7 @@ static void lippincott()
     try { throw; }
     catch (const ini_parser_error& e)
     {
-        gamelog()->error("ini_parser_error {}:{} - '{}'", e.filename(), e.line(), e.what());
+        gamelog()->error("{}", e.what());
     }
     catch (const std::exception& e)
     {
@@ -42,9 +42,9 @@ class sf_enum : public boost::totally_ordered<sf_enum>
     int val;
 
 public:
-    sf_enum(sf::Keyboard::Key key) : val(key) {}
-    sf_enum(sf::Mouse::Button mbtn) : val(mbtn) {}
-    sf_enum(int v) : val(v) {}
+    constexpr sf_enum(sf::Keyboard::Key key) : val(key) {}
+    constexpr sf_enum(sf::Mouse::Button mbtn) : val(mbtn) {}
+    constexpr sf_enum(int v) : val(v) {}
 
     operator sf::Keyboard::Key() const noexcept {
         return static_cast<sf::Keyboard::Key>(val);
@@ -53,18 +53,18 @@ public:
         return static_cast<sf::Mouse::Button>(val);
     }
 
-    bool operator== (sf_enum const& other) const noexcept
+    constexpr bool operator== (sf_enum const& other) const noexcept
     {
         return val == other.val;
     }
-    bool operator< (sf_enum const& other) const noexcept
+    constexpr bool operator< (sf_enum const& other) const noexcept
     {
         return val < other.val;
     }
 };
 
-using red::to_ci;
-using sf_enum_table = symbol_table<red::ci_string_view, sf_enum>;
+
+using sf_enum_table = symbol_table<std::string_view, sf_enum>;
 static auto sf_enums_table()->sf_enum_table const&;
 
 
@@ -105,7 +105,7 @@ std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
     std::string token; is >> token;
     try
     {
-        sf::Keyboard::Key val = table[to_ci(token)];
+        sf::Keyboard::Key val = table[token];
         key = val;
     }
     catch (const std::out_of_range&)
@@ -122,7 +122,7 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     std::string token; is >> token;
     try
     {
-        sf::Mouse::Button val = table[to_ci(token)];
+        sf::Mouse::Button val = table[token];
         btn = val;
     }
     catch (const std::out_of_range&)
@@ -142,7 +142,7 @@ struct keyboardkey_translator
     {
         auto const& table = sf_enums_table();
         try {
-            auto i = table[to_ci(v)];
+            auto i = table[v];
             return static_cast<sf::Keyboard::Key>(i);
         }
         catch (const std::out_of_range&) {
@@ -165,12 +165,14 @@ struct keyboardkey_translator
     }
 };
 
-void pong::config_t::load(std::filesystem::path filepath)
+pong::config_t pong::load_config(std::filesystem::path cfgfile)
 {
     using namespace boost::property_tree;
 
-    std::ifstream file{ filepath };
+    std::ifstream file{ cfgfile };
     ptree tree;
+    config_t cfg; // tem valores padrão
+
     try
     {
         read_ini(file, tree);
@@ -178,77 +180,86 @@ void pong::config_t::load(std::filesystem::path filepath)
     catch (...)
     {
         lippincott();
-        return;
+        return cfg;
     }
 
-    { // controls
+
+    { // player settings
         using Key = sf::Keyboard::Key;
         keyboardkey_translator tr;
-        
-        controls[0].up = tree.get<Key>(CFG_P1_UP, Key::W, tr);
-        controls[0].down = tree.get<Key>(CFG_P1_DOWN, Key::S, tr);
-        controls[0].fast = tree.get<Key>(CFG_P1_FAST, Key::LShift, tr);
-        controls[1].up = tree.get<Key>(CFG_P2_UP, Key::Up, tr);
-        controls[1].down = tree.get<Key>(CFG_P2_DOWN, Key::Down, tr);
-        controls[1].fast = tree.get<Key>(CFG_P2_FAST, Key::RControl, tr);
+        enum { P1, P2 };
+        auto dft = cfg.controls;
+
+        cfg.controls[P1].up = tree.get<Key>(CFG_P1_UP, dft[P1].up, tr);
+        cfg.controls[P1].down = tree.get<Key>(CFG_P1_DOWN, dft[P1].down, tr);
+        cfg.controls[P1].fast = tree.get<Key>(CFG_P1_FAST, dft[P1].fast, tr);
+        cfg.controls[P2].up = tree.get<Key>(CFG_P2_UP, dft[P2].up, tr);
+        cfg.controls[P2].down = tree.get<Key>(CFG_P2_DOWN, dft[P2].down, tr);
+        cfg.controls[P2].fast = tree.get<Key>(CFG_P2_FAST, dft[P2].fast, tr);
     }
 
     // paddle
-    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, 0.1f);
-    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, 10.f);
-    paddle.size.x = tree.get(CFG_PADDLE_SIZE_X, 25.f);
-    paddle.size.y = tree.get(CFG_PADDLE_SIZE_Y, 150.f);
-
+    auto def = cfg.paddle;
+    cfg.paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, def.accel);
+    cfg.paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, def.base_speed);
+    cfg.paddle.size.x = tree.get(CFG_PADDLE_SIZE_X, def.size.x);
+    cfg.paddle.size.y = tree.get(CFG_PADDLE_SIZE_Y, def.size.y);
 
     // ball
-    ball.accel = tree.get<float>(CFG_BALL_ACCEL, 0.1f);
-    ball.base_speed = tree.get<float>(CFG_BALL_SPEED, 5);
-    ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, 20);
-    ball.radius = tree.get<float>(CFG_BALL_RADIUS, 10);
+    auto defb = cfg.ball;
+    cfg.ball.accel = tree.get<float>(CFG_BALL_ACCEL, defb.accel);
+    cfg.ball.base_speed = tree.get<float>(CFG_BALL_SPEED, defb.base_speed);
+    cfg.ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, defb.max_speed);
+    cfg.ball.radius = tree.get<float>(CFG_BALL_RADIUS, defb.radius);
 
-    framerate = tree.get<unsigned>(CFG_FRAMERATE, 60);
+    cfg.framerate = tree.get<unsigned>(CFG_FRAMERATE, cfg.framerate);
+
+    return cfg;
 }
 
-void pong::config_t::save(std::filesystem::path filepath)
+bool pong::save_config(config_t const& cfg, std::filesystem::path cfgfile)
 {
     using namespace boost::property_tree;
 
     ptree tree;
     { // controls
         keyboardkey_translator tr;
-        tree.put(CFG_P1_UP, controls[0].up, tr);
-        tree.put(CFG_P1_DOWN, controls[0].down, tr);
-        tree.put(CFG_P1_FAST, controls[0].fast, tr);
-        tree.put(CFG_P2_UP, controls[1].up, tr);
-        tree.put(CFG_P2_DOWN, controls[1].down, tr);
-        tree.put(CFG_P2_FAST, controls[1].fast, tr);
+        enum { P1, P2 };
+
+        tree.put(CFG_P1_UP, cfg.controls[P1].up, tr);
+        tree.put(CFG_P1_DOWN, cfg.controls[P1].down, tr);
+        tree.put(CFG_P1_FAST, cfg.controls[P1].fast, tr);
+        tree.put(CFG_P2_UP, cfg.controls[P2].up, tr);
+        tree.put(CFG_P2_DOWN, cfg.controls[P2].down, tr);
+        tree.put(CFG_P2_FAST, cfg.controls[P2].fast, tr);
     }
     
     // paddle
-    tree.put(CFG_PADDLE_SPEED, paddle.base_speed);
-    tree.put(CFG_PADDLE_ACCEL, paddle.accel);
-    //tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator<float>{});
-    tree.put(CFG_PADDLE_SIZE_X, paddle.size.x);
-    tree.put(CFG_PADDLE_SIZE_Y, paddle.size.y);
+    tree.put(CFG_PADDLE_SPEED, cfg.paddle.base_speed);
+    tree.put(CFG_PADDLE_ACCEL, cfg.paddle.accel);
+    tree.put(CFG_PADDLE_SIZE_X, cfg.paddle.size.x);
+    tree.put(CFG_PADDLE_SIZE_Y, cfg.paddle.size.y);
 
     // ball
-    tree.put(CFG_BALL_MAXSPEED, ball.max_speed);
-    tree.put(CFG_BALL_SPEED, ball.base_speed);
-    tree.put(CFG_BALL_ACCEL, ball.accel);
-    tree.put(CFG_BALL_RADIUS, ball.radius);
+    tree.put(CFG_BALL_MAXSPEED, cfg.ball.max_speed);
+    tree.put(CFG_BALL_SPEED, cfg.ball.base_speed);
+    tree.put(CFG_BALL_ACCEL, cfg.ball.accel);
+    tree.put(CFG_BALL_RADIUS, cfg.ball.radius);
 
-    tree.put(CFG_FRAMERATE, framerate);
+    tree.put(CFG_FRAMERATE, cfg.framerate);
 
-    auto file = std::ofstream(filepath, std::ios::trunc);
+    auto file = std::ofstream(cfgfile, std::ios::trunc);
     file << "# sfPong configuration\n\n";
 
     try
     {
         write_ini(file, tree);
+        return true;
     }
     catch (...)
     {
         lippincott();
+        return false;
     }
 
 }
@@ -262,7 +273,23 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
 }
 
 
-// ---
+/*
+* enum table
+*/
+using red::to_ci;
+using pair_type = sf_enum_table::pair_type;
+
+
+constexpr bool operator < (pair_type const& lhs, pair_type::first_type const& rhs)
+{
+    return to_ci(lhs.first) < to_ci(rhs);
+}
+constexpr bool operator < (pair_type::first_type const& lhs, pair_type const& rhs)
+{
+    return to_ci(lhs) < to_ci(rhs.first);
+}
+
+
 auto sf_enums_table() ->sf_enum_table const&
 {
     using KbKey = sf::Keyboard::Key;

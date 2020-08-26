@@ -2,7 +2,6 @@
 #include <string_view>
 
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <imgui.h>
 #include <imgui-SFML.h>
 
 #include "common.h"
@@ -17,24 +16,25 @@ int main()
     pong::config_t config;
     try
     {
-        config.load("game.cfg");
+        config = pong::load_config("game.cfg");
     }
     catch (const std::exception& e)
     {
         logger->error("Failed to load config '{}'", e.what());
-        return 5;
+        logger->info("Using defaults");
     }
+
     // ----
     sf::RenderWindow window(sf::VideoMode(1280, 1024), "Sf Pong!");
     window.setFramerateLimit(config.framerate);
 
-    // imgui menu (branch imguifix no vcpkg)
+    // imgui menu
     ImGui::SFML::Init(window);
 
     auto result = pong::run_game(&window, &config);
 
     ImGui::SFML::Shutdown();
-    config.save("game.cfg");
 
+    pong::save_config(config, "game.cfg");
     return result;
 }

@@ -13,27 +13,31 @@ namespace pong
     {
         using Keyboard = sf::Keyboard;
 
-        void load(std::filesystem::path filepath);
-        void save(std::filesystem::path filepath);
-
         // ----
-        std::array<kb_keys, 2> controls;
+        std::array<kb_keys, 2> controls = {{
+            {Keyboard::W, Keyboard::S, Keyboard::LShift},
+            {Keyboard::Up, Keyboard::Down, Keyboard::RControl}
+        }};
 
         struct paddle_cfg {
-            float base_speed, accel;
-            sf::Vector2f size;
+            float base_speed=10, accel=0.1f;
+            sf::Vector2f size = { 25.f, 150.f };
         } paddle;
 
         struct ball_cfg {
-            float base_speed, accel, max_speed;
-            float radius;
+            float base_speed=5, accel=0.1f, max_speed=20;
+            float radius=10;
         } ball;
 
-        unsigned framerate=0;
+        unsigned framerate=60;
 
         
         bool operator== (const config_t& rhs) const noexcept;
     };
+
+    config_t load_config(std::filesystem::path cfgfile);
+    bool save_config(config_t const& cfg, std::filesystem::path cfgfile);
+
 
     // operators
     using std::rel_ops::operator!=;
