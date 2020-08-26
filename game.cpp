@@ -76,7 +76,7 @@ namespace
 		sf::Text text; sf::Font font;
 		std::pair<short, short>* const value = &G.score;
 
-		void draw() {
+		void update() {
 			text.setString(fmt::format("{}    {}", value->first, value->second));
 		}
 	} Score;
@@ -128,7 +128,7 @@ void checkScore() {
 			serve(dir::right);
 		}
 
-		Score.draw();
+		Score.update();
 	}
 }
 // ---
@@ -522,6 +522,7 @@ void guiOptions()
 					}
 				}
 			};
+
 			auto playerInputUI = [&](const char* player, pong::kb_keys& keys) {
 				im::Text("%s:", player);
 				ID _id_ = player;
@@ -531,6 +532,7 @@ void guiOptions()
 				controlInput("Down", keys.down);
 				controlInput("Fast", keys.fast);
 			};
+
 			// ---
 			auto& ctrls = config.controls;
 			playerInputUI("Player 1", ctrls[0]);
