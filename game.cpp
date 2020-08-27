@@ -3,6 +3,7 @@
 #include <random>
 
 #include <fmt/format.h>
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 #include "common.h"
 #include "game.h"
@@ -65,6 +66,25 @@ bool pong::check_collision(const sf::Shape *a, const sf::Shape *b)
 // GAME
 using namespace pong;
 
+struct DrawGroup : sf::Drawable, sf::Transformable
+{
+	
+};
+
+struct court : DrawGroup
+{
+
+private:
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+	{
+		states.transform *= getTransform();
+		target.draw(m_net, states);
+	}
+
+	sf::RectangleShape m_top, m_bottom;
+	pong::net_shape m_net;
+};
+
 namespace
 {
 	pong::game_state G;
@@ -94,7 +114,7 @@ namespace
 
 bool menu_state::configDirty() noexcept
 {
-	return tmp_config != *G.config;
+	return tmp_config != G.config;
 }
 
 
@@ -133,14 +153,25 @@ void checkScore() {
 }
 // ---
 
-int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
+int main()
 {
 	// init globais
-	G.window = win;
-	G.config = cfg;
-	M.tmp_config = *cfg;
+	auto logger = spdlog::stdout_color_st(LOGGER_NAME);
+	try
+	{
+		G.config = load_config("game.cfg");
+	}
+	catch (const std::exception& e)
+	{
+		gamelog()->error("Failed to load config: {}", e.what());
+		gamelog()->info("Using defaults");
+	}
 
-	G.playable_area = { {0.f,0.f}, static_cast<sf::Vector2f>(G.window->getSize()) };
+	G.window.create(sf::VideoMode(1280, 1024), "Sf Pong!");
+	G.window.setFramerateLimit(G.config.framerate);
+
+	M.tmp_config = G.config;
+	G.playable_area = { {0.f,0.f}, static_cast<sf::Vector2f>(G.window.getSize()) };
 
 	resetState();
 
@@ -148,24 +179,25 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 	sf::Clock deltaClock;
 	uint64_t tickcount = 0;
 
+	// imgui
+	ImGui::SFML::Init(G.window);
 	auto& io = ImGui::GetIO();
 	io.WantCaptureKeyboard = G.paused;
 	io.WantCaptureMouse = G.paused;
 
-	while (G.window->isOpen())
+	while (G.window.isOpen())
 	{
 		pollEvents();
-		
-		G.window->clear();
-		G.window->draw(Ball);
-		G.window->draw(Player1);
-		G.window->draw(Player2);
-		G.window->draw(Court.net);
-		G.window->draw(Court.top);
-		G.window->draw(Court.bottom);
-		G.window->draw(Score.text);
+		G.window.clear();
+		G.window.draw(Ball);
+		G.window.draw(Player1);
+		G.window.draw(Player2);
+		G.window.draw(Court.net);
+		G.window.draw(Court.top);
+		G.window.draw(Court.bottom);
+		G.window.draw(Score.text);
 
-		ImGui::SFML::Update(*G.window, deltaClock.restart());
+		ImGui::SFML::Update(G.window, deltaClock.restart());
 
 		if (!G.paused)
 		{
@@ -186,17 +218,19 @@ int pong::run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const&)
 		if (M.show_stats) {
 			guiStats();
 		}
-		ImGui::SFML::Render(*G.window);
 
-		G.window->display();
+		ImGui::SFML::Render(G.window);
+		G.window.display();
 	}
 
+	ImGui::SFML::Shutdown();
+	pong::save_config(G.config, "game.cfg");
 	return 0;
 }
 
 void updatePlayer(paddle& p)
 {
-	auto const& cfg = G.config->paddle;
+	auto const& cfg = G.config.paddle;
 	auto& velocity = p.velocity;
 
 	if (p.ai)
@@ -228,7 +262,7 @@ void updatePlayer(paddle& p)
 	else // player
 	{
 		auto offset = cfg.base_speed * cfg.accel;
-		auto const& c = G.config->controls[p.id];
+		auto const& c = G.config.controls[p.id];
 
 		if (sf::Keyboard::isKeyPressed(c.up))
 		{
@@ -269,7 +303,7 @@ void updateBall()
 	pong::paddle* paddle = nullptr;
 	auto bounds = Ball.getGlobalBounds();
 	auto& velocity = Ball.velocity;
-	auto const& cfg = G.config->ball;
+	auto const& cfg = G.config.ball;
 
 	
 	if (check_collision(&Ball, &Court.top) || check_collision(&Ball, &Court.bottom))
@@ -304,14 +338,14 @@ void updateBall()
 void pollEvents()
 {
 	sf::Event& event = G.lastEvent;
-	while (G.window->pollEvent(event)) {
+	while (G.window.pollEvent(event)) {
 
 		ImGui::SFML::ProcessEvent(event);
 
 		switch (event.type)
 		{
 		case sf::Event::Closed:
-			G.window->close();
+			G.window.close();
 			break;
 
 		case sf::Event::KeyReleased:
@@ -347,7 +381,7 @@ void pollEvents()
 		case sf::Event::Resized:
 		{
 			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
-			G.window->setView(sf::View(visibleArea));
+			G.window.setView(sf::View(visibleArea));
 			G.playable_area = visibleArea;
 		} break;
 
@@ -375,8 +409,8 @@ void resetState()
 	Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
 
 	Player1.id = 0;
-	Player1.setSize(G.config->paddle.size);
-	Player1.setOrigin(G.config->paddle.size.x / 2, G.config->paddle.size.y / 2);
+	Player1.setSize(G.config.paddle.size);
+	Player1.setOrigin(G.config.paddle.size.x / 2, G.config.paddle.size.y / 2);
 	Player1.setPosition(20, G.playable_area.height / 2);
 
 	Player2 = Player1;

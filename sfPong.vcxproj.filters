@@ -12,7 +12,6 @@
     <ClInclude Include="imgui_ext.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="program.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="imgui_ext.cpp" />

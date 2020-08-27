@@ -32,7 +32,6 @@
   <ItemGroup>
     <ClCompile Include="game.cpp" />
     <ClCompile Include="imgui_ext.cpp" />
-    <ClCompile Include="program.cpp" />
     <ClCompile Include="config.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

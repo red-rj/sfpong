@@ -1,13 +1,10 @@
 #pragma once
 #include <utility>
-
 #include <SFML/Graphics.hpp>
-
 #include "game_config.h"
 
 namespace pong
 {
-
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
         explicit net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
@@ -25,6 +22,7 @@ namespace pong
 		sf::VertexArray m_net{ sf::Quads };
 	};
 	
+
 	
 	struct game_entity
 	{
@@ -62,20 +60,15 @@ namespace pong
 	struct game_state
 	{
 		bool paused = true;
-		sf::Event lastEvent;
 		std::pair<short, short> score;
 		sf::FloatRect playable_area;
+		config_t config;
 
-		sf::RenderWindow* window;
-		config_t* config;
+		sf::Event lastEvent;
+		sf::RenderWindow window;
 	};
 
-	struct cmdline_options
-	{
-		// reserved
-	};
-
-	int run_game(sf::RenderWindow* win, config_t* cfg, cmdline_options const& cmdline = {});
+	
 	
 	enum class dir { left, right };
 
