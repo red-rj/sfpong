@@ -2,6 +2,7 @@
 #include <string>
 #include <string_view>
 #include <iostream>
+#include <cwctype>
 
 namespace red
 {
@@ -41,11 +42,14 @@ namespace red
             using std::make_unsigned_t;
             using std::is_same_v;
 
-            if constexpr (is_same_v<make_unsigned_t<T>, make_unsigned_t<char>>) {
+            if constexpr (is_same_v<make_unsigned_t<T>, unsigned char>) {
                 return static_cast<char>(std::toupper((unsigned char)c));
             }
             else if constexpr (is_same_v<T, wchar_t>) {
-                return ::towupper(c);
+                return std::towupper(c);
+            }
+            else {
+                static_assert(false, "Unsupported char type");
             }
         }
 

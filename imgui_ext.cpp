@@ -1,22 +1,23 @@
 #include "imgui_ext.h"
 
-struct InputTextUserData_string
+struct StringUserData
 {
     std::string* Str;
     ImGuiInputTextCallback ChainCallback;
     void* ChainCallbackUserData;
 
-    InputTextUserData_string(std::string* str, ImGuiInputTextCallback chain_cb, void* chain_data)
+    StringUserData(std::string* str, ImGuiInputTextCallback chain_cb, void* chain_data)
         : Str(str), ChainCallback(chain_cb), ChainCallbackUserData(chain_data) {}
 };
 
 static int InputTextCallback(ImGuiInputTextCallbackData* data)
 {
-    auto user_data = (InputTextUserData_string*)data->UserData;
+    auto user_data = (StringUserData*)data->UserData;
     if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
     {
         // Resize string callback
-        // If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize) we need to set them back to what we want.
+        // If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize)
+        // we need to set them back to what we want.
         std::string* str = user_data->Str;
         IM_ASSERT(data->Buf == str->c_str());
         str->resize(data->BufTextLen);
@@ -36,7 +37,7 @@ bool ImGui::InputText(const char* label, std::string* str, ImGuiInputTextFlags f
     IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
     flags |= ImGuiInputTextFlags_CallbackResize;
 
-    auto cb_user_data = InputTextUserData_string(str, callback, user_data);
+    auto cb_user_data = StringUserData(str, callback, user_data);
     return InputText(label, str->data(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
 }
 
@@ -45,7 +46,7 @@ bool ImGui::InputTextMultiline(const char* label, std::string* str, const ImVec2
     IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
     flags |= ImGuiInputTextFlags_CallbackResize;
 
-    auto cb_user_data = InputTextUserData_string(str, callback, user_data);
+    auto cb_user_data = StringUserData(str, callback, user_data);
     return InputTextMultiline(label, str->data(), str->capacity() + 1, size, flags, InputTextCallback, &cb_user_data);
 }
 
@@ -54,6 +55,6 @@ bool ImGui::InputTextWithHint(const char* label, const char* hint, std::string* 
     IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
     flags |= ImGuiInputTextFlags_CallbackResize;
 
-    auto cb_user_data = InputTextUserData_string(str, callback, user_data);
+    auto cb_user_data = StringUserData(str, callback, user_data);
     return InputTextWithHint(label, hint, str->data(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
 }

@@ -13,6 +13,7 @@
 #include <imgui-SFML.h>
 
 using namespace std::literals;
+namespace fs = std::filesystem;
 
 namespace
 {
@@ -63,54 +64,32 @@ bool pong::check_collision(const sf::Shape *a, const sf::Shape *b)
     return a->getGlobalBounds().intersects(b->getGlobalBounds());
 }
 
+
 // GAME
-using namespace pong;
-
-struct DrawGroup : sf::Drawable, sf::Transformable
-{
-	
-};
-
-struct court : DrawGroup
-{
-
-private:
-	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
-	{
-		states.transform *= getTransform();
-		target.draw(m_net, states);
-	}
-
-	sf::RectangleShape m_top, m_bottom;
-	pong::net_shape m_net;
-};
-
 namespace
 {
 	pong::game_state G;
 	pong::menu_state M;
 
-	// game entities
-	// score
-	struct {
-		sf::Text text; sf::Font font;
-		std::pair<short, short>* const value = &G.score;
+	pong::court Court;
 
-		void update() {
-			text.setString(fmt::format("{}    {}", value->first, value->second));
+	// score
+	struct
+	{
+		sf::Text text; 
+		sf::Font font;
+
+		void update(short p1, short p2) {
+			text.setString(fmt::format("{}    {}", p1, p2));
 		}
 	} Score;
 
-	// court
-	struct {
-		sf::RectangleShape top, bottom;
-		pong::net_shape net;
-	} Court;
-	
 	// moving parts
 	pong::paddle Player1, Player2;
 	pong::ball Ball;
 }
+
+using namespace pong;
 
 bool menu_state::configDirty() noexcept
 {
@@ -118,41 +97,20 @@ bool menu_state::configDirty() noexcept
 }
 
 
-
 void pollEvents();
+void resetState();
 void updatePlayer(pong::paddle& p);
 void updateBall();
+
+void checkScore();
+void serve(dir direction);
 
 void drawGui();
 void guiOptions();
 void guiStats();
 
-void serve(dir direction);
-void resetState();
 
-void checkScore() {
-	// check score
-	if (!G.playable_area.intersects(Ball.getGlobalBounds()))
-	{
-		// ponto!
-		if (Ball.getPosition().x < 0)
-		{
-			// indo p/ direita, ponto player 1
-			G.score.first++;
-			serve(dir::left);
-		}
-		else
-		{
-			// indo p/ esquerda, ponto player 2
-			G.score.second++;
-			serve(dir::right);
-		}
-
-		Score.update();
-	}
-}
 // ---
-
 int main()
 {
 	// init globais
@@ -189,13 +147,11 @@ int main()
 	{
 		pollEvents();
 		G.window.clear();
+		G.window.draw(Court);
+		G.window.draw(Score.text);
 		G.window.draw(Ball);
 		G.window.draw(Player1);
 		G.window.draw(Player2);
-		G.window.draw(Court.net);
-		G.window.draw(Court.top);
-		G.window.draw(Court.bottom);
-		G.window.draw(Score.text);
 
 		ImGui::SFML::Update(G.window, deltaClock.restart());
 
@@ -227,6 +183,91 @@ int main()
 	pong::save_config(G.config, "game.cfg");
 	return 0;
 }
+
+void pollEvents()
+{
+	sf::Event& event = G.lastEvent;
+	while (G.window.pollEvent(event)) {
+
+		ImGui::SFML::ProcessEvent(event);
+
+		switch (event.type)
+		{
+		case sf::Event::Closed:
+			G.window.close();
+			break;
+
+		case sf::Event::KeyReleased:
+		{
+			if (M.rebinding)
+				break;
+
+			switch (event.key.code)
+			{
+			case sf::Keyboard::F1:
+				Player1.ai = !Player1.ai;
+				break;
+			case sf::Keyboard::F2:
+				Player2.ai = !Player2.ai;
+				break;
+			case sf::Keyboard::Enter:
+				serve(dir::left);
+				gamelog()->info("manual ball serve");
+				break;
+			case sf::Keyboard::F12:
+				resetState();
+				break;
+			case sf::Keyboard::Escape:
+				G.paused = !G.paused;
+				// imgui deve capturar input só com o jogo pausado
+				auto& io = ImGui::GetIO();
+				io.WantCaptureKeyboard = G.paused;
+				io.WantCaptureMouse = G.paused;
+				break;
+			}
+		} break;
+
+		case sf::Event::Resized:
+		{
+			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
+			G.window.setView(sf::View(visibleArea));
+			G.playable_area = visibleArea;
+		} break;
+
+		}
+	}
+
+}
+
+void resetState()
+{
+	// drawables
+	//auto margin = sf::Vector2f(15, 20);
+
+	// pong court
+	Court = court(G.playable_area, 25, { 15, 20 });
+
+	// score
+	//Score = score(G.playable_area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
+
+	Score.font.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
+	Score.text = sf::Text("", Score.font, 55);
+	Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
+
+	Player1.id = 0;
+	Player1.setSize(G.config.paddle.size);
+	Player1.setOrigin(G.config.paddle.size.x / 2, G.config.paddle.size.y / 2);
+	Player1.setPosition(20, G.playable_area.height / 2);
+
+	Player2 = Player1;
+	Player2.ai = true;
+	Player2.id = 1;
+	Player2.setPosition(G.playable_area.width - 20, G.playable_area.height / 2);
+
+	Ball.setPosition(G.playable_area.width / 2, G.playable_area.height / 2);
+	Ball.setRadius(G.config.ball.radius);
+}
+
 
 void updatePlayer(paddle& p)
 {
@@ -335,96 +376,10 @@ void updateBall()
 	}
 }
 
-void pollEvents()
-{
-	sf::Event& event = G.lastEvent;
-	while (G.window.pollEvent(event)) {
-
-		ImGui::SFML::ProcessEvent(event);
-
-		switch (event.type)
-		{
-		case sf::Event::Closed:
-			G.window.close();
-			break;
-
-		case sf::Event::KeyReleased:
-		{
-			if (!M.rebinding)
-			{
-				switch (event.key.code)
-				{
-				case sf::Keyboard::F1:
-					Player1.ai = !Player1.ai;
-					break;
-				case sf::Keyboard::F2:
-					Player2.ai = !Player2.ai;
-					break;
-				case sf::Keyboard::Enter:
-					serve(dir::left);
-					gamelog()->info("manual ball serve");
-					break;
-				case sf::Keyboard::F12:
-					resetState();
-					break;
-				case sf::Keyboard::Escape:
-					G.paused = !G.paused;
-					// imgui deve capturar input só com o jogo pausado
-					auto& io = ImGui::GetIO();
-					io.WantCaptureKeyboard = G.paused;
-					io.WantCaptureMouse = G.paused;
-					break;
-				}
-			}
-		} break;
-
-		case sf::Event::Resized:
-		{
-			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
-			G.window.setView(sf::View(visibleArea));
-			G.playable_area = visibleArea;
-		} break;
-
-		}
-	}
-
-}
-
-
-void resetState()
-{
-	// drawables
-	//auto margin = sf::Vector2f(15, 20);
-
-	// pong court
-	Court.top = Court.bottom = sf::RectangleShape({ G.playable_area.width - 30, 25 });
-	Court.top.setPosition(15, 20);
-	Court.bottom.setOrigin(0, 25.f);
-	Court.bottom.setPosition(sf::Vector2f(15, 20) + sf::Vector2f(0, G.playable_area.height - 40));
-	Court.net.setPosition(G.playable_area.width / 2.f, 20);
-
-	// score
-	Score.font.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
-	Score.text = sf::Text("", Score.font, 55);
-	Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
-
-	Player1.id = 0;
-	Player1.setSize(G.config.paddle.size);
-	Player1.setOrigin(G.config.paddle.size.x / 2, G.config.paddle.size.y / 2);
-	Player1.setPosition(20, G.playable_area.height / 2);
-
-	Player2 = Player1;
-	Player2.ai = true;
-	Player2.id = 1;
-	Player2.setPosition(G.playable_area.width - 20, G.playable_area.height / 2);
-
-	Ball.setPosition(G.playable_area.width / 2, G.playable_area.height / 2);
-	Ball.setRadius(G.config->ball.radius);
-}
 
 void serve(dir direction)
 {
-	auto mov = G.config->ball.base_speed;
+	auto mov = G.config.ball.base_speed;
 	if (direction == dir::left) {
 		mov = -mov;
 	}
@@ -433,12 +388,35 @@ void serve(dir direction)
 	Ball.velocity = { mov, 0 };
 }
 
+void checkScore()
+{
+	// check score
+	if (!G.playable_area.intersects(Ball.getGlobalBounds()))
+	{
+		// ponto!
+		if (Ball.getPosition().x < 0)
+		{
+			// indo p/ direita, ponto player 1
+			G.score.first++;
+			serve(dir::left);
+		}
+		else
+		{
+			// indo p/ esquerda, ponto player 2
+			G.score.second++;
+			serve(dir::right);
+		}
+
+		Score.update(G.score.first, G.score.second);
+	}
+}
+
+
 // --- imgui funcs
 
 // helpers
 #include "convert.h"
 #include <fmt/ostream.h>
-#include <sstream>
 
 
 //---
@@ -450,7 +428,7 @@ void drawGui()
 
 	// main menu
 	using namespace ImScoped;
-	Window menu("Main Menu", &G.paused);
+	Window menu("Menu", &G.paused);
 	auto btnSize = sf::Vector2i(100, 30);
 
 	if (ImGui::Button("Jogar", btnSize)) {
@@ -463,7 +441,7 @@ void drawGui()
 		M.show_stats = true;
 	}
 	if (ImGui::Button("Sair", btnSize)) {
-		G.window->close();
+		G.window.close();
 		gamelog()->info("ate a proxima! ;D");
 	}
 }
@@ -584,11 +562,11 @@ void guiOptions()
 	im::Separator();
 
 	if (im::Button("Discard")) {
-		config = *active_config;
+		config = active_config;
 	}
 	im::SameLine();
 	if (im::Button("Save") && M.configDirty()) {
-		*active_config = config;
+		active_config = config;
 	}
 }
 

@@ -1,11 +1,9 @@
 #pragma once
-#include <algorithm>
 #include <utility>
-#include <stdexcept>
 #include <map>
 
 
-template<typename Stringish, typename Value, typename Compare = std::less<>>
+template<typename Stringish, typename Value, typename Compare>
 class symbol_table
 {
     template<class K, class V>
@@ -25,21 +23,11 @@ public:
         }
     }
 
-    auto get_name(value_type const& val) const -> string_type const&
-    {
+    auto& operator[] (value_type const& val) const {
         return m_values_to_keys.at(val);
     }
-
-    auto get_value(string_type const& name) const -> value_type const&
-    {
-        return m_keys_to_values.at(name);
-    }
-
-    auto& operator[] (value_type const& val) const {
-        return get_name(val);
-    }
     auto& operator[] (string_type const& name) const {
-        return get_value(name);
+        return m_keys_to_values.at(name);
     }
 
 private:
