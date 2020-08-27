@@ -292,19 +292,6 @@ namespace ImScoped
         float Width;
     };
 
-    struct OverlayWindow : Window
-    {
-        explicit OverlayWindow(const char* name, bool* p_open = NULL)
-            : Window(name, p_open, wflags)
-        {}
-
-    private:
-
-        static constexpr ImGuiWindowFlags wflags =
-            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize
-            | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing
-            | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-    };
 } // namespace ImScoped
 
 

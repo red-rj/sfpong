@@ -23,14 +23,20 @@ namespace pong
 		sf::VertexArray m_net{ sf::Quads };
 	};
 
-	// TODO: crasha
-	/*
+	
 	struct score : public sf::Drawable
 	{
 		score() = default;
 
 		score(sf::FloatRect playarea, std::filesystem::path const& fontfile, unsigned size)
 			: text("", font, size)
+		{
+			font.loadFromFile(fontfile.string());
+			text.setPosition(playarea.width / 2 - 100, 50);
+			update(0, 0);
+		}
+
+		void create(sf::FloatRect playarea, std::filesystem::path const& fontfile, unsigned size)
 		{
 			font.loadFromFile(fontfile.string());
 			text.setPosition(playarea.width / 2 - 100, 50);
@@ -50,7 +56,7 @@ namespace pong
 		sf::Text text;
 		sf::Font font;
 	};
-	*/
+	
 
 	struct court : public sf::Drawable
 	{
@@ -106,7 +112,6 @@ namespace pong
 		// options
 		bool show_options = false, rebinding = false;
 		config_t tmp_config;
-		bool configDirty() noexcept;
 
 		bool show_stats = false;
 	};

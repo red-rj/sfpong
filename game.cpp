@@ -72,30 +72,15 @@ namespace
 	pong::menu_state M;
 
 	pong::court Court;
-
-	// score
-	struct
-	{
-		sf::Text text; 
-		sf::Font font;
-
-		void update(short p1, short p2) {
-			text.setString(fmt::format("{}    {}", p1, p2));
-		}
-	} Score;
+	pong::score Score;
 
 	// moving parts
 	pong::paddle Player1, Player2;
 	pong::ball Ball;
 }
 
+
 using namespace pong;
-
-bool menu_state::configDirty() noexcept
-{
-	return tmp_config != G.config;
-}
-
 
 void pollEvents();
 void resetState();
@@ -148,7 +133,7 @@ int main()
 		pollEvents();
 		G.window.clear();
 		G.window.draw(Court);
-		G.window.draw(Score.text);
+		G.window.draw(Score);
 		G.window.draw(Ball);
 		G.window.draw(Player1);
 		G.window.draw(Player2);
@@ -249,10 +234,11 @@ void resetState()
 
 	// score
 	//Score = score(G.playable_area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
+	Score.create(G.playable_area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
 
-	Score.font.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
-	Score.text = sf::Text("", Score.font, 55);
-	Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
+	//Score.font.loadFromFile("C:/windows/fonts/LiberationMono-Regular.ttf");
+	//Score.text = sf::Text("", Score.font, 55);
+	//Score.text.setPosition(G.playable_area.width / 2 - 100, 50);
 
 	Player1.id = 0;
 	Player1.setSize(G.config.paddle.size);
@@ -456,7 +442,7 @@ void guiOptions()
 	} static model;
 
 	auto& config = M.tmp_config;
-	auto active_config = G.config;
+	auto& active_config = G.config;
 
 	{
 		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
@@ -464,7 +450,7 @@ void guiOptions()
 		im::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 	}
 
-	auto wflags = M.configDirty() ? ImGuiWindowFlags_UnsavedDocument : 0;
+	auto wflags = active_config != config ? ImGuiWindowFlags_UnsavedDocument : 0;
 	Window guiwindow("Config.", &M.show_options, wflags);
 	if (!guiwindow)
 		return;
@@ -565,7 +551,7 @@ void guiOptions()
 		config = active_config;
 	}
 	im::SameLine();
-	if (im::Button("Save") && M.configDirty()) {
+	if (im::Button("Save") && active_config != config) {
 		active_config = config;
 	}
 }
@@ -575,15 +561,12 @@ void guiStats()
 	using namespace ImScoped;
 
 	ImGuiIO& io = ImGui::GetIO();
-
-	auto constexpr wflags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize
-		| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing
-		| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-
 	sf::Vector2f winpos = { io.DisplaySize.x - 10.f, 15.f};
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::SetNextWindowPos(winpos, ImGuiCond_Always, {1.f, 0});
 
+	auto constexpr wflags = ImGuiWindowFlags_AlwaysAutoResize
+		| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing;
 	Window overlay("Stats", &M.show_stats, wflags);
 
 	auto p1b = Player1.getPosition();
