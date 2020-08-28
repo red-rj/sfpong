@@ -8,8 +8,19 @@
 
 namespace pong
 {
-    struct kb_keys { sf::Keyboard::Key up, down, fast; };
 
+    struct paddle_cfg {
+        float base_speed = 10, accel = 0.1f;
+        sf::Vector2f size = { 25.f, 150.f };
+    };
+
+    struct ball_cfg {
+        float base_speed = 5, accel = 0.1f, max_speed = 20;
+        float radius = 10;
+    };
+    
+    struct kb_keys { sf::Keyboard::Key up, down, fast; };
+    
     struct config_t
     {
         using Keyboard = sf::Keyboard;
@@ -20,18 +31,10 @@ namespace pong
             {Keyboard::Up, Keyboard::Down, Keyboard::RControl}
         }};
 
-        struct paddle_cfg {
-            float base_speed=10, accel=0.1f;
-            sf::Vector2f size = { 25.f, 150.f };
-        } paddle;
-
-        struct ball_cfg {
-            float base_speed=5, accel=0.1f, max_speed=20;
-            float radius=10;
-        } ball;
+        paddle_cfg paddle;
+        ball_cfg ball;
 
         unsigned framerate=60;
-
         
         bool operator== (const config_t& rhs) const noexcept;
     };
@@ -48,12 +51,12 @@ namespace pong
         return std::tie(lhs.up, lhs.down, lhs.fast) == std::tie(rhs.up, rhs.down, rhs.fast);
     }
 
-    constexpr bool operator== (config_t::paddle_cfg const& lhs, config_t::paddle_cfg const& rhs)
+    constexpr bool operator== (paddle_cfg const& lhs, paddle_cfg const& rhs)
     {
         return std::tie(lhs.accel, lhs.base_speed, lhs.size) ==
                std::tie(rhs.accel, rhs.base_speed, rhs.size);
     }
-    constexpr bool operator== (config_t::ball_cfg const& lhs, config_t::ball_cfg const& rhs)
+    constexpr bool operator== (ball_cfg const& lhs, ball_cfg const& rhs)
     {
         return std::tie(lhs.accel, lhs.base_speed, lhs.max_speed, lhs.radius) ==
                std::tie(rhs.accel, rhs.base_speed, rhs.max_speed, rhs.radius);
