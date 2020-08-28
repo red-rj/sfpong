@@ -128,7 +128,61 @@ namespace pong
 	};
 
 	
-	
 	enum class dir { left, right };
+
+
+	struct game
+	{
+		game(sf::RenderWindow& win, config_t& cfg);
+		void run();
+
+		enum class dir { left, right };
+		void serve(dir direction);
+
+		void pollEvents();
+
+		void drawGame();
+		void drawGui();
+		void drawScore();
+
+		void resetState();
+
+		void updatePlayers();
+		void updateBall();
+
+		void swap(game& other) noexcept;
+
+	private:
+		sf::RenderWindow& window;
+
+		bool paused = true;
+		sf::Clock deltaClock;
+		sf::FloatRect playable_area;
+		uint64_t tickcount = 0;
+
+		// score
+		sf::Text txtScore;
+		std::pair<short, short> score;
+
+		// court
+		sf::RectangleShape topBorder, bottomBorder;
+		net_shape net;
+
+		config_t& config;
+		paddle p1, p2;
+		ball ball;
+
+		// menu
+		config_t tmp_config;
+		sf::Event curEvent;
+		bool show_options = false, binding = false;
+
+		bool unpauseOnEsc() noexcept { return !show_options; }
+		bool config_dirty() noexcept { return tmp_config != config; }
+
+		void guiMainmenu();
+		void guiOptions();
+		void guiStats();
+	};
 
 }
