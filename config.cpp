@@ -122,26 +122,28 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     return is;
 }
 
-struct keyboardkey_translator
+
+template<class Enum>
+struct sfenum_translator
 {
     using internal_type = std::string;
-    using external_type = sf::Keyboard::Key;
+    using external_type = Enum;
 
-    auto get_value(std::string const& v) -> boost::optional<sf::Keyboard::Key>
+    auto get_value(std::string const& v)->boost::optional<external_type>
     {
-        auto const& table = sf_enums_table();
+        auto& table = sf_enums_table();
         try {
             auto i = table[v];
-            return static_cast<sf::Keyboard::Key>(i);
+            return static_cast<external_type>(i);
         }
         catch (const std::out_of_range&) {
             return boost::none;
         }
     }
 
-    auto put_value(sf::Keyboard::Key const& v) -> boost::optional<std::string>
+    auto put_value(external_type const& v) -> boost::optional<std::string>
     {
-        auto const& table = sf_enums_table();
+        auto& table = sf_enums_table();
         try
         {
             auto sv = table[v];
@@ -153,6 +155,8 @@ struct keyboardkey_translator
         }
     }
 };
+using keyboardkey_translator = sfenum_translator<sf::Keyboard::Key>;
+
 
 pong::config_t pong::load_config(std::filesystem::path cfgfile)
 {
@@ -264,112 +268,122 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
 
 auto sf_enums_table() ->sf_enum_table const&
 {
-    using KbKey = sf::Keyboard::Key;
     static sf_enum_table names
     {
         // keyboard
-        {"[", KbKey::LBracket},
-        {"]", KbKey::RBracket},
-        {";", KbKey::Semicolon},
-        {",", KbKey::Comma},
-        {".", KbKey::Period},
-        {"'", KbKey::Quote},
-        {"/", KbKey::Slash},
-        {"\\", KbKey::BackSlash},
-        {"~", KbKey::Tilde},
-        {"=", KbKey::Equal},
-        {"-", KbKey::Hyphen},
-        {"+", KbKey::Add},
-        {"*", KbKey::Multiply},
+        { "Escape", sf::Keyboard::Escape },
+        { "Esc", sf::Keyboard::Escape },
+        { "LControl", sf::Keyboard::LControl },
+        { "LCtrl", sf::Keyboard::LControl },
+        { "LShift", sf::Keyboard::LShift },
+        { "LAlt", sf::Keyboard::LAlt },
+        { "LSystem", sf::Keyboard::LSystem },
+        { "RControl", sf::Keyboard::RControl },
+        { "RCtrl", sf::Keyboard::RControl },
+        { "RShift", sf::Keyboard::RShift },
+        { "RAlt", sf::Keyboard::RAlt },
+        { "RSystem", sf::Keyboard::RSystem },
+        { "Menu", sf::Keyboard::Menu },
+        { "[", sf::Keyboard::LBracket },
+        { "]", sf::Keyboard::RBracket },
+        { ";", sf::Keyboard::Semicolon },
+        { ",", sf::Keyboard::Comma },
+        { ".", sf::Keyboard::Period },
+        { "'", sf::Keyboard::Quote },
+        { "/", sf::Keyboard::Slash },
+        { "\\", sf::Keyboard::Backslash },
+        { "~", sf::Keyboard::Tilde },
+        { "=", sf::Keyboard::Equal },
+        { "-", sf::Keyboard::Hyphen },
+        { "Space", sf::Keyboard::Space },
+        { "Enter", sf::Keyboard::Enter },
+        { "Backspace", sf::Keyboard::Backspace },
+        { "Tab", sf::Keyboard::Tab },
+        { "PageUp", sf::Keyboard::PageUp },
+        { "PageDown", sf::Keyboard::PageDown },
+        { "End", sf::Keyboard::End },
+        { "Home", sf::Keyboard::Home },
+        { "Insert", sf::Keyboard::Insert },
+        { "Delete", sf::Keyboard::Delete },
+        { "+", sf::Keyboard::Add },
+        { "Numpad-", sf::Keyboard::Subtract },
+        { "*", sf::Keyboard::Multiply },
+        { "Numpad/", sf::Keyboard::Divide },
+        { "Left", sf::Keyboard::Left },
+        { "LeftArrow", sf::Keyboard::Left },
+        { "Right", sf::Keyboard::Right },
+        { "RightArrow", sf::Keyboard::Right },
+        { "Up", sf::Keyboard::Up },
+        { "UpArrow", sf::Keyboard::Up },
+        { "Down", sf::Keyboard::Down },
+        { "DownArrow", sf::Keyboard::Down },
+        { "Pause", sf::Keyboard::Pause },
+        { "0", sf::Keyboard::Num0 },
+        { "Numpad0", sf::Keyboard::Numpad0 },
+        { "1", sf::Keyboard::Num1 },
+        { "Numpad1", sf::Keyboard::Numpad1 },
+        { "2", sf::Keyboard::Num2 },
+        { "Numpad2", sf::Keyboard::Numpad2 },
+        { "3", sf::Keyboard::Num3 },
+        { "Numpad3", sf::Keyboard::Numpad3 },
+        { "4", sf::Keyboard::Num4 },
+        { "Numpad4", sf::Keyboard::Numpad4 },
+        { "5", sf::Keyboard::Num5 },
+        { "Numpad5", sf::Keyboard::Numpad5 },
+        { "6", sf::Keyboard::Num6 },
+        { "Numpad6", sf::Keyboard::Numpad6 },
+        { "7", sf::Keyboard::Num7 },
+        { "Numpad7", sf::Keyboard::Numpad7 },
+        { "8", sf::Keyboard::Num8 },
+        { "Numpad8", sf::Keyboard::Numpad8 },
+        { "9", sf::Keyboard::Num9 },
+        { "Numpad9", sf::Keyboard::Numpad9 },
+        { "A", sf::Keyboard::A },
+        { "B", sf::Keyboard::B },
+        { "C", sf::Keyboard::C },
+        { "D", sf::Keyboard::D },
+        { "E", sf::Keyboard::E },
+        { "F", sf::Keyboard::F },
+        { "G", sf::Keyboard::G },
+        { "H", sf::Keyboard::H },
+        { "I", sf::Keyboard::I },
+        { "J", sf::Keyboard::J },
+        { "K", sf::Keyboard::K },
+        { "L", sf::Keyboard::L },
+        { "M", sf::Keyboard::M },
+        { "N", sf::Keyboard::N },
+        { "O", sf::Keyboard::O },
+        { "P", sf::Keyboard::P },
+        { "Q", sf::Keyboard::Q },
+        { "R", sf::Keyboard::R },
+        { "S", sf::Keyboard::S },
+        { "T", sf::Keyboard::T },
+        { "U", sf::Keyboard::U },
+        { "V", sf::Keyboard::V },
+        { "W", sf::Keyboard::W },
+        { "X", sf::Keyboard::X },
+        { "Y", sf::Keyboard::Y },
+        { "Z", sf::Keyboard::Z },
+        { "F1", sf::Keyboard::F1 },
+        { "F2", sf::Keyboard::F2 },
+        { "F3", sf::Keyboard::F3 },
+        { "F4", sf::Keyboard::F4 },
+        { "F5", sf::Keyboard::F5 },
+        { "F6", sf::Keyboard::F6 },
+        { "F7", sf::Keyboard::F7 },
+        { "F8", sf::Keyboard::F8 },
+        { "F9", sf::Keyboard::F9 },
+        { "F10", sf::Keyboard::F10 },
+        { "F11", sf::Keyboard::F11 },
+        { "F12", sf::Keyboard::F12 },
+        { "F13", sf::Keyboard::F13 },
+        { "F14", sf::Keyboard::F14 },
+        { "F15", sf::Keyboard::F15 },
 
-        {"Esc", KbKey::Escape}, {"Escape", KbKey::Escape},
-        {"LCtrl", KbKey::LControl},{"LControl", KbKey::LControl},
-        {"LAlt", KbKey::LAlt},
-        {"LShift", KbKey::LShift},
-        {"RCtrl", KbKey::RControl},{"RControl", KbKey::RControl},
-        {"RAlt", KbKey::RAlt},
-        {"RShift", KbKey::RShift},
-
-        {"Menu", KbKey::Menu},
-        {"Space", KbKey::Space},
-        {"Enter", KbKey::Enter},
-        {"Backspace", KbKey::Backspace},
-        {"Tab", KbKey::Tab},
-
-        {"PageUp", KbKey::PageUp},
-        {"PageDown", KbKey::PageDown},
-        {"End", KbKey::End},
-        {"Home", KbKey::Home},
-        {"Insert", KbKey::Insert},
-        {"Delete", KbKey::Delete},
-
-        {"Left", KbKey::Left},   {"LeftArrow", KbKey::Left},
-        {"Right", KbKey::Right}, {"RightArrow", KbKey::Right},
-        {"Up", KbKey::Up},       {"UpArrow", KbKey::Up},
-        {"Down", KbKey::Down},   {"DownArrow", KbKey::Down},
-
-        {"Pause", KbKey::Pause},
-
-        {"0", KbKey::Num0},
-        {"Num0", KbKey::Num0},
-        {"Numpad0", KbKey::Numpad0},
-        {"1", KbKey::Num1},
-        {"Num1", KbKey::Num1},
-        {"Numpad1", KbKey::Numpad1},
-        {"2", KbKey::Num2},
-        {"Num2", KbKey::Num2},
-        {"Numpad2", KbKey::Numpad2},
-        {"3", KbKey::Num3},
-        {"Num3", KbKey::Num3},
-        {"Numpad3", KbKey::Numpad3},
-        {"4", KbKey::Num4},
-        {"Num4", KbKey::Num4},
-        {"Numpad4", KbKey::Numpad4},
-        {"5", KbKey::Num5},
-        {"Num5", KbKey::Num5},
-        {"Numpad5", KbKey::Numpad5},
-        {"6", KbKey::Num6},
-        {"Num6", KbKey::Num6},
-        {"Numpad6", KbKey::Numpad6},
-        {"7", KbKey::Num7},
-        {"Num7", KbKey::Num7},
-        {"Numpad7", KbKey::Numpad7},
-        {"8", KbKey::Num8},
-        {"Num8", KbKey::Num8},
-        {"Numpad8", KbKey::Numpad8},
-        {"9", KbKey::Num9},
-        {"Num9", KbKey::Num9},
-        {"Numpad9", KbKey::Numpad9},
-        {"A", KbKey::A},
-        {"B", KbKey::B},
-        {"C", KbKey::C},
-        {"D", KbKey::D},
-        {"E", KbKey::E},
-        {"F", KbKey::F},
-        {"G", KbKey::G},
-        {"H", KbKey::H},
-        {"I", KbKey::I},
-        {"J", KbKey::J},
-        {"K", KbKey::K},
-        {"L", KbKey::L},
-        {"M", KbKey::M},
-        {"N", KbKey::N},
-        {"O", KbKey::O},
-        {"P", KbKey::P},
-        {"Q", KbKey::Q},
-        {"R", KbKey::R},
-        {"S", KbKey::S},
-        {"T", KbKey::T},
-        {"U", KbKey::U},
-        {"V", KbKey::V},
-        {"W", KbKey::W},
-        {"X", KbKey::X},
-        {"Y", KbKey::Y},
-        {"Z", KbKey::Z},
         // mouse
         {"MouseLeft", sf::Mouse::Left}, {"Mouse1", sf::Mouse::Left},
         {"MouseRight", sf::Mouse::Right}, {"Mouse2", sf::Mouse::Right},
-        {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Right},
+        {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Middle},
         {"Mouse4", sf::Mouse::XButton1},
         {"Mouse5", sf::Mouse::XButton2},
         {"MouseWheel", sf::Mouse::VerticalWheel},
