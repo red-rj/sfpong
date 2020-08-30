@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="at_scope.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ci_string.h" />
     <ClInclude Include="imgui_ext.h" />
+    <ClInclude Include="menu.h" />
     <ClInclude Include="rng.h" />
     <ClInclude Include="symbol_table.h" />
     <ClInclude Include="convert.h" />
@@ -33,6 +33,8 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="imgui_ext.cpp" />
     <ClCompile Include="config.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="menu.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
