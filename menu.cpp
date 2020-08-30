@@ -71,7 +71,7 @@ void pong::menu_state::guiOptions(game* ctx)
 		if (auto ctrltab = TabBarItem("Controls"))
 		{
 
-			auto InputControl = [id = 0, this, ctx](const char* label, sf::Keyboard::Key& curKey) mutable
+			auto InputControl = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
 			#pragma region Block
 			{
 				using namespace ImScoped;
