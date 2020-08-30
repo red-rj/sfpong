@@ -1,61 +1,15 @@
 #pragma once
-
 #include <utility>
-#include "SFML/Graphics.hpp"
+#include <SFML/Graphics.hpp>
+#include "game_config.h"
+#include "common.h"
 
-namespace red::pong
+namespace pong
 {
-	struct score : public sf::Drawable, public sf::Transformable
-	{
-	 	explicit score(const sf::Text& text_, short padding = 4) : m_text(text_), m_padding(padding)
-		{
-			format_score_txt();
-		}
-
-		
-		const auto get_scores() const
-		{
-			return std::make_pair(m_p1_score, m_p2_score);
-		}
-
-		void set(short p1, short p2)
-		{
-			m_p1_score = p1; m_p2_score = p2;
-			format_score_txt();
-		}
-
-		void add(short p1, short p2)
-		{
-			m_p1_score += p1; m_p2_score += p2;
-			format_score_txt();
-		}
-
-		short get_padding() const { return m_padding; }
-		void set_padding(short p);
-
-		const sf::Text& get_text() const { return m_text; }
-		void set_text(const sf::Text& txt) 
-		{
-			m_text = txt;
-			format_score_txt(); 
-		}
-
-	private:
-		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
-		{
-			states.transform *= getTransform();
-			target.draw(m_text, states);
-		}
-
-		void format_score_txt();
-
-		sf::Text m_text;
-		short m_padding = 4, m_p1_score = 0, m_p2_score = 0;
-	};
-
+	// game entities
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
-        net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
+        explicit net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
@@ -65,19 +19,71 @@ namespace red::pong
 		}
 
 		
-		float m_piece_size = 20.f;
-		int m_piece_count = 50;
+		float m_piece_size;
+		int m_piece_count;
 		sf::VertexArray m_net{ sf::Quads };
+	};
+	
+	struct score : public sf::Drawable
+	{
+		score() = default;
+
+		score(rect playarea, std::filesystem::path const& fontfile, unsigned size)
+		{
+			create(playarea, fontfile, size);
+		}
+
+		void create(rect playarea, std::filesystem::path const& fontfile, unsigned size)
+		{
+			font.loadFromFile(fontfile.string());
+			text = sf::Text("", font, size);
+			text.setPosition(playarea.width / 2 - 100, 50);
+			update();
+		}
+
+		void update();
+
+		// increment score
+		void add(short p1, short p2) {
+			val.first += p1;
+			val.second += p2;
+			update();
+		}
+
+		void set(std::pair<short, short> newscore) noexcept { val = newscore; }
+		constexpr auto& get() const { return val; }
+
+
+	private:
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+		{
+			target.draw(text, states);
+		}
+
+		std::pair<short, short> val = {0,0};
+		sf::Text text;
+		sf::Font font;
 	};
 
 	struct court : public sf::Drawable
 	{
-		court(const sf::Vector2f& topSize_, const sf::Vector2f& bottomSize_) 
-			: top(topSize_), bottom(bottomSize_)
+		court() = default;
+
+		court(rect playarea, float heigth, sf::Vector2f margin) : m_playarea(playarea), m_hOffset(margin.y+heigth)
 		{
+			top = bottom = sf::RectangleShape({ playarea.width - margin.x * 2, heigth });
+			top.setPosition(margin);
+			bottom.setOrigin(0, heigth);
+			bottom.setPosition(margin + sf::Vector2f(0, playarea.height - margin.y * 2));
+			net.setPosition(playarea.width / 2, 20);
 		}
 
-        explicit court(const sf::Vector2f& size_) : court(size_, size_) {}
+		auto getCenter() const noexcept {
+			auto center = m_playarea;
+			center.top += m_hOffset;
+			center.height -= m_hOffset * 2;
+			return center;
+		}
 
 		sf::RectangleShape top, bottom;
 		net_shape net;
@@ -89,60 +95,79 @@ namespace red::pong
 			target.draw(bottom, states);
 			target.draw(net, states);
 		}
-	};
-	
-	
-	struct game_objs;
-	
-	struct game_entity
-	{
-		virtual void update(game_objs& go) = 0;
 
-		virtual ~game_entity() = default;
-		
-		sf::Vector2f velocity = {};
+		rect m_playarea;
+		float m_hOffset;
 	};
 
-	struct paddle : sf::RectangleShape, game_entity
+	
+	template<typename T, typename E = T>
+	using pair = std::pair<T, E>;
+
+
+	struct paddle : sf::RectangleShape
 	{
-
-		void update(game_objs& go) override;
-
-		sf::Keyboard::Key up_key, down_key, fast_key;
-
-
 		bool ai = false;
-        float accel = 1.f;
-        float base_speed = 500.f;
+		int id = -1;
+		const config_t* pcfg = nullptr;
+		vel velocity;
 
-	private:
+		void update();
 	};
 
-	struct ball : sf::CircleShape, game_entity
+	struct ball : sf::CircleShape
 	{
-		explicit ball(float radius) : CircleShape(radius) {
-			setOrigin(radius / 2, radius / 2);
+		explicit ball(float radius = 0) : CircleShape(radius)
+		{
+			setOrigin(radius, radius);
 			setFillColor(sf::Color::Red);
 		}
 
-		virtual void update(game_objs& go) override;
+		void update();
 
-        float max_speed, serve_speed, accel;
+		const config_t* pcfg = nullptr;
+		vel velocity;
 	};
 
 
-	struct game_objs
+	bool check_collision(const sf::Shape& a, const sf::Shape& b);
+	bool border_collision(const sf::Shape& p);
+
+	void constrain_pos(pos& position);
+
+	struct menu_state;
+
+	enum class dir { left, right };
+
+
+	struct game
 	{
-		std::pair<paddle*, paddle*> players = {};
-		ball*	ball = nullptr;
-		score*	score = nullptr;
-		court*	court = nullptr;
-		sf::FloatRect* playable_bounds = nullptr;
+		friend menu_state;
+
+		game(config_t cfg, sf::RenderWindow& window);
+
+		void serve(dir direction);
+		void update(sf::RenderWindow& window);
+
+		// HACK
+		auto& getConfig() const { return Config; }
+	private:
+
+		void resetState();
+		void pollEvents(sf::RenderWindow& window);
+		void updatePlayer(paddle& player);
+		void updateBall();
+
+
+		bool paused = true;
 		uint64_t tickcount = 0;
+
+		score Score;
+		court Court;
+
+		config_t Config;
+		paddle Player1, Player2;
+		ball Ball;
 	};
 
-    bool check_collision(const sf::Shape* a, const sf::Shape* b);
-    inline bool check_collision(const sf::Shape* a, const court* court) {
-        return check_collision(a, &court->top) || check_collision(a, &court->bottom);
-    }
 }

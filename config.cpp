@@ -1,56 +1,33 @@
 #include <string>
 #include <string_view>
-#include <map>
 #include <sstream>
 #include <fstream>
 
 #include <SFML/Window/Keyboard.hpp>
-#include <SFML/Window/Joystick.hpp>
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <fmt/ostream.h>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/operators.hpp>
 
-#include "ci_string.h"
 #include "common.h"
-#include "serial_map.h"
+#include "ci_string.h"
+#include "symbol_table.h"
 #include "game_config.h"
+#include "convert.h"
 
-
-
-template<typename E>
-using enum_names_table = red::serial_map<red::ci_string_view, E>;
-
-
-// config keys
-constexpr auto
-    CFG_P1_UP = "player1.up",
-    CFG_P1_DOWN = "player1.down",
-    CFG_P1_FAST = "player1.fast",
-    CFG_P2_UP = "player2.up",
-    CFG_P2_DOWN = "player2.down",
-    CFG_P2_FAST = "player2.fast",
-    CFG_PADDLE_SPEED = "game.paddle_base_speed",
-    CFG_PADDLE_ACCEL = "game.paddle_accel",
-    CFG_PADDLE_SIZE = "game.paddle_size",
-    CFG_BALL_SPEED = "game.ball_base_speed",
-    CFG_BALL_MAXSPEED = "game.ball_max_speed",
-    CFG_BALL_ACCEL = "game.ball_accel",
-    CFG_BALL_RADIUS = "game.ball_radius",
-    CFG_FRAMERATE = "game.framerate"
-;
 
 static void lippincott()
 {
-    using red::gamelog;
+    using pong::gamelog;
     using boost::property_tree::ini_parser_error;
 
     try { throw; }
     catch (const ini_parser_error& e)
     {
-        gamelog()->error("ini_parser_error {}:{} - '{}'", e.filename(), e.line(), e.what());
+        gamelog()->error("{}", e.what());
     }
     catch (const std::exception& e)
     {
@@ -58,87 +35,137 @@ static void lippincott()
     }
 }
 
-struct enum_translator
+
+struct ci_compare
 {
-    using internal_type = std::string;
-    using external_type = sf::Keyboard::Key;
-
-    auto get_value(internal_type const& v) -> boost::optional<external_type>
+    constexpr bool operator()(std::string_view lhs, std::string_view rhs) const
     {
-        try
-        {
-            auto vv = red::ci_string_view(v.data(), v.size());
-            auto value = table[vv];
-            return (sf::Keyboard::Key)value;
-        }
-        catch (const std::exception&)
-        {
-            return boost::none;
-        }
+        using red::to_ci;
+        return to_ci(lhs) < to_ci(rhs);
     }
-
-    auto put_value(external_type const& v) -> boost::optional<internal_type>
+    constexpr bool operator()(int lhs, int rhs) const
     {
-        try
-        {
-            auto value = table[v];
-            return std::string{ value.data(), value.size() };
-        }
-        catch (const std::exception&)
-        {
-            return boost::none;
-        }
-    }
-
-private:
-    using nametable = enum_names_table<int>;
-    static nametable init_table();
-
-    nametable table = init_table();
-};
-
-template<typename T>
-struct sfVec_translator
-{
-    using internal_type = std::string;
-    using external_type = sf::Vector2<T>;
-
-    auto get_value(internal_type const& v)->boost::optional<external_type>
-    {
-        sf::Vector2<T> value;
-
-        try
-        {
-            std::istringstream ss{ v };
-            ss.imbue(std::locale::classic());
-
-            ss >> value.x >> value.y;
-            return value;
-        }
-        catch (const std::exception&)
-        {
-            return boost::none;
-        }
-    }
-
-    auto put_value(external_type const& v)->boost::optional<internal_type>
-    {
-        std::ostringstream ss;
-        ss.imbue(std::locale::classic());
-
-        ss << v.x << "  " << v.y;
-        return ss.str();
+        return lhs < rhs;
     }
 };
 
+using sf_enum_table = symbol_table<std::string_view, int, ci_compare>;
+
+/*
+* enum table
+*/
+auto sf_enums_table()->sf_enum_table const&;
 
 
-void red::pong::config_t::load(std::filesystem::path filepath)
+std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
+{
+    auto const& table = sf_enums_table();
+    try
+    {
+        auto name = table[key];
+        return os << name;
+    }
+    catch (const std::out_of_range&)
+    {
+        os << "unknown";
+        os.setstate(std::ios::failbit);
+        return os;
+    }
+}
+std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
+{
+    auto const& table = sf_enums_table();
+    try
+    {
+        auto name = table[btn];
+        return os << name;
+    }
+    catch (const std::out_of_range&)
+    {
+        os << "unknown";
+        os.setstate(std::ios::failbit);
+        return os;
+    }
+}
+
+std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
+{
+    auto const& table = sf_enums_table();
+    std::string token; is >> token;
+    try
+    {
+        auto val = sf::Keyboard::Key(table[token]);
+        key = val;
+    }
+    catch (const std::out_of_range&)
+    {
+        is.setstate(std::ios::failbit);
+        key = sf::Keyboard::Unknown;
+    }
+
+    return is;
+}
+std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
+{
+    auto const& table = sf_enums_table();
+    std::string token; is >> token;
+    try
+    {
+        auto val = sf::Mouse::Button(table[token]);
+        btn = val;
+    }
+    catch (const std::out_of_range&)
+    {
+        is.setstate(std::ios::failbit);
+    }
+
+    return is;
+}
+
+
+template<class Enum>
+struct sfenum_translator
+{
+    using internal_type = std::string;
+    using external_type = Enum;
+
+    auto get_value(std::string const& v)->boost::optional<external_type>
+    {
+        auto& table = sf_enums_table();
+        try {
+            auto i = table[v];
+            return static_cast<external_type>(i);
+        }
+        catch (const std::out_of_range&) {
+            return boost::none;
+        }
+    }
+
+    auto put_value(external_type const& v) -> boost::optional<std::string>
+    {
+        auto& table = sf_enums_table();
+        try
+        {
+            auto sv = table[v];
+            return std::string(sv.begin(), sv.end());
+        }
+        catch (const std::exception&)
+        {
+            return boost::none;
+        }
+    }
+};
+using keyboardkey_translator = sfenum_translator<sf::Keyboard::Key>;
+
+
+pong::config_t pong::load_config(std::filesystem::path cfgfile)
 {
     using namespace boost::property_tree;
 
-    std::ifstream file{ filepath };
+    std::ifstream file{ cfgfile };
     ptree tree;
+    config_t cfg; // tem valores padrão
+
     try
     {
         read_ini(file, tree);
@@ -146,190 +173,222 @@ void red::pong::config_t::load(std::filesystem::path filepath)
     catch (...)
     {
         lippincott();
-        return;
+        return cfg;
     }
 
-    { // controls
+
+    { // player settings
         using Key = sf::Keyboard::Key;
-        enum_translator tr;
-        
-        controls[0].up = tree.get<Key>(CFG_P1_UP, Key::W, tr);
-        controls[0].down = tree.get<Key>(CFG_P1_DOWN, Key::S, tr);
-        controls[0].fast = tree.get<Key>(CFG_P1_FAST, Key::LShift, tr);
-        controls[1].up = tree.get<Key>(CFG_P2_UP, Key::Up, tr);
-        controls[1].down = tree.get<Key>(CFG_P2_DOWN, Key::Down, tr);
-        controls[1].fast = tree.get<Key>(CFG_P2_FAST, Key::RControl, tr);
+        keyboardkey_translator tr;
+        enum { P1, P2 };
+        auto dft = cfg.controls;
+
+        cfg.controls[P1].up = tree.get<Key>(CFG_P1_UP, dft[P1].up, tr);
+        cfg.controls[P1].down = tree.get<Key>(CFG_P1_DOWN, dft[P1].down, tr);
+        cfg.controls[P1].fast = tree.get<Key>(CFG_P1_FAST, dft[P1].fast, tr);
+        cfg.controls[P2].up = tree.get<Key>(CFG_P2_UP, dft[P2].up, tr);
+        cfg.controls[P2].down = tree.get<Key>(CFG_P2_DOWN, dft[P2].down, tr);
+        cfg.controls[P2].fast = tree.get<Key>(CFG_P2_FAST, dft[P2].fast, tr);
     }
 
     // paddle
-    paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, 0.1);
-    paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, 10);
-    paddle.size = tree.get<sf::Vector2f>(CFG_PADDLE_SIZE, { 25.f, 150.f }, sfVec_translator<float>{});
+    auto def = cfg.paddle;
+    cfg.paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, def.accel);
+    cfg.paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, def.base_speed);
+    cfg.paddle.size.x = tree.get(CFG_PADDLE_SIZE_X, def.size.x);
+    cfg.paddle.size.y = tree.get(CFG_PADDLE_SIZE_Y, def.size.y);
 
     // ball
-    ball.accel = tree.get<float>(CFG_BALL_ACCEL, 0.1);
-    ball.base_speed = tree.get<float>(CFG_BALL_SPEED, 5);
-    ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, 20);
-    ball.radius = tree.get<float>(CFG_BALL_RADIUS, 10);
+    auto defb = cfg.ball;
+    cfg.ball.accel = tree.get<float>(CFG_BALL_ACCEL, defb.accel);
+    cfg.ball.base_speed = tree.get<float>(CFG_BALL_SPEED, defb.base_speed);
+    cfg.ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, defb.max_speed);
+    cfg.ball.radius = tree.get<float>(CFG_BALL_RADIUS, defb.radius);
 
-    framerate = tree.get<unsigned>(CFG_FRAMERATE, 60);
+    cfg.framerate = tree.get<unsigned>(CFG_FRAMERATE, cfg.framerate);
+
+    return cfg;
 }
 
-void red::pong::config_t::save(std::filesystem::path filepath)
+bool pong::save_config(config_t const& cfg, std::filesystem::path cfgfile)
 {
     using namespace boost::property_tree;
 
     ptree tree;
     { // controls
-        enum_translator tr;
-        tree.put(CFG_P1_UP, controls[0].up, tr);
-        tree.put(CFG_P1_DOWN, controls[0].down, tr);
-        tree.put(CFG_P1_FAST, controls[0].fast, tr);
-        tree.put(CFG_P2_UP, controls[1].up, tr);
-        tree.put(CFG_P2_DOWN, controls[1].down, tr);
-        tree.put(CFG_P2_FAST, controls[1].fast, tr);
+        keyboardkey_translator tr;
+        enum { P1, P2 };
+
+        tree.put(CFG_P1_UP, cfg.controls[P1].up, tr);
+        tree.put(CFG_P1_DOWN, cfg.controls[P1].down, tr);
+        tree.put(CFG_P1_FAST, cfg.controls[P1].fast, tr);
+        tree.put(CFG_P2_UP, cfg.controls[P2].up, tr);
+        tree.put(CFG_P2_DOWN, cfg.controls[P2].down, tr);
+        tree.put(CFG_P2_FAST, cfg.controls[P2].fast, tr);
     }
     
     // paddle
-    tree.put(CFG_PADDLE_SPEED, paddle.base_speed);
-    tree.put(CFG_PADDLE_ACCEL, paddle.accel);
-    tree.put(CFG_PADDLE_SIZE, paddle.size, sfVec_translator<float>{});
+    tree.put(CFG_PADDLE_SPEED, cfg.paddle.base_speed);
+    tree.put(CFG_PADDLE_ACCEL, cfg.paddle.accel);
+    tree.put(CFG_PADDLE_SIZE_X, cfg.paddle.size.x);
+    tree.put(CFG_PADDLE_SIZE_Y, cfg.paddle.size.y);
 
     // ball
-    tree.put(CFG_BALL_MAXSPEED, ball.max_speed);
-    tree.put(CFG_BALL_SPEED, ball.base_speed);
-    tree.put(CFG_BALL_ACCEL, ball.accel);
-    tree.put(CFG_BALL_RADIUS, ball.radius);
+    tree.put(CFG_BALL_MAXSPEED, cfg.ball.max_speed);
+    tree.put(CFG_BALL_SPEED, cfg.ball.base_speed);
+    tree.put(CFG_BALL_ACCEL, cfg.ball.accel);
+    tree.put(CFG_BALL_RADIUS, cfg.ball.radius);
 
-    tree.put(CFG_FRAMERATE, framerate);
+    tree.put(CFG_FRAMERATE, cfg.framerate);
 
-    auto file = std::ofstream(filepath, std::ios::trunc);
+    auto file = std::ofstream(cfgfile, std::ios::trunc);
     file << "# sfPong configuration\n\n";
 
     try
     {
         write_ini(file, tree);
+        return true;
     }
     catch (...)
     {
         lippincott();
+        return false;
     }
 
 }
 
-// ---
-using KbKey = sf::Keyboard::Key;
-
-auto enum_translator::init_table()->nametable
+bool pong::config_t::operator==(const config_t& rhs) const noexcept
 {
-    return {
+    return controls == rhs.controls &&
+           paddle == rhs.paddle &&
+           ball == rhs.ball &&
+           framerate == rhs.framerate;
+}
+
+
+auto sf_enums_table() ->sf_enum_table const&
+{
+    static sf_enum_table names
+    {
         // keyboard
-        {"[", KbKey::LBracket},
-        {"]", KbKey::RBracket},
-        {";", KbKey::Semicolon},
-        {",", KbKey::Comma},
-        {".", KbKey::Period},
-        {"'", KbKey::Quote},
-        {"/", KbKey::Slash},
-        {"\\", KbKey::BackSlash},
-        {"~", KbKey::Tilde},
-        {"=", KbKey::Equal},
-        {"-", KbKey::Hyphen},
-        {"+", KbKey::Add},
-        {"*", KbKey::Multiply},
+        { "Escape", sf::Keyboard::Escape },
+        { "Esc", sf::Keyboard::Escape },
+        { "LControl", sf::Keyboard::LControl },
+        { "LCtrl", sf::Keyboard::LControl },
+        { "LShift", sf::Keyboard::LShift },
+        { "LAlt", sf::Keyboard::LAlt },
+        { "LSystem", sf::Keyboard::LSystem },
+        { "RControl", sf::Keyboard::RControl },
+        { "RCtrl", sf::Keyboard::RControl },
+        { "RShift", sf::Keyboard::RShift },
+        { "RAlt", sf::Keyboard::RAlt },
+        { "RSystem", sf::Keyboard::RSystem },
+        { "Menu", sf::Keyboard::Menu },
+        { "[", sf::Keyboard::LBracket },
+        { "]", sf::Keyboard::RBracket },
+        { ";", sf::Keyboard::Semicolon },
+        { ",", sf::Keyboard::Comma },
+        { ".", sf::Keyboard::Period },
+        { "'", sf::Keyboard::Quote },
+        { "/", sf::Keyboard::Slash },
+        { "\\", sf::Keyboard::Backslash },
+        { "~", sf::Keyboard::Tilde },
+        { "=", sf::Keyboard::Equal },
+        { "-", sf::Keyboard::Hyphen },
+        { "Space", sf::Keyboard::Space },
+        { "Enter", sf::Keyboard::Enter },
+        { "Backspace", sf::Keyboard::Backspace },
+        { "Tab", sf::Keyboard::Tab },
+        { "PageUp", sf::Keyboard::PageUp },
+        { "PageDown", sf::Keyboard::PageDown },
+        { "End", sf::Keyboard::End },
+        { "Home", sf::Keyboard::Home },
+        { "Insert", sf::Keyboard::Insert },
+        { "Delete", sf::Keyboard::Delete },
+        { "+", sf::Keyboard::Add },
+        { "Numpad-", sf::Keyboard::Subtract },
+        { "*", sf::Keyboard::Multiply },
+        { "Numpad/", sf::Keyboard::Divide },
+        { "Left", sf::Keyboard::Left },
+        { "LeftArrow", sf::Keyboard::Left },
+        { "Right", sf::Keyboard::Right },
+        { "RightArrow", sf::Keyboard::Right },
+        { "Up", sf::Keyboard::Up },
+        { "UpArrow", sf::Keyboard::Up },
+        { "Down", sf::Keyboard::Down },
+        { "DownArrow", sf::Keyboard::Down },
+        { "Pause", sf::Keyboard::Pause },
+        { "0", sf::Keyboard::Num0 },
+        { "Numpad0", sf::Keyboard::Numpad0 },
+        { "1", sf::Keyboard::Num1 },
+        { "Numpad1", sf::Keyboard::Numpad1 },
+        { "2", sf::Keyboard::Num2 },
+        { "Numpad2", sf::Keyboard::Numpad2 },
+        { "3", sf::Keyboard::Num3 },
+        { "Numpad3", sf::Keyboard::Numpad3 },
+        { "4", sf::Keyboard::Num4 },
+        { "Numpad4", sf::Keyboard::Numpad4 },
+        { "5", sf::Keyboard::Num5 },
+        { "Numpad5", sf::Keyboard::Numpad5 },
+        { "6", sf::Keyboard::Num6 },
+        { "Numpad6", sf::Keyboard::Numpad6 },
+        { "7", sf::Keyboard::Num7 },
+        { "Numpad7", sf::Keyboard::Numpad7 },
+        { "8", sf::Keyboard::Num8 },
+        { "Numpad8", sf::Keyboard::Numpad8 },
+        { "9", sf::Keyboard::Num9 },
+        { "Numpad9", sf::Keyboard::Numpad9 },
+        { "A", sf::Keyboard::A },
+        { "B", sf::Keyboard::B },
+        { "C", sf::Keyboard::C },
+        { "D", sf::Keyboard::D },
+        { "E", sf::Keyboard::E },
+        { "F", sf::Keyboard::F },
+        { "G", sf::Keyboard::G },
+        { "H", sf::Keyboard::H },
+        { "I", sf::Keyboard::I },
+        { "J", sf::Keyboard::J },
+        { "K", sf::Keyboard::K },
+        { "L", sf::Keyboard::L },
+        { "M", sf::Keyboard::M },
+        { "N", sf::Keyboard::N },
+        { "O", sf::Keyboard::O },
+        { "P", sf::Keyboard::P },
+        { "Q", sf::Keyboard::Q },
+        { "R", sf::Keyboard::R },
+        { "S", sf::Keyboard::S },
+        { "T", sf::Keyboard::T },
+        { "U", sf::Keyboard::U },
+        { "V", sf::Keyboard::V },
+        { "W", sf::Keyboard::W },
+        { "X", sf::Keyboard::X },
+        { "Y", sf::Keyboard::Y },
+        { "Z", sf::Keyboard::Z },
+        { "F1", sf::Keyboard::F1 },
+        { "F2", sf::Keyboard::F2 },
+        { "F3", sf::Keyboard::F3 },
+        { "F4", sf::Keyboard::F4 },
+        { "F5", sf::Keyboard::F5 },
+        { "F6", sf::Keyboard::F6 },
+        { "F7", sf::Keyboard::F7 },
+        { "F8", sf::Keyboard::F8 },
+        { "F9", sf::Keyboard::F9 },
+        { "F10", sf::Keyboard::F10 },
+        { "F11", sf::Keyboard::F11 },
+        { "F12", sf::Keyboard::F12 },
+        { "F13", sf::Keyboard::F13 },
+        { "F14", sf::Keyboard::F14 },
+        { "F15", sf::Keyboard::F15 },
 
-        {"Escape", KbKey::Escape}, {"Esc", KbKey::Escape},
-        {"LControl", KbKey::LControl},{"LCtrl", KbKey::LControl},
-        {"LAlt", KbKey::LAlt},
-        {"LShift", KbKey::LShift},
-        {"RControl", KbKey::RControl}, {"RCtrl", KbKey::RControl},
-        {"RAlt", KbKey::RAlt},
-        {"RShift", KbKey::RShift},
-
-        {"Menu", KbKey::Menu},
-        {"Space", KbKey::Space},
-        {"Enter", KbKey::Enter},
-        {"Backspace", KbKey::Backspace},
-        {"Tab", KbKey::Tab},
-
-        {"PageUp", KbKey::PageUp},
-        {"PageDown", KbKey::PageDown},
-        {"End", KbKey::End},
-        {"Home", KbKey::Home},
-        {"Insert", KbKey::Insert},
-        {"Delete", KbKey::Delete},
-
-        {"Left", KbKey::Left},   {"LeftArrow", KbKey::Left},
-        {"Right", KbKey::Right}, {"RightArrow", KbKey::Right},
-        {"Up", KbKey::Up},       {"UpArrow", KbKey::Up},
-        {"Down", KbKey::Down},   {"DownArrow", KbKey::Down},
-
-        {"Pause", KbKey::Pause},
-
-        {"0", KbKey::Num0},
-        {"Num0", KbKey::Num0},
-        {"Numpad0", KbKey::Numpad0},
-        {"1", KbKey::Num1},
-        {"Num1", KbKey::Num1},
-        {"Numpad1", KbKey::Numpad1},
-        {"2", KbKey::Num2},
-        {"Num2", KbKey::Num2},
-        {"Numpad2", KbKey::Numpad2},
-        {"3", KbKey::Num3},
-        {"Num3", KbKey::Num3},
-        {"Numpad3", KbKey::Numpad3},
-        {"4", KbKey::Num4},
-        {"Num4", KbKey::Num4},
-        {"Numpad4", KbKey::Numpad4},
-        {"5", KbKey::Num5},
-        {"Num5", KbKey::Num5},
-        {"Numpad5", KbKey::Numpad5},
-        {"6", KbKey::Num6},
-        {"Num6", KbKey::Num6},
-        {"Numpad6", KbKey::Numpad6},
-        {"7", KbKey::Num7},
-        {"Num7", KbKey::Num7},
-        {"Numpad7", KbKey::Numpad7},
-        {"8", KbKey::Num8},
-        {"Num8", KbKey::Num8},
-        {"Numpad8", KbKey::Numpad8},
-        {"9", KbKey::Num9},
-        {"Num9", KbKey::Num9},
-        {"Numpad9", KbKey::Numpad9},
-        {"A", KbKey::A},
-        {"B", KbKey::B},
-        {"C", KbKey::C},
-        {"D", KbKey::D},
-        {"E", KbKey::E},
-        {"F", KbKey::F},
-        {"G", KbKey::G},
-        {"H", KbKey::H},
-        {"I", KbKey::I},
-        {"J", KbKey::J},
-        {"K", KbKey::K},
-        {"L", KbKey::L},
-        {"M", KbKey::M},
-        {"N", KbKey::N},
-        {"O", KbKey::O},
-        {"P", KbKey::P},
-        {"Q", KbKey::Q},
-        {"R", KbKey::R},
-        {"S", KbKey::S},
-        {"T", KbKey::T},
-        {"U", KbKey::U},
-        {"V", KbKey::V},
-        {"W", KbKey::W},
-        {"X", KbKey::X},
-        {"Y", KbKey::Y},
-        {"Z", KbKey::Z},
         // mouse
         {"MouseLeft", sf::Mouse::Left}, {"Mouse1", sf::Mouse::Left},
         {"MouseRight", sf::Mouse::Right}, {"Mouse2", sf::Mouse::Right},
-        {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Right},
+        {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Middle},
         {"Mouse4", sf::Mouse::XButton1},
         {"Mouse5", sf::Mouse::XButton2},
         {"MouseWheel", sf::Mouse::VerticalWheel},
         {"MouseHWheel", sf::Mouse::HorizontalWheel}
-
     };
+
+    return names;
 }
