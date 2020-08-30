@@ -60,7 +60,7 @@ namespace pong
 			target.draw(text, states);
 		}
 
-		std::pair<short, short> val = {0,0};
+		std::pair<short, short> val{};
 		sf::Text text;
 		sf::Font font;
 	};
@@ -109,7 +109,6 @@ namespace pong
 	{
 		bool ai = false;
 		int id = -1;
-		const config_t* pcfg = nullptr;
 		vel velocity;
 
 		void update();
@@ -125,15 +124,12 @@ namespace pong
 
 		void update();
 
-		const config_t* pcfg = nullptr;
 		vel velocity;
 	};
 
 
 	bool check_collision(const sf::Shape& a, const sf::Shape& b);
 	bool border_collision(const sf::Shape& p);
-
-	void constrain_pos(pos& position);
 
 	struct menu_state;
 
@@ -157,13 +153,13 @@ namespace pong
 		void pollEvents(sf::RenderWindow& window);
 		void updatePlayer(paddle& player);
 		void updateBall();
+		void generateLevel(rect area);
 
 
 		bool paused = true;
 		uint64_t tickcount = 0;
 
 		score Score;
-		court Court;
 
 		config_t Config;
 		paddle Player1, Player2;

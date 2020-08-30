@@ -24,17 +24,10 @@ namespace
 
 	pong::menu_state Menu;
 	sf::FloatRect Playarea;
-	sf::FloatRect Borders[2];
+	pong::court Court;
 
-	auto create_level(sf::FloatRect area)
-	{
-		Playarea = area;
-		auto lvl = pong::court(Playarea, 25, { 15, 20 });
-		Borders[0] = lvl.top.getGlobalBounds();
-		Borders[1] = lvl.bottom.getGlobalBounds();
-
-		return lvl;
-	}
+	pong::paddle_cfg CfgPaddle;
+	pong::ball_cfg CfgBall;
 }
 
 int pong::random_num(int min, int max)
@@ -79,40 +72,27 @@ bool pong::check_collision(const sf::Shape &a, const sf::Shape &b)
     return a.getGlobalBounds().intersects(b.getGlobalBounds());
 }
 
-
 bool pong::border_collision(const sf::Shape& p)
 {
-	bool result = false;
-	for (auto const& bord : Borders)
-	{
-		if (result = bord.intersects(p.getGlobalBounds()))
-			break;
-	}
-	return result;
+	return check_collision(p, Court.top) or check_collision(p, Court.bottom);
 }
-
 
 void pong::score::update()
 {
 	text.setString(fmt::format("{}    {}", val.first, val.second));
 }
 
-using namespace pong;
-
 pong::game::game(config_t cfg, sf::RenderWindow& window) : Config(std::move(cfg))
 {
 	// pong court
-	auto area = sf::FloatRect{ {0.f,0.f}, static_cast<sf::Vector2f>(window.getSize()) };
-	Court = create_level(area);
-
+	auto area = rect{ {0.f,0.f}, static_cast<sf::Vector2f>(window.getSize()) };
+	generateLevel(area);
 	Menu.config = Config;
-
 	Score.create(area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
-
 	resetState();
 }
 
-void game::pollEvents(sf::RenderWindow& window)
+void pong::game::pollEvents(sf::RenderWindow& window)
 {
 	sf::Event event;
 	while (window.pollEvent(event)) {
@@ -157,9 +137,9 @@ void game::pollEvents(sf::RenderWindow& window)
 
 		case sf::Event::Resized:
 		{
-			sf::FloatRect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
+			rect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
 			window.setView(sf::View(visibleArea));
-			Court = create_level(visibleArea);
+			generateLevel(visibleArea);
 		} break;
 
 		}
@@ -169,6 +149,8 @@ void game::pollEvents(sf::RenderWindow& window)
 
 void pong::game::update(sf::RenderWindow& window)
 {
+	pollEvents(window);
+
 	window.clear();
 	window.draw(Court);
 	window.draw(Score);
@@ -210,12 +192,13 @@ void pong::game::update(sf::RenderWindow& window)
 void pong::game::resetState()
 {
 	auto area = Playarea;
+	CfgPaddle = Config.paddle;
+	CfgBall = Config.ball;
 
 	Player1.id = 0;
 	Player1.setSize(Config.paddle.size);
 	Player1.setOrigin(Config.paddle.size.x / 2, Config.paddle.size.y / 2);
 	Player1.setPosition(20, area.height / 2);
-	Player1.pcfg = &Config;
 
 	Player2 = Player1;
 	Player2.ai = true;
@@ -224,14 +207,13 @@ void pong::game::resetState()
 
 	Ball.setPosition(area.width / 2, area.height / 2);
 	Ball.setRadius(Config.ball.radius);
-	Ball.pcfg = &Config;
 }
 
 
 void pong::game::updatePlayer(paddle& player)
 {
-	auto& cfg = player.pcfg->paddle;
-	auto& controls = player.pcfg->controls;
+	auto& cfg = CfgPaddle;
+	auto& controls = Config.controls;
 	auto& velocity = player.velocity;
 	auto ball_bounds = Ball.getGlobalBounds();
 
@@ -291,7 +273,7 @@ void pong::game::updatePlayer(paddle& player)
 
 void pong::game::updateBall()
 {
-	auto const& cfg = Config.ball;
+	auto const& cfg = CfgBall;
 
 	paddle* player = nullptr;
 	if (check_collision(Ball, Player1)) {
@@ -319,7 +301,13 @@ void pong::game::updateBall()
 	else Ball.update();
 }
 
-void game::serve(dir direction)
+void pong::game::generateLevel(rect area)
+{
+	Playarea = area;
+	Court = pong::court(Playarea, 25, { 15, 20 });
+}
+
+void pong::game::serve(dir direction)
 {
 	auto mov = Config.ball.base_speed;
 	if (direction == dir::left) {

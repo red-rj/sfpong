@@ -7,7 +7,6 @@
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <fmt/ostream.h>
-
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/operators.hpp>
@@ -49,17 +48,20 @@ struct ci_compare
     }
 };
 
-using sf_enum_table = symbol_table<std::string_view, int, ci_compare>;
+using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
+
+using iof = std::ios_base;
 
 /*
-* enum table
+* enum tables
 */
-auto sf_enums_table()->sf_enum_table const&;
+auto sf_keyboard_table()->enum_name_table const&;
+auto sf_mouse_table()->enum_name_table const&;
 
 
 std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
 {
-    auto const& table = sf_enums_table();
+    auto const& table = sf_keyboard_table();
     try
     {
         auto name = table[key];
@@ -68,13 +70,13 @@ std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
     catch (const std::out_of_range&)
     {
         os << "unknown";
-        os.setstate(std::ios::failbit);
+        os.setstate(iof::failbit);
         return os;
     }
 }
 std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
 {
-    auto const& table = sf_enums_table();
+    auto const& table = sf_mouse_table();
     try
     {
         auto name = table[btn];
@@ -83,14 +85,14 @@ std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
     catch (const std::out_of_range&)
     {
         os << "unknown";
-        os.setstate(std::ios::failbit);
+        os.setstate(iof::failbit);
         return os;
     }
 }
 
 std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
 {
-    auto const& table = sf_enums_table();
+    auto const& table = sf_keyboard_table();
     std::string token; is >> token;
     try
     {
@@ -107,7 +109,7 @@ std::istream& operator>>(std::istream& is, sf::Keyboard::Key& key)
 }
 std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
 {
-    auto const& table = sf_enums_table();
+    auto const& table = sf_mouse_table();
     std::string token; is >> token;
     try
     {
@@ -116,7 +118,7 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     }
     catch (const std::out_of_range&)
     {
-        is.setstate(std::ios::failbit);
+        is.setstate(iof::failbit);
     }
 
     return is;
@@ -131,23 +133,28 @@ struct sfenum_translator
 
     auto get_value(std::string const& v)->boost::optional<external_type>
     {
-        auto& table = sf_enums_table();
-        try {
-            auto i = table[v];
-            return static_cast<external_type>(i);
+        try
+        {
+            auto ss = std::stringstream(v, iof::in);
+            ss.exceptions(iof::failbit);
+            external_type i;
+            ss >> i;
+            return i;
         }
-        catch (const std::out_of_range&) {
+        catch (const std::exception&)
+        {
             return boost::none;
         }
     }
 
     auto put_value(external_type const& v) -> boost::optional<std::string>
     {
-        auto& table = sf_enums_table();
         try
         {
-            auto sv = table[v];
-            return std::string(sv.begin(), sv.end());
+            auto ss = std::stringstream(iof::out);
+            ss.exceptions(iof::failbit);
+            ss << v;
+            return ss.str();
         }
         catch (const std::exception&)
         {
@@ -193,19 +200,19 @@ pong::config_t pong::load_config(std::filesystem::path cfgfile)
 
     // paddle
     auto def = cfg.paddle;
-    cfg.paddle.accel = tree.get<float>(CFG_PADDLE_ACCEL, def.accel);
-    cfg.paddle.base_speed = tree.get<float>(CFG_PADDLE_SPEED, def.base_speed);
+    cfg.paddle.accel = tree.get(CFG_PADDLE_ACCEL, def.accel);
+    cfg.paddle.base_speed = tree.get(CFG_PADDLE_SPEED, def.base_speed);
     cfg.paddle.size.x = tree.get(CFG_PADDLE_SIZE_X, def.size.x);
     cfg.paddle.size.y = tree.get(CFG_PADDLE_SIZE_Y, def.size.y);
 
     // ball
     auto defb = cfg.ball;
-    cfg.ball.accel = tree.get<float>(CFG_BALL_ACCEL, defb.accel);
-    cfg.ball.base_speed = tree.get<float>(CFG_BALL_SPEED, defb.base_speed);
-    cfg.ball.max_speed = tree.get<float>(CFG_BALL_MAXSPEED, defb.max_speed);
-    cfg.ball.radius = tree.get<float>(CFG_BALL_RADIUS, defb.radius);
+    cfg.ball.accel = tree.get(CFG_BALL_ACCEL, defb.accel);
+    cfg.ball.base_speed = tree.get(CFG_BALL_SPEED, defb.base_speed);
+    cfg.ball.max_speed = tree.get(CFG_BALL_MAXSPEED, defb.max_speed);
+    cfg.ball.radius = tree.get(CFG_BALL_RADIUS, defb.radius);
 
-    cfg.framerate = tree.get<unsigned>(CFG_FRAMERATE, cfg.framerate);
+    cfg.framerate = tree.get(CFG_FRAMERATE, cfg.framerate);
 
     return cfg;
 }
@@ -241,7 +248,7 @@ bool pong::save_config(config_t const& cfg, std::filesystem::path cfgfile)
 
     tree.put(CFG_FRAMERATE, cfg.framerate);
 
-    auto file = std::ofstream(cfgfile, std::ios::trunc);
+    auto file = std::ofstream(cfgfile, iof::trunc);
     file << "# sfPong configuration\n\n";
 
     try
@@ -266,11 +273,10 @@ bool pong::config_t::operator==(const config_t& rhs) const noexcept
 }
 
 
-auto sf_enums_table() ->sf_enum_table const&
+auto sf_keyboard_table() ->enum_name_table const&
 {
-    static sf_enum_table names
+    static enum_name_table names
     {
-        // keyboard
         { "Escape", sf::Keyboard::Escape },
         { "Esc", sf::Keyboard::Escape },
         { "LControl", sf::Keyboard::LControl },
@@ -378,9 +384,16 @@ auto sf_enums_table() ->sf_enum_table const&
         { "F12", sf::Keyboard::F12 },
         { "F13", sf::Keyboard::F13 },
         { "F14", sf::Keyboard::F14 },
-        { "F15", sf::Keyboard::F15 },
+        { "F15", sf::Keyboard::F15 }
+    };
 
-        // mouse
+    return names;
+}
+
+auto sf_mouse_table()->enum_name_table const&
+{
+    static enum_name_table table
+    {
         {"MouseLeft", sf::Mouse::Left}, {"Mouse1", sf::Mouse::Left},
         {"MouseRight", sf::Mouse::Right}, {"Mouse2", sf::Mouse::Right},
         {"MouseMiddle", sf::Mouse::Middle}, {"Mouse3", sf::Mouse::Middle},
@@ -390,5 +403,5 @@ auto sf_enums_table() ->sf_enum_table const&
         {"MouseHWheel", sf::Mouse::HorizontalWheel}
     };
 
-    return names;
+    return table;
 }

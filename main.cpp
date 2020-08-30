@@ -31,6 +31,7 @@ int main()
 	while (window.isOpen())
 	{
 		ImGui::SFML::Update(window, deltaClock.restart());
+
 		vg.update(window);
 
 		ImGui::SFML::Render(window);
@@ -38,6 +39,10 @@ int main()
 	}
 
 	ImGui::SFML::Shutdown();
-	pong::save_config(vg.getConfig(), "game.cfg");
+	
+	auto vgconfig = vg.getConfig();
+	if (vgconfig != config)
+		pong::save_config(vgconfig, "game.cfg");
+
 	return 0;
 }

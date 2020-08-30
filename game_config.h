@@ -80,7 +80,4 @@ namespace pong
         CFG_BALL_RADIUS   = "game.ball_radius",
         CFG_FRAMERATE     = "game.framerate"
     ;
-
-
-
 }
