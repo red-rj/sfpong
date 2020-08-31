@@ -12,31 +12,17 @@ using sf::Mouse;
 
 namespace
 {
-	pong::input_state states[2];
-
+	// up, down, fast
 	std::tuple<Keyboard::Key, Keyboard::Key, Keyboard::Key>
 		keyboard_controls;
-
-
-	template<class C>
-	int ci_compare(std::basic_string_view<C> s1, std::basic_string_view<C> s2) {
-		using ci_strview = std::basic_string_view<C, red::ci_char_traits<C>>;
-		ci_strview views[2] = { {s1.data(),s1.size()}, {s2.data(),s2.size()} };
-		return views[0].compare(views[1]);
-	}
-
-	template<class C>
-	int ci_compare(std::basic_string_view<C> s1, C c) {
-		return ci_compare(s1, { &c, 1 });
-	}
 }
 
 
-auto pong::parse_jsinput(std::string_view text) -> joystick_input
+auto pong::parse_joyinput(std::string_view text) -> joy_input
 {
 	constexpr auto npos = std::string_view::npos;
 
-	joystick_input js;
+	joy_input js;
 
 	auto p = text.find("Joy");
 	auto i = text.find_first_of("B" "P" "XYZRUV", p);
@@ -74,15 +60,17 @@ auto pong::parse_jsinput(std::string_view text) -> joystick_input
 			js.axis_id = Joystick::Axis::PovY;
 		}
 
-		js.axis_dir = dir == '+';
+		js.axis_dir = dir == '-' ? dir::up : dir::down;
 	}
 	else { // joyaxis
-		auto const axis = text[p];
+		auto const axis = input_id;
 		p = text.find_first_of("+-", p, 1);
 		if (p == npos)
 			return js;
 		else {
 			js.type = js.axis;
+			auto const axd = text[p];
+			js.axis_dir = axd == '-' ? dir::up : dir::down;
 		}
 
 		switch (axis)

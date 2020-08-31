@@ -19,4 +19,6 @@ namespace pong
     using vel = sf::Vector2f;
     // bounds type
     using rect = sf::FloatRect;
+    // direction type
+    enum class dir { up, down, left, right };
 }

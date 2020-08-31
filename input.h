@@ -1,28 +1,22 @@
 #pragma once
 #include <string_view>
+#include "common.h"
 
 namespace pong
 {
-    struct input_state
-    {
-        bool up, down, fast;
-    };
-
-    using input_handler = bool(*)(input_state&);    
-
     enum class Player
     {
         One, Two
     };
 
-
-    struct joystick_input
+    // representação de um input de joystick
+    struct joy_input
     {
         enum input_type { invalid=-1, button, axis } type = invalid;
         int btn_number;
         int axis_id;
-        bool axis_dir;
+        dir axis_dir;
     };
 
-    auto parse_jsinput(std::string_view text)->joystick_input;
+    auto parse_joyinput(std::string_view text)->joy_input;
 }

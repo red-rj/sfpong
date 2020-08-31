@@ -131,10 +131,8 @@ namespace pong
 	bool check_collision(const sf::Shape& a, const sf::Shape& b);
 	bool border_collision(const sf::Shape& p);
 
+	
 	struct menu_state;
-
-	enum class dir { left, right };
-
 
 	struct game
 	{
