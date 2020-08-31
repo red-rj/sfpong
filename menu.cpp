@@ -4,11 +4,44 @@
 #include "common.h"
 
 #include <algorithm>
+#include <optional>
 
 #include "imgui_ext.h"
 #include <imgui-SFML.h>
 #include <fmt/ostream.h>
 #include <SFML/Window/Window.hpp>
+
+static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
+{
+	using sf::Keyboard;
+	
+	auto& io = ImGui::GetIO();
+	auto const begin = io.KeysDown;
+	auto const end = begin + Keyboard::KeyCount;
+	auto it = std::find(begin, end, true);
+
+	if (it != end) {
+		return Keyboard::Key(it - begin);
+	}
+	else return {};
+}
+
+static auto scan_mouse() noexcept -> std::optional<sf::Mouse::Button>
+{
+	using sf::Mouse;
+	constexpr auto Count = Mouse::ButtonCount;
+	static_assert(Count <= ImGuiMouseButton_COUNT, "Num. btns de Mouse errado!");
+
+	auto& io = ImGui::GetIO();
+	auto const begin = io.MouseDown;
+	auto const end = begin + Count;
+	auto it = std::find(begin, end, true);
+
+	if (it != end) {
+		return Mouse::Button(it - begin);
+	}
+	else return {};
+}
 
 
 void pong::menu_state::draw(game* ctx, sf::Window* window)
@@ -92,17 +125,10 @@ void pong::menu_state::guiOptions(game* ctx)
 					using Key = sf::Keyboard::Key;
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
-					auto& io = GetIO();
-					auto const keysEnd = io.KeysDown + Key::KeyCount;
-					auto it = std::find(io.KeysDown, keysEnd, true);
-
-					if (it != keysEnd) {
-						auto key = Key( it - io.KeysDown );
-						if (key != Key::Escape) {
-							curKey = key;
-						}
-
-						CloseCurrentPopup();
+					auto key = scan_kb();
+					if (key && key.value() != Key::Escape)
+					{
+						curKey = key.value();
 					}
 				}
 			};
