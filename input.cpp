@@ -18,15 +18,16 @@ namespace
 }
 
 
-auto pong::parse_joyinput(std::string_view text) -> joy_input
+auto pong::parse_joyinput(std::string_view arg) -> joy_input
 {
 	constexpr auto npos = std::string_view::npos;
+	auto text = red::to_ci(arg);
 
 	joy_input js;
 
 	auto p = text.find("Joy");
-	auto i = text.find_first_of("B" "P" "XYZRUV", p);
-	if (p == npos or i == npos) {
+	p = text.find_first_of("B" "P" "XYZRUV", p+3);
+	if (p == npos) {
 		return js;
 	}
 
@@ -43,15 +44,16 @@ auto pong::parse_joyinput(std::string_view text) -> joy_input
 		return js;
 	}
 	else if (input_id == 'P') { // joy pov hat
-		p = text.find_first_of("XY", p, 3);
-		auto d = text.find_first_of("+-", p, 1);
+		p = text.find_first_of("XY", p);
+		auto d = text.find_first_of("+-", p);
 
 		if (p == npos or d == npos) {
 			return js;
 		}
+		else js.type = js.axis;
 
 		const auto axis = text[p];
-		const auto dir = text[d];
+		const auto axd = text[d];
 
 		if (axis == 'X') {
 			js.axis_id = Joystick::Axis::PovX;
@@ -60,11 +62,11 @@ auto pong::parse_joyinput(std::string_view text) -> joy_input
 			js.axis_id = Joystick::Axis::PovY;
 		}
 
-		js.axis_dir = dir == '-' ? dir::up : dir::down;
+		js.axis_dir = axd == '-' ? dir::up : dir::down;
 	}
 	else { // joyaxis
 		auto const axis = input_id;
-		p = text.find_first_of("+-", p, 1);
+		p = text.find_first_of("+-", p, 2);
 		if (p == npos)
 			return js;
 		else {
