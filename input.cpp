@@ -14,7 +14,10 @@ using sf::Mouse;
 namespace
 {
 	unsigned player_joystick[2] = { -1, -1 };
-	pong::keyboard_ctrls player_keyboard_controls[2];
+	pong::keyboard_ctrls player_keyboard_controls[2] = {
+			{sf::Keyboard::W, sf::Keyboard::S, sf::Keyboard::LShift},
+			{sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::RControl}
+	};
 
 	bool refresh_jsinfo = true;
 	std::vector<std::string> list_of_joysticks;
@@ -107,12 +110,12 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 	return js;
 }
 
-pong::keyboard_ctrls pong::get_controls(Player pl) noexcept
+pong::keyboard_ctrls pong::get_keyboard_controls(Player pl) noexcept
 {
 	return player_keyboard_controls[int(pl)];
 }
 
-void pong::set_controls(keyboard_ctrls ctrls, Player pl) noexcept
+void pong::set_keyboard_controls(Player pl, keyboard_ctrls ctrls) noexcept
 {
 	player_keyboard_controls[int(pl)] = ctrls;
 }

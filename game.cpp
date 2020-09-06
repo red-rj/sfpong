@@ -3,7 +3,6 @@
 #include <random>
 
 #include <fmt/format.h>
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "imgui_ext.h"
 #include <imgui-SFML.h>
 
@@ -11,6 +10,7 @@
 #include "game.h"
 #include "rng.h"
 #include "menu.h"
+#include "input.h"
 
 
 using namespace std::literals;
@@ -23,12 +23,30 @@ namespace
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 
 	pong::menu_state Menu;
-	sf::FloatRect Playarea;
+	pong::rect Playarea;
 	pong::court Court;
 
-	pong::paddle_cfg CfgPaddle;
-	pong::ball_cfg CfgBall;
+	pong::paddle_cfg CfgPaddle{
+		/*base speed*/	10,
+		/*accel*/		0.1f,
+		/*size*/		{25, 150}
+	};
+	pong::ball_cfg CfgBall{
+		/*base speed*/	5,
+		/*accel*/		0.1f,
+		/*max speed*/	20,
+		/*radius*/		20,
+	};
+
+	unsigned CfgFramerate = 60;
 }
+
+//HACK
+auto game_cfg() noexcept
+{
+	return std::make_tuple(CfgPaddle, CfgBall, CfgFramerate, Playarea);
+}
+
 
 int pong::random_num(int min, int max)
 {
@@ -90,6 +108,13 @@ pong::game::game(config_t cfg, sf::RenderWindow& window) : Config(std::move(cfg)
 	Menu.config = Config;
 	Score.create(area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
 	resetState();
+
+	// load input settings
+	set_keyboard_controls(Player::One, Config.get_player_cfg(Player::One).keyboard_controls);
+	set_joystick_for(Player::One, Config.get_player_cfg(Player::One).joystickId);
+
+	set_keyboard_controls(Player::Two, Config.get_player_cfg(Player::Two).keyboard_controls);
+	set_joystick_for(Player::Two, Config.get_player_cfg(Player::Two).joystickId);
 }
 
 void pong::game::pollEvents(sf::RenderWindow& window)
@@ -192,8 +217,6 @@ void pong::game::update(sf::RenderWindow& window)
 void pong::game::resetState()
 {
 	auto area = Playarea;
-	CfgPaddle = Config.paddle;
-	CfgBall = Config.ball;
 
 	Player1.id = 0;
 	Player1.setSize(Config.paddle.size);
@@ -213,7 +236,6 @@ void pong::game::resetState()
 void pong::game::updatePlayer(paddle& player)
 {
 	auto& cfg = CfgPaddle;
-	auto& controls = Config.controls;
 	auto& velocity = player.velocity;
 	auto ball_bounds = Ball.getGlobalBounds();
 
@@ -246,13 +268,13 @@ void pong::game::updatePlayer(paddle& player)
 	else // player
 	{
 		auto offset = cfg.base_speed * cfg.accel;
-		auto const& c = controls[player.id];
+		auto controls = pong::get_keyboard_controls(Player(player.id));
 
-		if (sf::Keyboard::isKeyPressed(c.up))
+		if (sf::Keyboard::isKeyPressed(controls.up))
 		{
 			velocity.y -= offset;
 		}
-		else if (sf::Keyboard::isKeyPressed(c.down))
+		else if (sf::Keyboard::isKeyPressed(controls.down))
 		{
 			velocity.y += offset;
 		}
@@ -261,8 +283,8 @@ void pong::game::updatePlayer(paddle& player)
 			velocity.y *= 0.5f;
 		}
 
-		bool moving = velocity != sf::Vector2f();
-		if (moving && sf::Keyboard::isKeyPressed(c.fast))
+		bool moving = velocity != vel();
+		if (moving && sf::Keyboard::isKeyPressed(controls.fast))
 		{
 			velocity.y *= 1.25f;
 		}

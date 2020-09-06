@@ -1,43 +1,71 @@
 #pragma once
+#include "input.h"
 #include <string_view>
 #include <filesystem>
+#include <tuple>
 #include <array>
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 
 namespace pong
 {
-
     struct paddle_cfg {
-        float base_speed = 10, accel = 0.1f;
-        sf::Vector2f size = { 25.f, 150.f };
+        float base_speed, accel;
+        sf::Vector2f size;
     };
 
     struct ball_cfg {
-        float base_speed = 5, accel = 0.1f, max_speed = 20;
-        float radius = 10;
+        float base_speed, accel, max_speed;
+        float radius;
     };
-    
-    struct kb_keys { sf::Keyboard::Key up, down, fast; };
-    
+
+    struct player_cfg
+    {
+        keyboard_ctrls keyboard_controls;
+        int joystickId;
+
+        bool operator== (const player_cfg& rhs) const noexcept
+        {
+            return keyboard_controls == rhs.keyboard_controls
+                && joystickId == rhs.joystickId;
+        }
+    };
+
     struct config_t
     {
-        using Keyboard = sf::Keyboard;
+        std::array<player_cfg, 2> player;
 
-        // ----
-        std::array<kb_keys, 2> controls = {{
-            {Keyboard::W, Keyboard::S, Keyboard::LShift},
-            {Keyboard::Up, Keyboard::Down, Keyboard::RControl}
-        }};
+        auto const& get_player_cfg(Player pl) const noexcept {
+            return player[int(pl)];
+        }
 
         paddle_cfg paddle;
         ball_cfg ball;
-
-        unsigned framerate=60;
+        unsigned framerate;
         
         bool operator== (const config_t& rhs) const noexcept;
     };
+
+    struct game_guts
+    {
+        struct movable { float speed, accel, max_speed; };
+
+        struct : movable
+        {
+            sf::Vector2f size;
+
+        } paddle;
+
+        struct : movable
+        {
+            float radius;
+
+        } ball;
+    };
+
+    using cfgtree = boost::property_tree::iptree;
 
     config_t load_config(std::filesystem::path cfgfile);
     bool save_config(config_t const& cfg, std::filesystem::path cfgfile);
@@ -45,11 +73,6 @@ namespace pong
 
     // operators
     using std::rel_ops::operator!=;
-
-    constexpr bool operator==(const kb_keys& lhs, const kb_keys& rhs)
-    {
-        return std::tie(lhs.up, lhs.down, lhs.fast) == std::tie(rhs.up, rhs.down, rhs.fast);
-    }
 
     constexpr bool operator== (paddle_cfg const& lhs, paddle_cfg const& rhs)
     {
@@ -79,5 +102,6 @@ namespace pong
         CFG_BALL_ACCEL    = "game.ball_accel",
         CFG_BALL_RADIUS   = "game.ball_radius",
         CFG_FRAMERATE     = "game.framerate"
+
     ;
 }

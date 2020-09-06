@@ -2,14 +2,17 @@
 #include "convert.h"
 #include "game.h"
 #include "common.h"
+#include "input.h"
+#include "imgui_ext.h"
 
 #include <algorithm>
 #include <optional>
+#include <tuple>
 
-#include "imgui_ext.h"
 #include <imgui-SFML.h>
 #include <fmt/ostream.h>
 #include <SFML/Window/Window.hpp>
+#include <boost/range/algorithm.hpp>
 
 static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 {
@@ -26,11 +29,10 @@ static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 	else return {};
 }
 
-static auto scan_mouse() noexcept -> std::optional<sf::Mouse::Button>
+static auto scan_mouse_btn() noexcept -> std::optional<sf::Mouse::Button>
 {
 	using sf::Mouse;
 	constexpr auto Count = Mouse::ButtonCount;
-	static_assert(Count <= ImGuiMouseButton_COUNT, "Num. btns de Mouse errado!");
 
 	auto& io = ImGui::GetIO();
 	auto const begin = io.MouseDown;
@@ -42,6 +44,27 @@ static auto scan_mouse() noexcept -> std::optional<sf::Mouse::Button>
 	}
 	else return {};
 }
+
+static auto scan_joy_btn() noexcept
+{
+	using sf::Joystick;
+
+	for (unsigned id = 0; id < Joystick::Count; id++)
+	{
+		const auto btnCount = Joystick::getButtonCount(id);
+		for (unsigned btn = 0; btn < btnCount; btn++)
+		{
+			if (Joystick::isButtonPressed(id, btn))
+			{
+				return std::make_tuple(btn, id);
+			}
+		}
+	}
+}
+
+static void selectJoystick(pong::Player player);
+static void applyChanges(const pong::config_t& config);
+
 
 
 void pong::menu_state::draw(game* ctx, sf::Window* window)
@@ -83,6 +106,7 @@ void pong::menu_state::guiOptions(game* ctx)
 	struct {
 		float paddle_size[2]{};
 		int framerate = 0;
+		bool useJs[2]{};
 	} static model;
 
 	auto& active_config = ctx->Config;
@@ -106,7 +130,6 @@ void pong::menu_state::guiOptions(game* ctx)
 			auto InputControl = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
 			#pragma region Block
 			{
-				using namespace ImScoped;
 				using namespace ImGui;
 
 				ID _id_ = id++;
@@ -134,20 +157,31 @@ void pong::menu_state::guiOptions(game* ctx)
 			};
 			#pragma endregion
 
-			auto InputPlayerCtrls = [&](const char* player, pong::kb_keys& keys) {
-				ImGui::Text("%s:", player);
-				ID _id_ = player;
+			auto InputPlayerCtrls = [&](pong::Player pl) mutable
+			{
+				ID _id_ = int(pl);
+				auto* title = "Player ???";
+				switch (pl)
+				{
+				case pong::Player::One: title = "Player 1"; break;
+				case pong::Player::Two: title = "Player 2"; break;
+				}
+
+				ImGui::Text("%s:", title);
 				Indent _ind_{ 5.f };
 
-				InputControl("Up", keys.up);
-				InputControl("Down", keys.down);
-				InputControl("Fast", keys.fast);
+				auto& player_ctrls = config.player[int(pl)].keyboard_controls;
+
+				InputControl("Up", player_ctrls.up);
+				InputControl("Down", player_ctrls.down);
+				InputControl("Fast", player_ctrls.fast);
+
+				selectJoystick(pl);
 			};
 
 			// ---
-			auto& ctrls = config.controls;
-			InputPlayerCtrls("Player 1", ctrls[0]);
-			InputPlayerCtrls("Player 2", ctrls[1]);
+			InputPlayerCtrls(Player::One);
+			InputPlayerCtrls(Player::Two);
 		}
 		if (auto gametab = TabBarItem("Game vars"))
 		{
@@ -195,6 +229,7 @@ void pong::menu_state::guiOptions(game* ctx)
 	ImGui::SameLine();
 	if (ImGui::Button("Save") && active_config != config) {
 		active_config = config;
+		applyChanges(config);
 	}
 }
 
@@ -228,4 +263,48 @@ void pong::menu_state::guiStats(game* ctx)
 		P1.velocity.y, P2.velocity.y, Ball.velocity.x, Ball.velocity.y);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
+}
+
+void selectJoystick(pong::Player player)
+{
+	using namespace ImGui;
+	namespace gui = ImScoped;
+	using sf::Joystick;
+
+	auto& jsnames = pong::get_joystick_names();
+	unsigned currentjs = pong::get_joystick_for(player);
+
+	auto previewItem = currentjs == unsigned(-1) ? "None" : jsnames[currentjs];
+	if (auto cb = gui::Combo("Select joystick", previewItem.c_str()))
+	{
+		auto s = unsigned(-1);
+		bool is_selected = s == currentjs;
+
+		if (Selectable("None", is_selected)) {
+			pong::set_joystick_for(player, s);
+		}
+
+		s=0;
+		for (auto& name : jsnames)
+		{
+			is_selected = s == currentjs;
+			if (Selectable(name.c_str(), is_selected))
+				pong::set_joystick_for(player, s);
+
+			if (is_selected)
+				SetItemDefaultFocus();
+
+			s++;
+		}
+	}
+}
+
+void applyChanges(const pong::config_t& config)
+{
+	using pong::Player;
+	for (auto player : { Player::One, Player::Two }) {
+		auto& playercfg = config.player[int(player)];
+		pong::set_controls(playercfg.keyboard_controls, player);
+		pong::set_joystick_for(player, playercfg.joystickId);
+	}
 }

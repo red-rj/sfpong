@@ -30,8 +30,10 @@ namespace pong
 
     auto parse_joyinput(std::string_view text)->joy_input;
 
-    keyboard_ctrls get_controls(Player pl) noexcept;
-    void set_controls(keyboard_ctrls ctrls, Player pl) noexcept;
+    // getters e setters para as configurações ativas de input
+
+    auto get_keyboard_controls(Player pl) noexcept -> keyboard_ctrls;
+    void set_keyboard_controls(Player pl, keyboard_ctrls ctrls) noexcept;
 
     unsigned get_joystick_for(Player pl) noexcept;
     void set_joystick_for(Player pl, unsigned joyid) noexcept;

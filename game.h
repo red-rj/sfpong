@@ -6,6 +6,9 @@
 
 namespace pong
 {
+	template<typename T, typename E = T>
+	using pair = std::pair<T, E>;
+
 	// game entities
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
@@ -50,7 +53,7 @@ namespace pong
 			update();
 		}
 
-		void set(std::pair<short, short> newscore) noexcept { val = newscore; }
+		void set(pair<short> newscore) noexcept { val = newscore; }
 		constexpr auto& get() const { return val; }
 
 
@@ -60,7 +63,7 @@ namespace pong
 			target.draw(text, states);
 		}
 
-		std::pair<short, short> val{};
+		pair<short> val{};
 		sf::Text text;
 		sf::Font font;
 	};
@@ -101,8 +104,6 @@ namespace pong
 	};
 
 	
-	template<typename T, typename E = T>
-	using pair = std::pair<T, E>;
 
 
 	struct paddle : sf::RectangleShape
