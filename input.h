@@ -1,12 +1,22 @@
 #pragma once
-#include <string_view>
 #include "common.h"
+#include <string_view>
+#include <vector>
+#include <SFML/Window/Keyboard.hpp>
+#include <SFML/Window/Joystick.hpp>
 
 namespace pong
 {
     enum class Player
     {
         One, Two
+    };
+
+    struct keyboard_ctrls
+    {
+        sf::Keyboard::Key up, down, fast;
+
+        bool operator== (const keyboard_ctrls& rhs) const noexcept;
     };
 
     // representação de um input de joystick
@@ -19,4 +29,13 @@ namespace pong
     };
 
     auto parse_joyinput(std::string_view text)->joy_input;
+
+    keyboard_ctrls get_controls(Player pl) noexcept;
+    void set_controls(keyboard_ctrls ctrls, Player pl) noexcept;
+
+    unsigned get_joystick_for(Player pl) noexcept;
+    void set_joystick_for(Player pl, unsigned joyid) noexcept;
+
+    auto get_joystick_names()->std::vector<std::string> const&;
+    void refresh_joystick_names();
 }
