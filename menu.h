@@ -1,5 +1,6 @@
 #pragma once
 #include "game_config.h"
+#include <array>
 
 namespace sf { class Window; }
 
@@ -13,12 +14,13 @@ namespace pong
 
 		// options
 		bool show_options = false, rebinding = false;
-		config_t config;
 		bool show_stats = false;
 
 	private:
 		void guiOptions(game* ctx);
 		void guiStats(game* ctx);
+
+		std::array<player_input_cfg, 2> input_settings;
 	};
 
 }

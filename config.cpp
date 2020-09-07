@@ -163,112 +163,64 @@ struct sfenum_translator
 };
 using keyboardkey_translator = sfenum_translator<sf::Keyboard::Key>;
 
-
-pong::config_t pong::load_config(std::filesystem::path cfgfile)
+void pong::applyConfig(const cfgtree& tree)
 {
-    using namespace boost::property_tree;
+    using sf::Keyboard;
+    using namespace ckey;
+    enum { P1, P2 };
+    player_input_cfg inputs[2];
 
-    std::ifstream file{ cfgfile };
-    ptree tree;
-    config_t cfg; // tem valores padrão
+    keyboard_ctrls controls[2];
+    int joyid[2];
+    const keyboard_ctrls def[2] = {
+        get_keyboard_controls(Player::One),
+        get_keyboard_controls(Player::Two)
+    };
 
-    try
+    keyboardkey_translator tr;
+    controls[P1].up = tree.get<Keyboard::Key>(ckey::P1_UP, def[P1].up, tr);
+    controls[P1].down = tree.get<Keyboard::Key>(ckey::P1_DOWN, def[P1].down, tr);
+    controls[P1].fast = tree.get<Keyboard::Key>(ckey::P1_FAST, def[P1].fast, tr);
+    joyid[P1] = tree.get(P1_JOYSTICK, -1);
+
+    controls[P2].up = tree.get<Keyboard::Key>(ckey::P2_UP, def[P2].up, tr);
+    controls[P2].down = tree.get<Keyboard::Key>(ckey::P2_DOWN, def[P2].down, tr);
+    controls[P2].fast = tree.get<Keyboard::Key>(ckey::P2_FAST, def[P2].fast, tr);
+    joyid[P2] = tree.get(P2_JOYSTICK, -1);
+
+
+    for (auto player : { Player::One, Player::Two })
     {
-        read_ini(file, tree);
+        auto index = int(player);
+        set_keyboard_controls(player, controls[index]);
+        if (joyid[index] > -1) {
+            set_joystick_for(player, joyid[index]);
+        }
     }
-    catch (...)
-    {
-        lippincott();
-        return cfg;
-    }
-
-
-    { // player settings
-        using Key = sf::Keyboard::Key;
-        keyboardkey_translator tr;
-        enum { P1, P2 };
-        auto dft = cfg.controls;
-
-        cfg.controls[P1].up = tree.get<Key>(CFG_P1_UP, dft[P1].up, tr);
-        cfg.controls[P1].down = tree.get<Key>(CFG_P1_DOWN, dft[P1].down, tr);
-        cfg.controls[P1].fast = tree.get<Key>(CFG_P1_FAST, dft[P1].fast, tr);
-        cfg.controls[P2].up = tree.get<Key>(CFG_P2_UP, dft[P2].up, tr);
-        cfg.controls[P2].down = tree.get<Key>(CFG_P2_DOWN, dft[P2].down, tr);
-        cfg.controls[P2].fast = tree.get<Key>(CFG_P2_FAST, dft[P2].fast, tr);
-    }
-
-    // paddle
-    auto def = cfg.paddle;
-    cfg.paddle.accel = tree.get(CFG_PADDLE_ACCEL, def.accel);
-    cfg.paddle.base_speed = tree.get(CFG_PADDLE_SPEED, def.base_speed);
-    cfg.paddle.size.x = tree.get(CFG_PADDLE_SIZE_X, def.size.x);
-    cfg.paddle.size.y = tree.get(CFG_PADDLE_SIZE_Y, def.size.y);
-
-    // ball
-    auto defb = cfg.ball;
-    cfg.ball.accel = tree.get(CFG_BALL_ACCEL, defb.accel);
-    cfg.ball.base_speed = tree.get(CFG_BALL_SPEED, defb.base_speed);
-    cfg.ball.max_speed = tree.get(CFG_BALL_MAXSPEED, defb.max_speed);
-    cfg.ball.radius = tree.get(CFG_BALL_RADIUS, defb.radius);
-
-    cfg.framerate = tree.get(CFG_FRAMERATE, cfg.framerate);
-
-    return cfg;
 }
 
-bool pong::save_config(config_t const& cfg, std::filesystem::path cfgfile)
+pong::cfgtree pong::getGameConfig()
 {
-    using namespace boost::property_tree;
-
-    ptree tree;
-    { // controls
-        keyboardkey_translator tr;
-        enum { P1, P2 };
-
-        tree.put(CFG_P1_UP, cfg.controls[P1].up, tr);
-        tree.put(CFG_P1_DOWN, cfg.controls[P1].down, tr);
-        tree.put(CFG_P1_FAST, cfg.controls[P1].fast, tr);
-        tree.put(CFG_P2_UP, cfg.controls[P2].up, tr);
-        tree.put(CFG_P2_DOWN, cfg.controls[P2].down, tr);
-        tree.put(CFG_P2_FAST, cfg.controls[P2].fast, tr);
-    }
+    using namespace ckey;
+    enum { P1, P2 };
     
-    // paddle
-    tree.put(CFG_PADDLE_SPEED, cfg.paddle.base_speed);
-    tree.put(CFG_PADDLE_ACCEL, cfg.paddle.accel);
-    tree.put(CFG_PADDLE_SIZE_X, cfg.paddle.size.x);
-    tree.put(CFG_PADDLE_SIZE_Y, cfg.paddle.size.y);
+    auto tree = cfgtree();
 
-    // ball
-    tree.put(CFG_BALL_MAXSPEED, cfg.ball.max_speed);
-    tree.put(CFG_BALL_SPEED, cfg.ball.base_speed);
-    tree.put(CFG_BALL_ACCEL, cfg.ball.accel);
-    tree.put(CFG_BALL_RADIUS, cfg.ball.radius);
+    player_input_cfg inputs[2] = {
+        get_input_cfg(Player::One),
+        get_input_cfg(Player::Two)
+    };
+    keyboardkey_translator tr;
 
-    tree.put(CFG_FRAMERATE, cfg.framerate);
-
-    auto file = std::ofstream(cfgfile, iof::trunc);
-    file << "# sfPong configuration\n\n";
-
-    try
-    {
-        write_ini(file, tree);
-        return true;
-    }
-    catch (...)
-    {
-        lippincott();
-        return false;
-    }
-
-}
-
-bool pong::config_t::operator==(const config_t& rhs) const noexcept
-{
-    return controls == rhs.controls &&
-           paddle == rhs.paddle &&
-           ball == rhs.ball &&
-           framerate == rhs.framerate;
+    tree.put(P1_UP, inputs[P1].keyboard_controls.up, tr);
+    tree.put(P1_DOWN, inputs[P1].keyboard_controls.down, tr);
+    tree.put(P1_FAST, inputs[P1].keyboard_controls.fast, tr);
+    tree.put(P1_JOYSTICK, inputs[P1].joystickId);
+    
+    tree.put(P2_UP, inputs[P2].keyboard_controls.up, tr);
+    tree.put(P2_DOWN, inputs[P2].keyboard_controls.down, tr);
+    tree.put(P2_FAST, inputs[P2].keyboard_controls.fast, tr);
+    tree.put(P2_JOYSTICK, inputs[P2].joystickId);
 }
 
 

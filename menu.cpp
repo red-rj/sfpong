@@ -62,8 +62,7 @@ static auto scan_joy_btn() noexcept
 	}
 }
 
-static void selectJoystick(pong::Player player);
-static void applyChanges(const pong::config_t& config);
+static void selectJoystick(pong::Player player, int& joyid);
 
 
 
@@ -103,13 +102,10 @@ void pong::menu_state::guiOptions(game* ctx)
 {
 	using namespace ImScoped;
 
-	struct {
-		float paddle_size[2]{};
-		int framerate = 0;
-		bool useJs[2]{};
-	} static model;
-
-	auto& active_config = ctx->Config;
+	std::array<player_input_cfg, 2> active_settings = {{
+		{get_keyboard_controls(Player::One), get_joystick_for(Player::One)},
+		{get_keyboard_controls(Player::Two), get_joystick_for(Player::Two)}
+	}};
 
 	{
 		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
@@ -117,7 +113,8 @@ void pong::menu_state::guiOptions(game* ctx)
 		ImGui::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 	}
 
-	auto wflags = active_config != config ? ImGuiWindowFlags_UnsavedDocument : 0;
+	auto wflags = input_settings != active_settings ? ImGuiWindowFlags_UnsavedDocument : 0;
+
 	Window guiwindow("Config.", &show_options, wflags);
 	if (!guiwindow)
 		return;
@@ -170,53 +167,19 @@ void pong::menu_state::guiOptions(game* ctx)
 				ImGui::Text("%s:", title);
 				Indent _ind_{ 5.f };
 
-				auto& player_ctrls = config.player[int(pl)].keyboard_controls;
+				auto& settings = input_settings[int(pl)];
+				auto& player_ctrls = settings.keyboard_controls;
 
 				InputControl("Up", player_ctrls.up);
 				InputControl("Down", player_ctrls.down);
 				InputControl("Fast", player_ctrls.fast);
 
-				selectJoystick(pl);
+				selectJoystick(pl, settings.joystickId);
 			};
 
 			// ---
 			InputPlayerCtrls(Player::One);
 			InputPlayerCtrls(Player::Two);
-		}
-		if (auto gametab = TabBarItem("Game vars"))
-		{
-			ImGui::Text(u8"É preciso reiniciar o jogo para que as alterações desta aba tenham efeito.");
-			{
-				ID _id_ = "paddle";
-				ImGui::Text("Paddle vars");
-				ImGui::InputFloat("Base speed", &config.paddle.base_speed);
-				ImGui::InputFloat("Acceleration", &config.paddle.accel);
-
-				if (ImGui::InputFloat2("Size", model.paddle_size)) {
-					config.paddle.size.x = model.paddle_size[0];
-					config.paddle.size.y = model.paddle_size[1];
-				}
-				else {
-					model.paddle_size[0] = config.paddle.size.x;
-					model.paddle_size[1] = config.paddle.size.y;
-				}
-			}
-			{
-				ID _id_ = "ball";
-				ImGui::Text("Ball vars");
-				ImGui::InputFloat("Base speed", &config.ball.base_speed);
-				ImGui::InputFloat("Acceleration", &config.ball.accel);
-				ImGui::InputFloat("Max speed", &config.ball.max_speed);
-				ImGui::InputFloat("Radius", &config.ball.radius);
-			}
-
-			ImGui::Text("Misc");
-			if (ImGui::SliderInt("Framerate", &model.framerate, 15, 144)) {
-				config.framerate = (unsigned)model.framerate;
-			}
-			else {
-				model.framerate = (int)config.framerate;
-			}
 		}
 	}
 
@@ -224,12 +187,16 @@ void pong::menu_state::guiOptions(game* ctx)
 	ImGui::Separator();
 
 	if (ImGui::Button("Discard")) {
-		config = active_config;
+		input_settings = active_settings;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Save") && active_config != config) {
-		active_config = config;
-		applyChanges(config);
+	if (ImGui::Button("Save") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0) {
+		for (auto player : { Player::One, Player::Two })
+		{
+			auto& setting = input_settings[int(player)];
+			set_keyboard_controls(player, setting.keyboard_controls);
+			set_joystick_for(player, setting.joystickId);
+		}
 	}
 }
 
@@ -265,29 +232,25 @@ void pong::menu_state::guiStats(game* ctx)
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void selectJoystick(pong::Player player)
+void selectJoystick(pong::Player player, int& joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
 	using sf::Joystick;
 
 	auto& jsnames = pong::get_joystick_names();
-	unsigned currentjs = pong::get_joystick_for(player);
 
-	auto previewItem = currentjs == unsigned(-1) ? "None" : jsnames[currentjs];
+	auto previewItem = joyid == -1 ? "None" : jsnames[joyid];
 	if (auto cb = gui::Combo("Select joystick", previewItem.c_str()))
 	{
-		auto s = unsigned(-1);
-		bool is_selected = s == currentjs;
-
-		if (Selectable("None", is_selected)) {
-			pong::set_joystick_for(player, s);
+		if (Selectable("None", joyid==-1)) {
+			pong::unset_joystick_for(player);
 		}
 
-		s=0;
+		auto s=0;
 		for (auto& name : jsnames)
 		{
-			is_selected = s == currentjs;
+			bool is_selected = s == joyid;
 			if (Selectable(name.c_str(), is_selected))
 				pong::set_joystick_for(player, s);
 
@@ -296,15 +259,5 @@ void selectJoystick(pong::Player player)
 
 			s++;
 		}
-	}
-}
-
-void applyChanges(const pong::config_t& config)
-{
-	using pong::Player;
-	for (auto player : { Player::One, Player::Two }) {
-		auto& playercfg = config.player[int(player)];
-		pong::set_controls(playercfg.keyboard_controls, player);
-		pong::set_joystick_for(player, playercfg.joystickId);
 	}
 }

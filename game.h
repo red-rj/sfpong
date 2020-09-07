@@ -1,8 +1,9 @@
 #pragma once
-#include <utility>
-#include <SFML/Graphics.hpp>
-#include "game_config.h"
 #include "common.h"
+#include <utility>
+#include <filesystem>
+#include <SFML/Graphics.hpp>
+
 
 namespace pong
 {
@@ -103,8 +104,6 @@ namespace pong
 		float m_hOffset;
 	};
 
-	
-
 
 	struct paddle : sf::RectangleShape
 	{
@@ -129,7 +128,8 @@ namespace pong
 	};
 
 
-	bool check_collision(const sf::Shape& a, const sf::Shape& b);
+	bool collision(const sf::Shape& a, const sf::Shape& b);
+	bool collision(const sf::Shape& a, const rect& b);
 	bool border_collision(const sf::Shape& p);
 
 	
@@ -139,13 +139,11 @@ namespace pong
 	{
 		friend menu_state;
 
-		game(config_t cfg, sf::RenderWindow& window);
+		game(sf::RenderWindow& window);
 
 		void serve(dir direction);
 		void update(sf::RenderWindow& window);
 
-		// HACK
-		auto& getConfig() const { return Config; }
 	private:
 
 		void resetState();
@@ -160,9 +158,10 @@ namespace pong
 
 		score Score;
 
-		config_t Config;
+		//config_t Config;
 		paddle Player1, Player2;
 		ball Ball;
 	};
+
 
 }

@@ -5,15 +5,22 @@
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
 #include <imgui-SFML.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/info_parser.hpp>
+
+namespace fs = std::filesystem;
+using namespace std::literals;
 
 
 int main()
 {
 	auto logger = spdlog::stdout_color_st(pong::LOGGER_NAME);
-	pong::config_t config;
+
+	pong::cfgtree guts, gamecfg;
 	try
 	{
-		config = pong::load_config("game.cfg");
+		read_ini("game.cfg", gamecfg);
 	}
 	catch (const std::exception& e)
 	{
@@ -21,11 +28,40 @@ int main()
 		logger->info("Using defaults");
 	}
 
+	auto gutsfile = gamecfg.get(pong::ckey::GUTSFILE, "guts.info");
+
+	try
+	{
+		read_info(gutsfile, guts);
+	}
+	catch (const std::exception& e)
+	{
+		logger->info("No guts loaded: {}", e.what());
+	}
+
+
+	if (!gamecfg.empty()) try
+	{
+		pong::applyConfig(gamecfg);
+	}
+	catch (std::exception& e)
+	{
+		logger->error("applyConfig failed! {}", e.what());
+		return 5;
+	}
+
+	if (!guts.empty())
+		pong::overrideGuts(guts);
+
+
+	// ---
+	unsigned const framelimit = guts.get("framerate_limit", 60u);
+	// ---
 	sf::RenderWindow window{ sf::VideoMode(1280, 1024), "Sf Pong!" };
-	window.setFramerateLimit(config.framerate);
+	window.setFramerateLimit(framelimit);
 	ImGui::SFML::Init(window);
 
-	auto vg = pong::game(config, window);
+	auto vg = pong::game(window);
 	sf::Clock deltaClock;
 
 	while (window.isOpen())

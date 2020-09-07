@@ -21,4 +21,6 @@ namespace pong
     using rect = sf::FloatRect;
     // direction type
     enum class dir { up, down, left, right };
+
+    using size2d = sf::Vector2f;
 }

@@ -17,6 +17,27 @@ namespace pong
         sf::Keyboard::Key up, down, fast;
 
         bool operator== (const keyboard_ctrls& rhs) const noexcept;
+
+        bool operator!= (const keyboard_ctrls& rhs) const noexcept {
+            return !(*this == rhs);
+        }
+    };
+
+    struct player_input_cfg
+    {
+        keyboard_ctrls keyboard_controls;
+        int joystickId;
+
+        bool operator== (const player_input_cfg& rhs) const noexcept
+        {
+            return keyboard_controls == rhs.keyboard_controls
+                && joystickId == rhs.joystickId;
+        }
+        bool operator!= (const player_input_cfg& rhs) const noexcept
+        {
+            return !(*this == rhs);
+        }
+
     };
 
     // representação de um input de joystick
@@ -37,6 +58,18 @@ namespace pong
 
     unsigned get_joystick_for(Player pl) noexcept;
     void set_joystick_for(Player pl, unsigned joyid) noexcept;
+
+    inline void unset_joystick_for(Player pl) noexcept {
+        set_joystick_for(pl, unsigned(-1));
+    }
+
+    inline auto get_input_cfg(Player player)
+    {
+        player_input_cfg cfg;
+        cfg.keyboard_controls = get_keyboard_controls(player);
+        cfg.joystickId = get_joystick_for(player);
+        return cfg;
+    }
 
     auto get_joystick_names()->std::vector<std::string> const&;
     void refresh_joystick_names();

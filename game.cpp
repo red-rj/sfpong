@@ -5,6 +5,7 @@
 #include <fmt/format.h>
 #include "imgui_ext.h"
 #include <imgui-SFML.h>
+#include <boost/property_tree/ptree.hpp>
 
 #include "common.h"
 #include "game.h"
@@ -29,7 +30,7 @@ namespace
 	pong::paddle_cfg CfgPaddle{
 		/*base speed*/	10,
 		/*accel*/		0.1f,
-		/*size*/		{25, 150}
+		/*size {x,y}*/	{25, 150}
 	};
 	pong::ball_cfg CfgBall{
 		/*base speed*/	5,
@@ -39,12 +40,6 @@ namespace
 	};
 
 	unsigned CfgFramerate = 60;
-}
-
-//HACK
-auto game_cfg() noexcept
-{
-	return std::make_tuple(CfgPaddle, CfgBall, CfgFramerate, Playarea);
 }
 
 
@@ -85,14 +80,49 @@ pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pie
 	setOrigin(piece_size.x / 2, 0);
 }
 
-bool pong::check_collision(const sf::Shape &a, const sf::Shape &b)
+bool pong::collision(const sf::Shape &a, const sf::Shape &b)
 {
     return a.getGlobalBounds().intersects(b.getGlobalBounds());
 }
-
+bool pong::collision(const sf::Shape& a, const rect& b)
+{
+	return a.getGlobalBounds().intersects(b);
+}
 bool pong::border_collision(const sf::Shape& p)
 {
-	return check_collision(p, Court.top) or check_collision(p, Court.bottom);
+	return collision(p, Court.top) or collision(p, Court.bottom);
+}
+
+
+void pong::overrideGuts(const cfgtree& guts)
+{
+	if (auto p = guts.get_child_optional("paddle")) try
+	{
+		CfgPaddle.base_speed = p->get<float>("speed");
+		CfgPaddle.accel = p->get<float>("acceleration");
+		CfgPaddle.size.x = p->get<float>("width");
+		CfgPaddle.size.y = p->get<float>("height");
+	}
+	catch(std::exception& e)
+	{
+		gamelog()->debug("{} paddle error: {}", __func__, e.what());
+	}
+
+	if (auto node = guts.get_child_optional("ball")) try
+	{
+		CfgBall.base_speed = node->get<float>("speed");
+		CfgBall.accel = node->get<float>("acceleration");
+		CfgBall.max_speed = node->get<float>("maxspeed");
+		CfgBall.radius = node->get<float>("radius");
+	}
+	catch (std::exception& e)
+	{
+		gamelog()->debug("{} ball error: {}", __func__, e.what());
+	}
+
+	if (auto val = guts.get_optional<float>("framerate_limit")) {
+		CfgFramerate = *val;
+	}
 }
 
 void pong::score::update()
@@ -100,21 +130,13 @@ void pong::score::update()
 	text.setString(fmt::format("{}    {}", val.first, val.second));
 }
 
-pong::game::game(config_t cfg, sf::RenderWindow& window) : Config(std::move(cfg))
+pong::game::game(sf::RenderWindow& window)
 {
 	// pong court
 	auto area = rect{ {0.f,0.f}, static_cast<sf::Vector2f>(window.getSize()) };
 	generateLevel(area);
-	Menu.config = Config;
 	Score.create(area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
 	resetState();
-
-	// load input settings
-	set_keyboard_controls(Player::One, Config.get_player_cfg(Player::One).keyboard_controls);
-	set_joystick_for(Player::One, Config.get_player_cfg(Player::One).joystickId);
-
-	set_keyboard_controls(Player::Two, Config.get_player_cfg(Player::Two).keyboard_controls);
-	set_joystick_for(Player::Two, Config.get_player_cfg(Player::Two).joystickId);
 }
 
 void pong::game::pollEvents(sf::RenderWindow& window)
@@ -219,8 +241,8 @@ void pong::game::resetState()
 	auto area = Playarea;
 
 	Player1.id = 0;
-	Player1.setSize(Config.paddle.size);
-	Player1.setOrigin(Config.paddle.size.x / 2, Config.paddle.size.y / 2);
+	Player1.setSize(CfgPaddle.size);
+	Player1.setOrigin(CfgPaddle.size.x / 2, CfgPaddle.size.y / 2);
 	Player1.setPosition(20, area.height / 2);
 
 	Player2 = Player1;
@@ -229,7 +251,7 @@ void pong::game::resetState()
 	Player2.setPosition(area.width - 20, area.height / 2);
 
 	Ball.setPosition(area.width / 2, area.height / 2);
-	Ball.setRadius(Config.ball.radius);
+	Ball.setRadius(CfgBall.radius);
 }
 
 
@@ -298,10 +320,10 @@ void pong::game::updateBall()
 	auto const& cfg = CfgBall;
 
 	paddle* player = nullptr;
-	if (check_collision(Ball, Player1)) {
+	if (collision(Ball, Player1)) {
 		player = &Player1;
 	}
-	else if (check_collision(Ball, Player2)) {
+	else if (collision(Ball, Player2)) {
 		player = &Player2;
 	}
 
@@ -318,7 +340,7 @@ void pong::game::updateBall()
 		do
 		{
 			Ball.update();
-		} while (check_collision(*player, Ball));
+		} while (collision(*player, Ball));
 	}
 	else Ball.update();
 }
@@ -331,7 +353,7 @@ void pong::game::generateLevel(rect area)
 
 void pong::game::serve(dir direction)
 {
-	auto mov = Config.ball.base_speed;
+	auto mov = CfgBall.base_speed;
 	if (direction == dir::left) {
 		mov = -mov;
 	}
