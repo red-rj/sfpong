@@ -18,12 +18,12 @@ namespace pong
     };
 
     struct paddle_cfg {
-        float base_speed, accel;
+        movement move;
         size2d size;
     };
 
     struct ball_cfg {
-        float base_speed, accel, max_speed;
+        movement move;
         float radius;
     };
 

@@ -29,14 +29,17 @@ namespace
 
 
 	pong::paddle_cfg CfgPaddle{
-		/*base speed*/	10,
+		/*speed*/		10,
+		/*max speed*/	30,
 		/*accel*/		0.1f,
-		/*size {x,y}*/	{25, 150}
+
+		/*size {x,y}*/	pong::size2d(25, 150)
 	};
 	pong::ball_cfg CfgBall{
-		/*base speed*/	5,
-		/*accel*/		0.1f,
+		/*speed*/		5,
 		/*max speed*/	20,
+		/*accel*/		0.1f,
+
 		/*radius*/		20,
 	};
 }
@@ -99,8 +102,8 @@ void pong::overrideGuts(const cfgtree& guts)
 {
 	if (auto p = guts.get_child_optional("paddle")) try
 	{
-		CfgPaddle.base_speed = p->get<float>("speed");
-		CfgPaddle.accel = p->get<float>("acceleration");
+		CfgPaddle.move.speed = p->get<float>("speed");
+		CfgPaddle.move.acceleration = p->get<float>("acceleration");
 		CfgPaddle.size.x = p->get<float>("width");
 		CfgPaddle.size.y = p->get<float>("height");
 	}
@@ -111,9 +114,9 @@ void pong::overrideGuts(const cfgtree& guts)
 
 	if (auto node = guts.get_child_optional("ball")) try
 	{
-		CfgBall.base_speed = node->get<float>("speed");
-		CfgBall.accel = node->get<float>("acceleration");
-		CfgBall.max_speed = node->get<float>("maxspeed");
+		CfgBall.move.speed = node->get<float>("speed");
+		CfgBall.move.acceleration = node->get<float>("acceleration");
+		CfgBall.move.max_speed = node->get<float>("maxspeed");
 		CfgBall.radius = node->get<float>("radius");
 	}
 	catch (std::exception& e)
@@ -276,11 +279,11 @@ void pong::game::updatePlayer(paddle& player)
 		{
 			if (ball_pos.y < myPos.y)
 			{
-				velocity.y = std::clamp(-ySpeed, -cfg.base_speed * 2, 0.f);
+				velocity.y = std::clamp(-ySpeed, -cfg.move.speed * 2, 0.f);
 			}
 			else if (ball_pos.y > myPos.y)
 			{
-				velocity.y = std::clamp(ySpeed, 0.f, cfg.base_speed * 2);
+				velocity.y = std::clamp(ySpeed, 0.f, cfg.move.speed * 2);
 			}
 		}
 		else
@@ -310,7 +313,7 @@ void pong::game::updatePlayer(paddle& player)
 		}
 		else
 		{
-			auto offset = cfg.base_speed * cfg.accel;
+			auto offset = cfg.move.speed * cfg.move.acceleration;
 
 			if (Keyboard::isKeyPressed(controls.up))
 				movement -= offset;
@@ -322,7 +325,7 @@ void pong::game::updatePlayer(paddle& player)
 			gofast = Keyboard::isKeyPressed(controls.fast);
 		}
 
-		velocity.y = std::clamp(movement, -30.f, 30.f);
+		velocity.y = std::clamp(movement, -cfg.move.max_speed, cfg.move.max_speed);
 
 		if (velocity != vel() && gofast)
 		{
@@ -347,10 +350,10 @@ void pong::game::updateBall()
 
 	if (player)
 	{
-		const auto MAX = cfg.max_speed;
+		const auto MAX = cfg.move.max_speed;
 		vel velocity = Ball.velocity;
 
-		velocity.x *= 1.0 + cfg.accel;
+		velocity.x *= 1.0 + cfg.move.acceleration;
 		if (player->velocity.y != 0) {
 			velocity.y = player->velocity.y * 0.75 + random_num(-2, 2);
 			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
@@ -377,7 +380,7 @@ void pong::game::generateLevel(rect area)
 
 void pong::game::serve(dir direction)
 {
-	auto mov = CfgBall.base_speed;
+	auto mov = CfgBall.move.speed;
 	if (direction == dir::left) {
 		mov = -mov;
 	}
