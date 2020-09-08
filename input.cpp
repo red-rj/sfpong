@@ -18,6 +18,7 @@ namespace
 			{Keyboard::W, Keyboard::S, Keyboard::LShift},
 			{Keyboard::Up, Keyboard::Down, Keyboard::RControl}
 	};
+	float player_deadzone[2];
 
 	bool refresh_jsinfo = true;
 	std::vector<std::string> list_of_joysticks;
@@ -130,6 +131,24 @@ void pong::set_joystick_for(playerid pl, unsigned joyid) noexcept
 	player_joystick[int(pl)] = joyid;
 }
 
+auto pong::get_input_cfg(playerid player) noexcept -> player_input_cfg
+{
+	const auto p = int(player);
+	player_input_cfg cfg;
+	cfg.joystickId = player_joystick[p];
+	cfg.joystick_deadzone = player_deadzone[p];
+	cfg.keyboard_controls = player_keyboard_controls[p];
+	return cfg;
+}
+
+void pong::set_input_cfg(player_input_cfg input, playerid player) noexcept
+{
+	const auto p = int(player);
+	player_keyboard_controls[p] = input.keyboard_controls;
+	player_joystick[p] = input.joystickId;
+	player_deadzone[p] = input.joystick_deadzone;
+}
+
 auto pong::get_joystick_names() -> const std::vector<std::string>&
 {
 	if (refresh_jsinfo)
@@ -156,7 +175,15 @@ void pong::refresh_joystick_names()
 	refresh_jsinfo = true;
 }
 
+
 bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
 {
 	return std::tie(up,down,fast) == std::tie(rhs.up,rhs.down,rhs.fast);
+}
+
+bool pong::player_input_cfg::operator==(const player_input_cfg& rhs) const noexcept
+{
+	using std::tie;
+	return tie(keyboard_controls, joystickId, joystick_deadzone) == 
+		tie(rhs.keyboard_controls, rhs.joystickId, rhs.joystick_deadzone);
 }

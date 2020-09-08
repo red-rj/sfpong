@@ -22,14 +22,12 @@ namespace pong
     {
         keyboard_ctrls keyboard_controls;
         int joystickId;
+        float joystick_deadzone;
 
-        bool operator== (const player_input_cfg& rhs) const noexcept
-        {
-            return keyboard_controls == rhs.keyboard_controls
-                && joystickId == rhs.joystickId;
-        }
-        bool operator!= (const player_input_cfg& rhs) const noexcept
-        {
+        bool use_joystick() const noexcept { return joystickId > -1; }
+
+        bool operator== (const player_input_cfg& rhs) const noexcept;
+        bool operator!= (const player_input_cfg& rhs) const noexcept {
             return !(*this == rhs);
         }
 
@@ -58,13 +56,8 @@ namespace pong
         set_joystick_for(pl, unsigned(-1));
     }
 
-    inline auto get_input_cfg(playerid player)
-    {
-        player_input_cfg cfg;
-        cfg.keyboard_controls = get_keyboard_controls(player);
-        cfg.joystickId = get_joystick_for(player);
-        return cfg;
-    }
+    auto get_input_cfg(playerid player) noexcept ->player_input_cfg;
+    void set_input_cfg(player_input_cfg input, playerid player) noexcept;
 
     auto get_joystick_names()->std::vector<std::string> const&;
     void refresh_joystick_names();

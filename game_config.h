@@ -10,6 +10,13 @@
 
 namespace pong
 {
+    struct movement
+    {
+        float speed;
+        float max_speed;
+        float acceleration;
+    };
+
     struct paddle_cfg {
         float base_speed, accel;
         size2d size;
@@ -25,21 +32,6 @@ namespace pong
 
     void applyConfig(const cfgtree& tree);
     cfgtree getGameConfig();
-
-
-    // operators
-    using std::rel_ops::operator!=;
-
-    constexpr bool operator== (paddle_cfg const& lhs, paddle_cfg const& rhs)
-    {
-        return std::tie(lhs.accel, lhs.base_speed, lhs.size) ==
-               std::tie(rhs.accel, rhs.base_speed, rhs.size);
-    }
-    constexpr bool operator== (ball_cfg const& lhs, ball_cfg const& rhs)
-    {
-        return std::tie(lhs.accel, lhs.base_speed, lhs.max_speed, lhs.radius) ==
-               std::tie(rhs.accel, rhs.base_speed, rhs.max_speed, rhs.radius);
-    }
 
 // config keys
 namespace ckey

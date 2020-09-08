@@ -24,8 +24,6 @@ namespace pong
 		void guiOptions(game* ctx);
 		void guiStats(game* ctx);
 
-		//std::array<player_input_cfg, 2> input_settings;
-
 		union input_u
 		{
 			std::array<player_input_cfg, 2> settings;

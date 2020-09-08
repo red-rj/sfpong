@@ -62,7 +62,7 @@ static auto scan_joy_btn() noexcept
 	}
 }
 
-static void selectJoystick(pong::playerid player, int& joyid);
+static void selectJoystick(int& joyid);
 
 
 
@@ -184,7 +184,7 @@ void pong::menu_state::guiOptions(game* ctx)
 				InputControl("Down", player_ctrls.down);
 				InputControl("Fast", player_ctrls.fast);
 
-				selectJoystick(pl, settings.joystickId);
+				selectJoystick(settings.joystickId);
 			};
 
 			// ---
@@ -216,8 +216,7 @@ void pong::menu_state::guiOptions(game* ctx)
 		for (auto player : { playerid::one, playerid::two })
 		{
 			auto& setting = input.settings[int(player)];
-			set_keyboard_controls(player, setting.keyboard_controls);
-			set_joystick_for(player, setting.joystickId);
+			set_input_cfg(setting, player);
 		}
 	}
 }
@@ -254,12 +253,11 @@ void pong::menu_state::guiStats(game* ctx)
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void selectJoystick(pong::playerid player, int& joyid)
+void selectJoystick(int& joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
 	using sf::Joystick;
-	using pong::playerid;
 
 	auto& jsnames = pong::get_joystick_names();
 

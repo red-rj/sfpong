@@ -71,13 +71,10 @@ int main(int argcount, const char* args[])
 		logger->info("Failed to load guts: {}", e.what());
 	}
 
-
-
+	// ---
 	if (!guts.empty())
 		pong::overrideGuts(guts);
 
-
-	// ---
 	unsigned const framelimit = guts.get("framerate_limit", 60u);
 	// ---
 	sf::RenderWindow window{ sf::VideoMode(1280, 1024), "Sf Pong!" };

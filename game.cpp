@@ -27,6 +27,7 @@ namespace
 	pong::rect Playarea;
 	pong::court Court;
 
+
 	pong::paddle_cfg CfgPaddle{
 		/*base speed*/	10,
 		/*accel*/		0.1f,
@@ -38,8 +39,6 @@ namespace
 		/*max speed*/	20,
 		/*radius*/		20,
 	};
-
-	unsigned CfgFramerate = 60;
 }
 
 
@@ -122,9 +121,9 @@ void pong::overrideGuts(const cfgtree& guts)
 		gamelog()->debug("{} ball error: {}", __func__, e.what());
 	}
 
-	if (auto val = guts.get_optional<float>("framerate_limit")) {
-		CfgFramerate = *val;
-	}
+	//if (auto val = guts.get_optional<unsigned>("framerate_limit")) {
+	//	CfgFramerate = *val;
+	//}
 }
 
 void pong::score::update()
@@ -291,24 +290,41 @@ void pong::game::updatePlayer(paddle& player)
 	}
 	else // player
 	{
-		auto offset = cfg.base_speed * cfg.accel;
-		auto controls = pong::get_keyboard_controls(player.id);
+		using sf::Keyboard;
+		using sf::Joystick;
 
-		if (sf::Keyboard::isKeyPressed(controls.up))
-		{
-			velocity.y -= offset;
-		}
-		else if (sf::Keyboard::isKeyPressed(controls.down))
-		{
-			velocity.y += offset;
+		float movement = velocity.y;
+		bool gofast = false;
+		auto input = pong::get_input_cfg(player.id);
+		const auto& controls = input.keyboard_controls;
+
+		if (input.use_joystick()) {
+			auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
+			// deadzone
+			if (abs(axis) > 10.f)
+				movement = axis / 5;
+			else
+				movement /= 3; // desacelerar
+
+			gofast = Joystick::isButtonPressed(input.joystickId, 0);
 		}
 		else
 		{
-			velocity.y *= 0.5f;
+			auto offset = cfg.base_speed * cfg.accel;
+
+			if (Keyboard::isKeyPressed(controls.up))
+				movement -= offset;
+			else if (Keyboard::isKeyPressed(controls.down))
+				movement += offset;
+			else
+				movement /= 3; // desacelerar
+
+			gofast = Keyboard::isKeyPressed(controls.fast);
 		}
 
-		bool moving = velocity != vel();
-		if (moving && sf::Keyboard::isKeyPressed(controls.fast))
+		velocity.y = std::clamp(movement, -30.f, 30.f);
+
+		if (velocity != vel() && gofast)
 		{
 			velocity.y *= 1.25f;
 		}
