@@ -53,8 +53,7 @@ namespace ckey
         P2_UP = "player2.up",
         P2_DOWN = "player2.down",
         P2_FAST = "player2.fast",
-        P2_JOYSTICK = "player2.joystick",
-        GUTSFILE = "game.guts"
+        P2_JOYSTICK = "player2.joystick"
         ;
 }
 

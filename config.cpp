@@ -115,33 +115,23 @@ struct sfenum_translator
 
     auto get_value(std::string const& v)->boost::optional<external_type>
     {
-        try
-        {
-            auto ss = std::stringstream(v, iof::in);
-            ss.exceptions(iof::failbit);
-            external_type i;
-            ss >> i;
+        auto ss = std::istringstream(v);
+        external_type i;
+        ss >> i;
+        if (ss.good())
             return i;
-        }
-        catch (const std::exception&)
-        {
+        else
             return boost::none;
-        }
     }
 
     auto put_value(external_type const& v) -> boost::optional<std::string>
     {
-        try
-        {
-            auto ss = std::stringstream(iof::out);
-            ss.exceptions(iof::failbit);
-            ss << v;
+        auto ss = std::ostringstream();
+        ss << v;
+        if (ss.good()) 
             return ss.str();
-        }
-        catch (const std::exception&)
-        {
+        else
             return boost::none;
-        }
     }
 };
 using keyboardkey_translator = sfenum_translator<sf::Keyboard::Key>;

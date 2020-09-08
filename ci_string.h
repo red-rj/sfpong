@@ -2,7 +2,7 @@
 #include <string>
 #include <string_view>
 #include <iostream>
-#include <cwctype>
+#include <locale>
 
 namespace red
 {
@@ -18,9 +18,9 @@ namespace red
         }
         static int compare(const char_type* s1, const char_type* s2, size_t n) {
             while (n-- != 0) {
-                char const uch[] = { to_upper(*s1), to_upper(*s2) };
-                if (uch[0] < uch[1]) return -1;
-                if (uch[0] > uch[1]) return 1;
+                char const us[] = { to_upper(*s1), to_upper(*s2) };
+                if (us[0] < us[1]) return -1;
+                if (us[0] > us[1]) return 1;
                 ++s1; ++s2;
             }
             return 0;
@@ -37,20 +37,9 @@ namespace red
         }
 
     private:
-        static T to_upper(T c) noexcept
+        static T to_upper(T c)
         {
-            using std::make_unsigned_t;
-            using std::is_same_v;
-
-            if constexpr (is_same_v<make_unsigned_t<T>, unsigned char>) {
-                return static_cast<char>(std::toupper((unsigned char)c));
-            }
-            else if constexpr (is_same_v<T, wchar_t>) {
-                return std::towupper(c);
-            }
-            else {
-                static_assert(false, "Unsupported char type");
-            }
+            return toupper(c, std::locale::classic());
         }
 
     };

@@ -170,7 +170,6 @@ void pong::game::pollEvents(sf::RenderWindow& window)
 				break;
 			case sf::Keyboard::Enter:
 				serve(dir::left);
-				gamelog()->info("manual ball serve");
 				break;
 			case sf::Keyboard::F12:
 				resetState();

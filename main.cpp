@@ -8,39 +8,49 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/info_parser.hpp>
+#include <lyra/lyra.hpp>
+#include <fmt/format.h>
 
 namespace fs = std::filesystem;
+namespace ckey = pong::ckey;
 using namespace std::literals;
+using fmt::print;
 
 
-int main()
+int main(int argcount, const char* args[])
 {
+	fs::path guts_file, config_file = "game.cfg";
+	bool show_help=false;
+
+	auto cli = lyra::cli()
+		| lyra::help(show_help)
+		| lyra::opt(config_file, "arquivo")["--config"]("arquivo config (padrão: game.cfg).")
+		| lyra::opt(guts_file, "arquivo")["--guts"]("usar arquivo GUTS.")
+		;
+
+	auto cli_result = cli.parse({ argcount, args });
+	if (!cli_result) {
+		print(stderr, "CLI error: {}\n", cli_result.errorMessage());
+	}
+	else if (show_help) {
+		std::cout << cli << '\n';
+		return 0;
+	}
+
 	auto logger = spdlog::stdout_color_st(pong::LOGGER_NAME);
 
 	pong::cfgtree guts, gamecfg;
 	try
 	{
-		read_ini("game.cfg", gamecfg);
+		if (fs::exists(config_file))
+			read_ini(config_file.string(), gamecfg);
 	}
 	catch (const std::exception& e)
 	{
 		logger->error("Failed to load config: {}", e.what());
-		logger->info("Using defaults");
 	}
-
-	auto gutsfile = gamecfg.get(pong::ckey::GUTSFILE, "guts.info");
 
 	try
-	{
-		read_info(gutsfile, guts);
-	}
-	catch (const std::exception& e)
-	{
-		logger->info("No guts loaded: {}", e.what());
-	}
-
-
-	if (!gamecfg.empty()) try
 	{
 		pong::applyConfig(gamecfg);
 	}
@@ -49,6 +59,19 @@ int main()
 		logger->error("applyConfig failed! {}", e.what());
 		return 5;
 	}
+
+
+	try
+	{
+		if (fs::exists(guts_file))
+			read_info(guts_file.string(), guts);
+	}
+	catch (const std::exception& e)
+	{
+		logger->info("Failed to load guts: {}", e.what());
+	}
+
+
 
 	if (!guts.empty())
 		pong::overrideGuts(guts);
@@ -78,7 +101,7 @@ int main()
 	
 	auto config = pong::getGameConfig();
 	if (gamecfg != config) {
-		write_ini("game.cfg", config);
+		write_ini(config_file.string(), config);
 	}
 
 	return 0;

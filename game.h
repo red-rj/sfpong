@@ -2,8 +2,8 @@
 #include "common.h"
 #include <utility>
 #include <filesystem>
-#include <SFML/Graphics.hpp>
 
+#include "SFML/Graphics.hpp"
 
 namespace pong
 {
@@ -161,7 +161,6 @@ namespace pong
 
 		score Score;
 
-		//config_t Config;
 		paddle Player1, Player2;
 		ball Ball;
 	};
