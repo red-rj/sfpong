@@ -6,7 +6,7 @@
 #include "spdlog/spdlog.h"
 
 #define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; \
-    __red_tu_main_t__::__red_tu_main_t__()
+    __red_tu_main_t__::__red_tu_main_t__
 
 namespace pong
 {
@@ -23,4 +23,6 @@ namespace pong
     enum class dir { up, down, left, right };
 
     using size2d = sf::Vector2f;
+
+    enum class playerid { invalid=-1, one, two };
 }

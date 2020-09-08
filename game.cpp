@@ -55,6 +55,7 @@ bool pong::coin_flip()
 	return dist(rnd_eng);
 }
 
+
 pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
 {
 	m_net.clear();
@@ -79,6 +80,7 @@ pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pie
 
 	setOrigin(piece_size.x / 2, 0);
 }
+
 
 bool pong::collision(const sf::Shape &a, const sf::Shape &b)
 {
@@ -137,6 +139,7 @@ pong::game::game(sf::RenderWindow& window)
 	generateLevel(area);
 	Score.create(area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
 	resetState();
+	Menu.init();
 }
 
 void pong::game::pollEvents(sf::RenderWindow& window)
@@ -240,14 +243,14 @@ void pong::game::resetState()
 {
 	auto area = Playarea;
 
-	Player1.id = 0;
+	Player1.id = playerid::one;
 	Player1.setSize(CfgPaddle.size);
 	Player1.setOrigin(CfgPaddle.size.x / 2, CfgPaddle.size.y / 2);
 	Player1.setPosition(20, area.height / 2);
 
 	Player2 = Player1;
 	Player2.ai = true;
-	Player2.id = 1;
+	Player2.id = playerid::two;
 	Player2.setPosition(area.width - 20, area.height / 2);
 
 	Ball.setPosition(area.width / 2, area.height / 2);
@@ -290,7 +293,7 @@ void pong::game::updatePlayer(paddle& player)
 	else // player
 	{
 		auto offset = cfg.base_speed * cfg.accel;
-		auto controls = pong::get_keyboard_controls(Player(player.id));
+		auto controls = pong::get_keyboard_controls(player.id);
 
 		if (sf::Keyboard::isKeyPressed(controls.up))
 		{
@@ -329,12 +332,18 @@ void pong::game::updateBall()
 
 	if (player)
 	{
-		const auto vX = Ball.velocity.x * (1.f + cfg.accel);
-		const auto vY = (player->velocity.y != 0 ? player->velocity.y * 0.75f : Ball.velocity.y) + random_num(-2, 2);
+		const auto MAX = cfg.max_speed;
+		vel velocity = Ball.velocity;
+
+		velocity.x *= 1.0 + cfg.accel;
+		if (player->velocity.y != 0) {
+			velocity.y = player->velocity.y * 0.75 + random_num(-2, 2);
+			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
+		}
 
 		Ball.velocity = {
-			-std::clamp(vX, -cfg.max_speed, cfg.max_speed),
-			 std::clamp(vY, -cfg.max_speed, cfg.max_speed)
+			-std::clamp(velocity.x, -MAX, MAX),
+			 std::clamp(velocity.y, -MAX, MAX)
 		};
 
 		do

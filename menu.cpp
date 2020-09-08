@@ -62,7 +62,7 @@ static auto scan_joy_btn() noexcept
 	}
 }
 
-static void selectJoystick(pong::Player player, int& joyid);
+static void selectJoystick(pong::playerid player, int& joyid);
 
 
 
@@ -98,14 +98,21 @@ void pong::menu_state::draw(game* ctx, sf::Window* window)
 
 }
 
+void pong::menu_state::init()
+{
+	input.player1 = get_input_cfg(playerid::one);
+	input.player2 = get_input_cfg(playerid::two);
+}
+
 void pong::menu_state::guiOptions(game* ctx)
 {
 	using namespace ImScoped;
 
-	std::array<player_input_cfg, 2> active_settings = {{
-		{get_keyboard_controls(Player::One), get_joystick_for(Player::One)},
-		{get_keyboard_controls(Player::Two), get_joystick_for(Player::Two)}
-	}};
+	input_u active_input;
+	active_input.settings = {
+		get_input_cfg(playerid::one),
+		get_input_cfg(playerid::two)
+	};
 
 	{
 		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
@@ -113,7 +120,7 @@ void pong::menu_state::guiOptions(game* ctx)
 		ImGui::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
 	}
 
-	auto wflags = input_settings != active_settings ? ImGuiWindowFlags_UnsavedDocument : 0;
+	auto wflags = input.settings != active_input.settings ? ImGuiWindowFlags_UnsavedDocument : 0;
 
 	Window guiwindow("Config.", &show_options, wflags);
 	if (!guiwindow)
@@ -146,28 +153,31 @@ void pong::menu_state::guiOptions(game* ctx)
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 					auto key = scan_kb();
-					if (key && key.value() != Key::Escape)
+					if (key)
 					{
-						curKey = key.value();
+						if (key.value() != Key::Escape)
+							curKey = key.value();
+
+						CloseCurrentPopup();
 					}
 				}
 			};
 			#pragma endregion
 
-			auto InputPlayerCtrls = [&](pong::Player pl) mutable
+			auto InputPlayerCtrls = [&](pong::playerid pl) mutable
 			{
 				ID _id_ = int(pl);
 				auto* title = "Player ???";
 				switch (pl)
 				{
-				case pong::Player::One: title = "Player 1"; break;
-				case pong::Player::Two: title = "Player 2"; break;
+				case pong::playerid::one: title = "Player 1"; break;
+				case pong::playerid::two: title = "Player 2"; break;
 				}
 
 				ImGui::Text("%s:", title);
 				Indent _ind_{ 5.f };
 
-				auto& settings = input_settings[int(pl)];
+				auto& settings = input.settings[int(pl)];
 				auto& player_ctrls = settings.keyboard_controls;
 
 				InputControl("Up", player_ctrls.up);
@@ -178,8 +188,19 @@ void pong::menu_state::guiOptions(game* ctx)
 			};
 
 			// ---
-			InputPlayerCtrls(Player::One);
-			InputPlayerCtrls(Player::Two);
+			InputPlayerCtrls(playerid::one);
+
+			if (input.player1.joystickId != -1 && input.player1.joystickId == input.player2.joystickId)
+			{
+				input.player2.joystickId = -1;
+			}
+			
+			InputPlayerCtrls(playerid::two);
+			
+			if (input.player2.joystickId != -1 && input.player2.joystickId == input.player2.joystickId)
+			{
+				input.player1.joystickId = -1;
+			}
 		}
 	}
 
@@ -187,13 +208,14 @@ void pong::menu_state::guiOptions(game* ctx)
 	ImGui::Separator();
 
 	if (ImGui::Button("Discard")) {
-		input_settings = active_settings;
+		input.settings = active_input.settings;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Save") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0) {
-		for (auto player : { Player::One, Player::Two })
+	if (ImGui::Button("Save") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0)
+	{
+		for (auto player : { playerid::one, playerid::two })
 		{
-			auto& setting = input_settings[int(player)];
+			auto& setting = input.settings[int(player)];
 			set_keyboard_controls(player, setting.keyboard_controls);
 			set_joystick_for(player, setting.joystickId);
 		}
@@ -232,11 +254,12 @@ void pong::menu_state::guiStats(game* ctx)
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void selectJoystick(pong::Player player, int& joyid)
+void selectJoystick(pong::playerid player, int& joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
 	using sf::Joystick;
+	using pong::playerid;
 
 	auto& jsnames = pong::get_joystick_names();
 
@@ -244,7 +267,7 @@ void selectJoystick(pong::Player player, int& joyid)
 	if (auto cb = gui::Combo("Select joystick", previewItem.c_str()))
 	{
 		if (Selectable("None", joyid==-1)) {
-			pong::unset_joystick_for(player);
+			joyid = -1;
 		}
 
 		auto s=0;
@@ -252,7 +275,7 @@ void selectJoystick(pong::Player player, int& joyid)
 		{
 			bool is_selected = s == joyid;
 			if (Selectable(name.c_str(), is_selected))
-				pong::set_joystick_for(player, s);
+				joyid = s;
 
 			if (is_selected)
 				SetItemDefaultFocus();

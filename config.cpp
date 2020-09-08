@@ -17,23 +17,6 @@
 #include "convert.h"
 
 
-static void lippincott()
-{
-    using pong::gamelog;
-    using boost::property_tree::ini_parser_error;
-
-    try { throw; }
-    catch (const ini_parser_error& e)
-    {
-        gamelog()->error("{}", e.what());
-    }
-    catch (const std::exception& e)
-    {
-        gamelog()->error("{}", e.what());
-    }
-}
-
-
 struct ci_compare
 {
     constexpr bool operator()(std::string_view lhs, std::string_view rhs) const
@@ -168,33 +151,36 @@ void pong::applyConfig(const cfgtree& tree)
     using sf::Keyboard;
     using namespace ckey;
     enum { P1, P2 };
-    player_input_cfg inputs[2];
 
-    keyboard_ctrls controls[2];
-    int joyid[2];
+    player_input_cfg inputs[2] = {
+        get_input_cfg(playerid::one),
+        get_input_cfg(playerid::two)
+    };
     const keyboard_ctrls def[2] = {
-        get_keyboard_controls(Player::One),
-        get_keyboard_controls(Player::Two)
+        get_keyboard_controls(playerid::one),
+        get_keyboard_controls(playerid::two)
     };
 
     keyboardkey_translator tr;
-    controls[P1].up = tree.get<Keyboard::Key>(ckey::P1_UP, def[P1].up, tr);
-    controls[P1].down = tree.get<Keyboard::Key>(ckey::P1_DOWN, def[P1].down, tr);
-    controls[P1].fast = tree.get<Keyboard::Key>(ckey::P1_FAST, def[P1].fast, tr);
-    joyid[P1] = tree.get(P1_JOYSTICK, -1);
+    // player one
+    inputs[P1].keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP,   def[P1].up, tr);
+    inputs[P1].keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, def[P1].down, tr);
+    inputs[P1].keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, def[P1].fast, tr);
+    inputs[P1].joystickId = tree.get(P1_JOYSTICK, -1);
+    
+    // player two
+    inputs[P2].keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP,   def[P2].up, tr);
+    inputs[P2].keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, def[P2].down, tr);
+    inputs[P2].keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, def[P2].fast, tr);
+    inputs[P2].joystickId = tree.get(P2_JOYSTICK, -1);
 
-    controls[P2].up = tree.get<Keyboard::Key>(ckey::P2_UP, def[P2].up, tr);
-    controls[P2].down = tree.get<Keyboard::Key>(ckey::P2_DOWN, def[P2].down, tr);
-    controls[P2].fast = tree.get<Keyboard::Key>(ckey::P2_FAST, def[P2].fast, tr);
-    joyid[P2] = tree.get(P2_JOYSTICK, -1);
-
-
-    for (auto player : { Player::One, Player::Two })
+    for (auto player : { playerid::one, playerid::two })
     {
-        auto index = int(player);
-        set_keyboard_controls(player, controls[index]);
-        if (joyid[index] > -1) {
-            set_joystick_for(player, joyid[index]);
+        const auto& inp = inputs[int(player)];
+
+        set_keyboard_controls(player, inp.keyboard_controls);
+        if (inp.joystickId > -1) {
+            set_joystick_for(player, inp.joystickId);
         }
     }
 }
@@ -207,8 +193,8 @@ pong::cfgtree pong::getGameConfig()
     auto tree = cfgtree();
 
     player_input_cfg inputs[2] = {
-        get_input_cfg(Player::One),
-        get_input_cfg(Player::Two)
+        get_input_cfg(playerid::one),
+        get_input_cfg(playerid::two)
     };
     keyboardkey_translator tr;
 
@@ -221,6 +207,8 @@ pong::cfgtree pong::getGameConfig()
     tree.put(P2_DOWN, inputs[P2].keyboard_controls.down, tr);
     tree.put(P2_FAST, inputs[P2].keyboard_controls.fast, tr);
     tree.put(P2_JOYSTICK, inputs[P2].joystickId);
+
+    return tree;
 }
 
 

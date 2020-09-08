@@ -53,6 +53,9 @@ namespace pong
 			val.second += p2;
 			update();
 		}
+		void add(pair<short> value) {
+			add(value.first, value.second);
+		}
 
 		void set(pair<short> newscore) noexcept { val = newscore; }
 		constexpr auto& get() const { return val; }
@@ -108,7 +111,7 @@ namespace pong
 	struct paddle : sf::RectangleShape
 	{
 		bool ai = false;
-		int id = -1;
+		playerid id = playerid::invalid;
 		vel velocity;
 
 		void update();

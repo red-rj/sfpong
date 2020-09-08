@@ -21,7 +21,6 @@ namespace pong
     };
 
 
-
     using cfgtree = boost::property_tree::ptree;
 
     void applyConfig(const cfgtree& tree);

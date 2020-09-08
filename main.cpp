@@ -76,9 +76,10 @@ int main()
 
 	ImGui::SFML::Shutdown();
 	
-	auto vgconfig = vg.getConfig();
-	if (vgconfig != config)
-		pong::save_config(vgconfig, "game.cfg");
+	auto config = pong::getGameConfig();
+	if (gamecfg != config) {
+		write_ini("game.cfg", config);
+	}
 
 	return 0;
 }

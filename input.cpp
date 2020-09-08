@@ -15,8 +15,8 @@ namespace
 {
 	unsigned player_joystick[2] = { -1, -1 };
 	pong::keyboard_ctrls player_keyboard_controls[2] = {
-			{sf::Keyboard::W, sf::Keyboard::S, sf::Keyboard::LShift},
-			{sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::RControl}
+			{Keyboard::W, Keyboard::S, Keyboard::LShift},
+			{Keyboard::Up, Keyboard::Down, Keyboard::RControl}
 	};
 
 	bool refresh_jsinfo = true;
@@ -110,22 +110,22 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 	return js;
 }
 
-pong::keyboard_ctrls pong::get_keyboard_controls(Player pl) noexcept
+pong::keyboard_ctrls pong::get_keyboard_controls(playerid pl) noexcept
 {
 	return player_keyboard_controls[int(pl)];
 }
 
-void pong::set_keyboard_controls(Player pl, keyboard_ctrls ctrls) noexcept
+void pong::set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept
 {
 	player_keyboard_controls[int(pl)] = ctrls;
 }
 
-unsigned pong::get_joystick_for(Player pl) noexcept
+unsigned pong::get_joystick_for(playerid pl) noexcept
 {
 	return player_joystick[int(pl)];
 }
 
-void pong::set_joystick_for(Player pl, unsigned joyid) noexcept
+void pong::set_joystick_for(playerid pl, unsigned joyid) noexcept
 {
 	player_joystick[int(pl)] = joyid;
 }

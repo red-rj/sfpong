@@ -7,11 +7,6 @@
 
 namespace pong
 {
-    enum class Player
-    {
-        One, Two
-    };
-
     struct keyboard_ctrls
     {
         sf::Keyboard::Key up, down, fast;
@@ -53,17 +48,17 @@ namespace pong
 
     // getters e setters para as configurações ativas de input
 
-    auto get_keyboard_controls(Player pl) noexcept -> keyboard_ctrls;
-    void set_keyboard_controls(Player pl, keyboard_ctrls ctrls) noexcept;
+    auto get_keyboard_controls(playerid pl) noexcept -> keyboard_ctrls;
+    void set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept;
 
-    unsigned get_joystick_for(Player pl) noexcept;
-    void set_joystick_for(Player pl, unsigned joyid) noexcept;
+    unsigned get_joystick_for(playerid pl) noexcept;
+    void set_joystick_for(playerid pl, unsigned joyid) noexcept;
 
-    inline void unset_joystick_for(Player pl) noexcept {
+    inline void unset_joystick_for(playerid pl) noexcept {
         set_joystick_for(pl, unsigned(-1));
     }
 
-    inline auto get_input_cfg(Player player)
+    inline auto get_input_cfg(playerid player)
     {
         player_input_cfg cfg;
         cfg.keyboard_controls = get_keyboard_controls(player);
