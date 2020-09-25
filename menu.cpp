@@ -68,16 +68,19 @@ static void selectJoystick(int& joyid);
 
 void pong::menu_state::draw(game* ctx, sf::Window* window)
 {
-	if (show_options)
+	if (!ctx->paused) return;
+
+	if (show.options)
 		guiOptions(ctx);
 
-	if (show_stats)
+	if (show.game_stats)
 		guiStats(ctx);
-
-	if (!ctx->paused) return;
 
 	using namespace ImGui;
 	using namespace ImScoped;
+
+	if (show.imgui_demo)
+		ShowDemoWindow(&show.imgui_demo);
 
 	Window menu("Menu", &ctx->paused);
 	auto btnSize = sf::Vector2i(100, 30);
@@ -86,10 +89,7 @@ void pong::menu_state::draw(game* ctx, sf::Window* window)
 		ctx->paused = false;
 	}
 	if (Button(u8"Opções", btnSize)) {
-		show_options = true;
-	}
-	if (Button("DEV", btnSize)) {
-		show_stats = true;
+		show.options = true;
 	}
 	if (Button("Sair", btnSize)) {
 		window->close();
@@ -108,7 +108,7 @@ void pong::menu_state::guiOptions(game* ctx)
 {
 	using namespace ImScoped;
 
-	input_u active_input;
+	input_t active_input;
 	active_input.settings = {
 		get_input_cfg(playerid::one),
 		get_input_cfg(playerid::two)
@@ -122,13 +122,13 @@ void pong::menu_state::guiOptions(game* ctx)
 
 	auto wflags = input.settings != active_input.settings ? ImGuiWindowFlags_UnsavedDocument : 0;
 
-	Window guiwindow("Config.", &show_options, wflags);
+	Window guiwindow(u8"Opções", &show.options, wflags);
 	if (!guiwindow)
 		return;
 
 	if (auto tabbar = TabBar("##Tabs"))
 	{
-		if (auto ctrltab = TabBarItem("Controls"))
+		if (auto tab = TabBarItem("Controls"))
 		{
 
 			auto InputControl = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
@@ -185,6 +185,8 @@ void pong::menu_state::guiOptions(game* ctx)
 				InputControl("Fast", player_ctrls.fast);
 
 				selectJoystick(settings.joystickId);
+
+				ImGui::SliderFloat("Joystick deadzone", &settings.joystick_deadzone, 0, 35, "%.1f%%");
 			};
 
 			// ---
@@ -200,6 +202,19 @@ void pong::menu_state::guiOptions(game* ctx)
 			if (input.player2.joystickId != -1 && input.player2.joystickId == input.player2.joystickId)
 			{
 				input.player1.joystickId = -1;
+			}
+		}
+		if (auto tab = TabBarItem("DEV"))
+		{
+			using ImGui::Button;
+
+			if (Button("game stats"))
+			{
+				show.game_stats = true;
+			}
+			if (Button("ImGui demo window"))
+			{
+				show.imgui_demo = true;
 			}
 		}
 	}
@@ -231,7 +246,7 @@ void pong::menu_state::guiStats(game* ctx)
 	ImGui::SetNextWindowPos(winpos, ImGuiCond_FirstUseEver, { 1.f, 0 });
 
 	auto constexpr wflags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
-	Window overlay("Stats", &show_stats, wflags);
+	Window overlay("Stats", &show.game_stats, wflags);
 
 	auto const& P1 = ctx->Player1;
 	auto const& P2 = ctx->Player2;

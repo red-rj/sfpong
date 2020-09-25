@@ -14,23 +14,25 @@ namespace pong
 
 		void init();
 
-		// options
-		bool show_options = false;
 		bool rebinding = false;
-		bool show_stats = false;
 
+		struct {
+			bool options = false;
+			bool game_stats = false;
+
+			bool imgui_demo = false; 
+		//---
+		} show;
 
 	private:
 		void guiOptions(game* ctx);
 		void guiStats(game* ctx);
 
-		union input_u
+		struct input_t
 		{
 			std::array<player_input_cfg, 2> settings;
-			struct
-			{
-				player_input_cfg player1, player2;
-			};
+			player_input_cfg& player1 = settings[0];
+			player_input_cfg& player2 = settings[1];
 
 		} input;
 	};
