@@ -135,6 +135,7 @@ namespace pong
 	bool collision(const sf::Shape& a, const rect& b);
 	bool border_collision(const sf::Shape& p);
 
+	void constrain_pos(pos& p);
 	
 	struct menu_state;
 

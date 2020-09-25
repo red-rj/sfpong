@@ -97,6 +97,14 @@ bool pong::border_collision(const sf::Shape& p)
 	return collision(p, Court.top) or collision(p, Court.bottom);
 }
 
+void pong::constrain_pos(pos& p)
+{
+	while (p.x >= Playarea.width)	p.x -= Playarea.width;
+	while (p.y >= Playarea.height)	p.y -= Playarea.height;
+	while (p.x < Playarea.left)		p.x += Playarea.left;
+	while (p.y < Playarea.top)		p.x += Playarea.top;
+}
+
 
 void pong::overrideGuts(const cfgtree& guts)
 {
