@@ -312,7 +312,7 @@ void pong::game::updatePlayer(paddle& player)
 		if (input.use_joystick()) {
 			auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
 			// deadzone
-			if (abs(axis) > 10.f)
+			if (abs(axis) > input.joystick_deadzone)
 				movement = axis / 5;
 			else
 				movement /= 3; // desacelerar

@@ -142,36 +142,27 @@ void pong::applyConfig(const cfgtree& tree)
     using namespace ckey;
     enum { P1, P2 };
 
-    player_input_cfg inputs[2] = {
-        get_input_cfg(playerid::one),
-        get_input_cfg(playerid::two)
-    };
-    const keyboard_ctrls def[2] = {
-        get_keyboard_controls(playerid::one),
-        get_keyboard_controls(playerid::two)
-    };
+    player_input_cfg inputs[2];
 
     keyboardkey_translator tr;
     // player one
-    inputs[P1].keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP,   def[P1].up, tr);
-    inputs[P1].keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, def[P1].down, tr);
-    inputs[P1].keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, def[P1].fast, tr);
+    inputs[P1].keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP, Keyboard::W, tr);
+    inputs[P1].keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, Keyboard::S, tr);
+    inputs[P1].keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, Keyboard::LShift, tr);
     inputs[P1].joystickId = tree.get(P1_JOYSTICK, -1);
+    inputs[P1].joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
     
     // player two
-    inputs[P2].keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP,   def[P2].up, tr);
-    inputs[P2].keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, def[P2].down, tr);
-    inputs[P2].keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, def[P2].fast, tr);
+    inputs[P2].keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP, Keyboard::Up, tr);
+    inputs[P2].keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, Keyboard::Down, tr);
+    inputs[P2].keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, Keyboard::RControl, tr);
     inputs[P2].joystickId = tree.get(P2_JOYSTICK, -1);
+    inputs[P2].joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
+
 
     for (auto player : { playerid::one, playerid::two })
     {
-        const auto& inp = inputs[int(player)];
-
-        set_keyboard_controls(player, inp.keyboard_controls);
-        if (inp.joystickId > -1) {
-            set_joystick_for(player, inp.joystickId);
-        }
+        set_input_cfg(inputs[int(player)], player);
     }
 }
 
