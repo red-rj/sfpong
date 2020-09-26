@@ -124,10 +124,10 @@ void pong::constrain_pos(pos& p)
 }
 
 
-void pong::overrideGuts(const fs::path& gutsFile)
+pong::cfgtree pong::overrideGuts(const fs::path& gutsFile)
 {
 	if (!fs::exists(gutsFile))
-		return;
+		return {};
 
 	cfgtree guts;
 	read_info(gutsFile.string(), guts);
@@ -159,6 +159,8 @@ void pong::overrideGuts(const fs::path& gutsFile)
 	{
 		gamelog()->debug("{} ball error: {}", __func__, e.what());
 	}
+
+	return guts;
 }
 
 void pong::score::update()

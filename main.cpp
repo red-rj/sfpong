@@ -41,33 +41,27 @@ int main(int argcount, const char* args[])
 	pong::cfgtree guts, gamecfg;
 	try
 	{
+		logger->info("loading config file");
 		if (fs::exists(config_file))
 			read_ini(config_file.string(), gamecfg);
 	}
 	catch (const std::exception& e)
 	{
-		logger->error("Failed to load config: {}", e.what());
+		logger->error("{}", e.what());
 	}
 
 	try
 	{
+		logger->info("Setting up...");
 		pong::applyConfig(gamecfg);
+		guts = pong::overrideGuts(guts_file);
 	}
 	catch (std::exception& e)
 	{
-		logger->error("applyConfig failed! {}", e.what());
+		logger->error("Game setup failed! {}", e.what());
 		return 5;
 	}
 
-
-	try
-	{
-		pong::overrideGuts(guts_file);
-	}
-	catch (const std::exception& e)
-	{
-		logger->info("Failed to load guts: {}", e.what());
-	}
 
 	unsigned const framelimit = guts.get("framerate_limit", 60u);
 	// ---

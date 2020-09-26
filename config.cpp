@@ -183,11 +183,13 @@ pong::cfgtree pong::getGameConfig()
     tree.put(P1_DOWN, inputs[P1].keyboard_controls.down, tr);
     tree.put(P1_FAST, inputs[P1].keyboard_controls.fast, tr);
     tree.put(P1_JOYSTICK, inputs[P1].joystickId);
+    tree.put(P1_JSDEADZONE, inputs[P1].joystick_deadzone);
     
     tree.put(P2_UP, inputs[P2].keyboard_controls.up, tr);
     tree.put(P2_DOWN, inputs[P2].keyboard_controls.down, tr);
     tree.put(P2_FAST, inputs[P2].keyboard_controls.fast, tr);
     tree.put(P2_JOYSTICK, inputs[P2].joystickId);
+    tree.put(P2_JSDEADZONE, inputs[P2].joystick_deadzone);
 
     return tree;
 }

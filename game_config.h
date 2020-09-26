@@ -14,7 +14,7 @@ namespace pong
 
     void applyConfig(const cfgtree& tree);
     cfgtree getGameConfig();
-    void overrideGuts(const std::filesystem::path& guts = "guts.info");
+    cfgtree overrideGuts(const std::filesystem::path& guts = "guts.info");
 
 // config keys
 namespace ckey
