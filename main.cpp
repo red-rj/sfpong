@@ -7,7 +7,6 @@
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/info_parser.hpp>
 #include <lyra/lyra.hpp>
 #include <fmt/format.h>
 
@@ -63,17 +62,12 @@ int main(int argcount, const char* args[])
 
 	try
 	{
-		if (fs::exists(guts_file))
-			read_info(guts_file.string(), guts);
+		pong::overrideGuts(guts_file);
 	}
 	catch (const std::exception& e)
 	{
 		logger->info("Failed to load guts: {}", e.what());
 	}
-
-	// ---
-	if (!guts.empty())
-		pong::overrideGuts(guts);
 
 	unsigned const framelimit = guts.get("framerate_limit", 60u);
 	// ---

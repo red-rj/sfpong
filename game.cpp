@@ -6,6 +6,7 @@
 #include "imgui_ext.h"
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/info_parser.hpp>
 
 #include "common.h"
 #include "game.h"
@@ -27,15 +28,32 @@ namespace
 	pong::rect Playarea;
 	pong::court Court;
 
+	struct movement
+	{
+		float speed;
+		float max_speed;
+		float acceleration;
+	};
 
-	pong::paddle_cfg CfgPaddle{
+	struct paddle_cfg {
+		movement move;
+		pong::size2d size;
+	};
+
+	struct ball_cfg {
+		movement move;
+		float radius;
+	};
+
+
+	paddle_cfg CfgPaddle{
 		/*speed*/		10,
 		/*max speed*/	30,
 		/*accel*/		0.1f,
 
 		/*size {x,y}*/	pong::size2d(25, 150)
 	};
-	pong::ball_cfg CfgBall{
+	ball_cfg CfgBall{
 		/*speed*/		5,
 		/*max speed*/	20,
 		/*accel*/		0.1f,
@@ -106,14 +124,22 @@ void pong::constrain_pos(pos& p)
 }
 
 
-void pong::overrideGuts(const cfgtree& guts)
+void pong::overrideGuts(const fs::path& gutsFile)
 {
+	if (!fs::exists(gutsFile))
+		return;
+
+	cfgtree guts;
+	read_info(gutsFile.string(), guts);
+
 	if (auto p = guts.get_child_optional("paddle")) try
 	{
-		CfgPaddle.move.speed = p->get<float>("speed");
-		CfgPaddle.move.acceleration = p->get<float>("acceleration");
-		CfgPaddle.size.x = p->get<float>("width");
-		CfgPaddle.size.y = p->get<float>("height");
+		paddle_cfg cfg;
+		cfg.move.speed = p->get<float>("speed");
+		cfg.move.acceleration = p->get<float>("acceleration");
+		cfg.size.x = p->get<float>("width");
+		cfg.size.y = p->get<float>("height");
+		CfgPaddle = cfg;
 	}
 	catch(std::exception& e)
 	{
@@ -122,19 +148,17 @@ void pong::overrideGuts(const cfgtree& guts)
 
 	if (auto node = guts.get_child_optional("ball")) try
 	{
-		CfgBall.move.speed = node->get<float>("speed");
-		CfgBall.move.acceleration = node->get<float>("acceleration");
-		CfgBall.move.max_speed = node->get<float>("maxspeed");
-		CfgBall.radius = node->get<float>("radius");
+		ball_cfg cfg;
+		cfg.move.speed = node->get<float>("speed");
+		cfg.move.acceleration = node->get<float>("acceleration");
+		cfg.move.max_speed = node->get<float>("maxspeed");
+		cfg.radius = node->get<float>("radius");
+		CfgBall = cfg;
 	}
 	catch (std::exception& e)
 	{
 		gamelog()->debug("{} ball error: {}", __func__, e.what());
 	}
-
-	//if (auto val = guts.get_optional<unsigned>("framerate_limit")) {
-	//	CfgFramerate = *val;
-	//}
 }
 
 void pong::score::update()

@@ -10,28 +10,11 @@
 
 namespace pong
 {
-    struct movement
-    {
-        float speed;
-        float max_speed;
-        float acceleration;
-    };
-
-    struct paddle_cfg {
-        movement move;
-        size2d size;
-    };
-
-    struct ball_cfg {
-        movement move;
-        float radius;
-    };
-
-
     using cfgtree = boost::property_tree::ptree;
 
     void applyConfig(const cfgtree& tree);
     cfgtree getGameConfig();
+    void overrideGuts(const std::filesystem::path& guts = "guts.info");
 
 // config keys
 namespace ckey
@@ -52,5 +35,4 @@ namespace ckey
         ;
 }
 
-    void overrideGuts(const cfgtree& guts);
 }
