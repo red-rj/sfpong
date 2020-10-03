@@ -271,7 +271,7 @@ void pong::game::update(sf::RenderWindow& window)
 		tickcount++;
 	}
 
-	Menu.draw(this, &window);
+	Menu.draw(*this, window);
 }
 
 void pong::game::resetState()

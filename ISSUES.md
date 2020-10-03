@@ -4,6 +4,7 @@ sfPong TODOs
 1. [wip] Suporte a Joystick e Mouse
 	- [ ] Arrumar um jeito de serializar e deserializar inputs de Joystick
 	- [ ] sensitividade configurável
+	- [x] deadzone configurável
 2. [x] Unit tests
 3. [ ] Sound Fx?
 4. [ ] Renomear tags (v0.0.0)

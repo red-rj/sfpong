@@ -66,9 +66,9 @@ static void selectJoystick(int& joyid);
 
 
 
-void pong::menu_state::draw(game* ctx, sf::Window* window)
+void pong::menu_state::draw(game& ctx, sf::Window& window)
 {
-	if (!ctx->paused) return;
+	if (!ctx.paused) return;
 
 	if (show.options)
 		guiOptions(ctx);
@@ -82,17 +82,17 @@ void pong::menu_state::draw(game* ctx, sf::Window* window)
 	if (show.imgui_demo)
 		ShowDemoWindow(&show.imgui_demo);
 
-	Window menu("Menu", &ctx->paused);
+	Window menu("Menu", &ctx.paused);
 	auto btnSize = sf::Vector2i(100, 30);
 
 	if (Button("Jogar", btnSize)) {
-		ctx->paused = false;
+		ctx.paused = false;
 	}
 	if (Button(u8"Opções", btnSize)) {
 		show.options = true;
 	}
 	if (Button("Sair", btnSize)) {
-		window->close();
+		window.close();
 		gamelog()->info("ate a proxima! ;D");
 	}
 
@@ -104,7 +104,7 @@ void pong::menu_state::init()
 	input.player2 = get_input_cfg(playerid::two);
 }
 
-void pong::menu_state::guiOptions(game* ctx)
+void pong::menu_state::guiOptions(game& ctx)
 {
 	using namespace ImScoped;
 
@@ -236,7 +236,7 @@ void pong::menu_state::guiOptions(game* ctx)
 	}
 }
 
-void pong::menu_state::guiStats(game* ctx)
+void pong::menu_state::guiStats(game& ctx)
 {
 	using namespace ImScoped;
 
@@ -248,9 +248,9 @@ void pong::menu_state::guiStats(game* ctx)
 	auto constexpr wflags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
 	Window overlay("Stats", &show.game_stats, wflags);
 
-	auto const& P1 = ctx->Player1;
-	auto const& P2 = ctx->Player2;
-	auto const& Ball = ctx->Ball;
+	auto const& P1 = ctx.Player1;
+	auto const& P2 = ctx.Player2;
+	auto const& Ball = ctx.Ball;
 
 	auto p1_pos = P1.getPosition();
 	auto p2_pos = P2.getPosition();

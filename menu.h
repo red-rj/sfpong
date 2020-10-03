@@ -10,12 +10,13 @@ namespace pong
 
 	struct menu_state
 	{
-		void draw(game* ctx, sf::Window* window);
+		void draw(game& ctx, sf::Window& window);
 
 		void init();
 
 		bool rebinding = false;
 
+	private:
 		struct {
 			bool options = false;
 			bool game_stats = false;
@@ -24,9 +25,8 @@ namespace pong
 		//---
 		} show;
 
-	private:
-		void guiOptions(game* ctx);
-		void guiStats(game* ctx);
+		void guiOptions(game& ctx);
+		void guiStats(game& ctx);
 
 		struct input_t
 		{
