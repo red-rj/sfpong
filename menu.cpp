@@ -104,7 +104,7 @@ void pong::menu_state::init()
 	input.player2 = get_input_cfg(playerid::two);
 }
 
-void pong::menu_state::guiOptions(game& ctx)
+void pong::menu_state::guiOptions(game&)
 {
 	using namespace ImScoped;
 

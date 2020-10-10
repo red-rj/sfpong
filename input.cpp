@@ -28,12 +28,16 @@ namespace
 auto pong::parse_joyinput(std::string_view arg) -> joy_input
 {
 	constexpr auto npos = std::string_view::npos;
+	constexpr auto INPUT_ID = "B" "P" "XYZRUV";
+	constexpr auto AXIS = INPUT_ID+2;
+	constexpr auto AXIS_DIR = "+-";
+
 	auto text = red::to_ci(arg);
 
 	joy_input js;
 
 	auto p = text.find("Joy");
-	p = text.find_first_of("B" "P" "XYZRUV", p+3);
+	p = text.find_first_of(INPUT_ID, p+3);
 	if (p == npos) {
 		return js;
 	}
@@ -51,8 +55,8 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 		return js;
 	}
 	else if (input_id == 'P') { // joy pov hat
-		p = text.find_first_of("XY", p);
-		auto d = text.find_first_of("+-", p);
+		p = text.find_first_of(AXIS, p, 2);
+		auto d = text.find_first_of(AXIS_DIR, p);
 
 		if (p == npos or d == npos) {
 			return js;
@@ -73,7 +77,7 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 	}
 	else { // joyaxis
 		auto const axis = input_id;
-		p = text.find_first_of("+-", p, 2);
+		p = text.find_first_of(AXIS_DIR, p, 2);
 		if (p == npos)
 			return js;
 		else {

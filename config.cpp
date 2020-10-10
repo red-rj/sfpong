@@ -140,56 +140,46 @@ void pong::applyConfig(const cfgtree& tree)
 {
     using sf::Keyboard;
     using namespace ckey;
-    enum { P1, P2 };
 
-    player_input_cfg inputs[2];
-
+    player_input_cfg P1, P2;
     keyboardkey_translator tr;
+
     // player one
-    inputs[P1].keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP, Keyboard::W, tr);
-    inputs[P1].keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, Keyboard::S, tr);
-    inputs[P1].keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, Keyboard::LShift, tr);
-    inputs[P1].joystickId = tree.get(P1_JOYSTICK, -1);
-    inputs[P1].joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
+    P1.keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP, Keyboard::W, tr);
+    P1.keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, Keyboard::S, tr);
+    P1.keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, Keyboard::LShift, tr);
+    P1.joystickId = tree.get(P1_JOYSTICK, -1);
+    P1.joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
+    set_input_cfg(P1, playerid::one);
     
     // player two
-    inputs[P2].keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP, Keyboard::Up, tr);
-    inputs[P2].keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, Keyboard::Down, tr);
-    inputs[P2].keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, Keyboard::RControl, tr);
-    inputs[P2].joystickId = tree.get(P2_JOYSTICK, -1);
-    inputs[P2].joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
-
-
-    for (auto player : { playerid::one, playerid::two })
-    {
-        set_input_cfg(inputs[int(player)], player);
-    }
+    P2.keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP, Keyboard::Up, tr);
+    P2.keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, Keyboard::Down, tr);
+    P2.keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, Keyboard::RControl, tr);
+    P2.joystickId = tree.get(P2_JOYSTICK, -1);
+    P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
+    set_input_cfg(P2, playerid::two);
 }
 
 pong::cfgtree pong::getGameConfig()
 {
     using namespace ckey;
-    enum { P1, P2 };
-    
     auto tree = cfgtree();
 
-    player_input_cfg inputs[2] = {
-        get_input_cfg(playerid::one),
-        get_input_cfg(playerid::two)
-    };
+    player_input_cfg P1 = get_input_cfg(playerid::one), P2 = get_input_cfg(playerid::two);
     keyboardkey_translator tr;
 
-    tree.put(P1_UP, inputs[P1].keyboard_controls.up, tr);
-    tree.put(P1_DOWN, inputs[P1].keyboard_controls.down, tr);
-    tree.put(P1_FAST, inputs[P1].keyboard_controls.fast, tr);
-    tree.put(P1_JOYSTICK, inputs[P1].joystickId);
-    tree.put(P1_JSDEADZONE, inputs[P1].joystick_deadzone);
+    tree.put(P1_UP, P1.keyboard_controls.up, tr);
+    tree.put(P1_DOWN, P1.keyboard_controls.down, tr);
+    tree.put(P1_FAST, P1.keyboard_controls.fast, tr);
+    tree.put(P1_JOYSTICK, P1.joystickId);
+    tree.put(P1_JSDEADZONE, P1.joystick_deadzone);
     
-    tree.put(P2_UP, inputs[P2].keyboard_controls.up, tr);
-    tree.put(P2_DOWN, inputs[P2].keyboard_controls.down, tr);
-    tree.put(P2_FAST, inputs[P2].keyboard_controls.fast, tr);
-    tree.put(P2_JOYSTICK, inputs[P2].joystickId);
-    tree.put(P2_JSDEADZONE, inputs[P2].joystick_deadzone);
+    tree.put(P2_UP, P2.keyboard_controls.up, tr);
+    tree.put(P2_DOWN, P2.keyboard_controls.down, tr);
+    tree.put(P2_FAST, P2.keyboard_controls.fast, tr);
+    tree.put(P2_JOYSTICK, P2.joystickId);
+    tree.put(P2_JSDEADZONE, P2.joystick_deadzone);
 
     return tree;
 }
