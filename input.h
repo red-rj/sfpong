@@ -18,6 +18,15 @@ namespace pong
         }
     };
 
+    // representação de um input de joystick
+    struct joy_input
+    {
+        enum input_type { invalid=-1, button, axis } type = invalid;
+        int btn_number;
+        int axis_id;
+        dir axis_dir;
+    };
+
     struct player_input_cfg
     {
         keyboard_ctrls keyboard_controls;
@@ -33,14 +42,6 @@ namespace pong
 
     };
 
-    // representação de um input de joystick
-    struct joy_input
-    {
-        enum input_type { invalid=-1, button, axis } type = invalid;
-        int btn_number;
-        int axis_id;
-        dir axis_dir;
-    };
 
     auto parse_joyinput(std::string_view text)->joy_input;
 
@@ -49,11 +50,11 @@ namespace pong
     auto get_keyboard_controls(playerid pl) noexcept -> keyboard_ctrls;
     void set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept;
 
-    unsigned get_joystick_for(playerid pl) noexcept;
-    void set_joystick_for(playerid pl, unsigned joyid) noexcept;
+    unsigned get_joystick(playerid pl) noexcept;
+    void set_joystick(playerid pl, unsigned joyid) noexcept;
 
-    inline void unset_joystick_for(playerid pl) noexcept {
-        set_joystick_for(pl, unsigned(-1));
+    inline void unset_joystick(playerid pl) noexcept {
+        set_joystick(pl, unsigned(-1));
     }
 
     auto get_input_cfg(playerid player) noexcept ->player_input_cfg;

@@ -27,20 +27,20 @@ int main(int argcount, const char* args[])
 		| lyra::opt(guts_file, "arquivo")["--guts"]("usar arquivo GUTS.")
 		;
 
+	auto logger = spdlog::stdout_color_st("sfPong");
+	spdlog::set_default_logger(logger);
+#ifndef NDEBUG
+	spdlog::set_level(spdlog::level::debug);
+#endif // DEBUG
+
 	auto cli_result = cli.parse({ argcount, args });
 	if (!cli_result) {
-		print(stderr, "CLI error: {}\n", cli_result.errorMessage());
+		print("CLI error: {}\n", cli_result.errorMessage());
 	}
 	else if (show_help) {
 		std::cout << cli << '\n';
 		return 0;
 	}
-
-#ifndef NDEBUG
-	spdlog::set_level(spdlog::level::debug);
-#endif // DEBUG
-	auto logger = spdlog::stdout_color_st(pong::LOGGER_NAME);
-
 
 	pong::cfgtree guts, gamecfg;
 	try
@@ -78,15 +78,19 @@ int main(int argcount, const char* args[])
 	sf::Font sansFont, monoFont;
 	sansFont.loadFromFile("support\\liberation-sans.ttf");
 	monoFont.loadFromFile("support\\liberation-mono.ttf");
-	pong::sansFont = &sansFont;
-	pong::monoFont = &monoFont;
+	
+	{
+		auto& io = ImGui::GetIO();
+		io.Fonts->Clear();
+		const auto ui_font_size = 18.f;
+		io.Fonts->AddFontFromFileTTF("support\\liberation-sans.ttf", ui_font_size);
+		io.Fonts->AddFontFromFileTTF("support\\liberation-sans.ttf", ui_font_size * 2);
+		io.Fonts->AddFontFromFileTTF("support\\liberation-mono.ttf", ui_font_size);
+		
+		ImGui::SFML::UpdateFontTexture();
+	}
 
-	auto& io = ImGui::GetIO();
-	io.Fonts->Clear();
-	auto* imfont = io.Fonts->AddFontFromFileTTF("support\\liberation-sans.ttf", 18.f);
-	io.Fonts->AddFontDefault();
-
-	ImGui::SFML::UpdateFontTexture();
+	pong::setup_game(&sansFont, &monoFont);
 
 	auto vg = pong::game(window);
 	sf::Clock deltaClock;

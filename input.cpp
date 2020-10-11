@@ -43,7 +43,6 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 	}
 
 	const auto input_id = text[p];
-
 	if (input_id == 'B') { // joybtn
 		p++;
 		auto* begin = &text[p];
@@ -54,7 +53,7 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 		}
 		return js;
 	}
-	else if (input_id == 'P') { // joy pov hat
+	else if (input_id == 'P') { // joy povhat
 		p = text.find_first_of(AXIS, p, 2);
 		auto d = text.find_first_of(AXIS_DIR, p);
 
@@ -125,12 +124,12 @@ void pong::set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept
 	player_keyboard_controls[int(pl)] = ctrls;
 }
 
-unsigned pong::get_joystick_for(playerid pl) noexcept
+unsigned pong::get_joystick(playerid pl) noexcept
 {
 	return player_joystick[int(pl)];
 }
 
-void pong::set_joystick_for(playerid pl, unsigned joyid) noexcept
+void pong::set_joystick(playerid pl, unsigned joyid) noexcept
 {
 	player_joystick[int(pl)] = joyid;
 }

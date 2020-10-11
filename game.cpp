@@ -151,7 +151,7 @@ pong::cfgtree pong::overrideGuts(const fs::path& gutsFile)
 	}
 	catch(std::exception& e)
 	{
-		gamelog()->debug("{} paddle error: {}", __func__, e.what());
+		log::debug("{} paddle error: {}", __func__, e.what());
 	}
 
 	if (auto node = guts.get_child_optional("ball")) try
@@ -165,7 +165,7 @@ pong::cfgtree pong::overrideGuts(const fs::path& gutsFile)
 	}
 	catch (std::exception& e)
 	{
-		gamelog()->debug("{} ball error: {}", __func__, e.what());
+		log::debug("{} ball error: {}", __func__, e.what());
 	}
 
 	return guts;
@@ -235,10 +235,6 @@ void pong::game::pollEvents(sf::RenderWindow& window)
 			rect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
 			window.setView(sf::View(visibleArea));
 			generateLevel(visibleArea);
-		} break;
-		
-		case sf::Event::MouseWheelScrolled: {
-			auto delta = event.mouseWheelScroll.delta;
 		} break;
 
 		}

@@ -10,3 +10,4 @@ sfPong TODOs
 4. [ ] Renomear tags (v0.0.0)
 5. [ ] Não usar absolute path do ttf
 6. [x] Menu de seleção de modo (1 ou 2 jogadores)
+7. [ ] Variavel de versão do programa (SFPONG_VERSION)

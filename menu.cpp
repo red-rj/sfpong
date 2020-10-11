@@ -314,7 +314,6 @@ void pong::menu_state::aboutSfPong()
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
 	
-	constexpr auto libver = "%10s: %d.%d.%d";
 	Text("%10s %s", "Dear ImGui", ImGui::GetVersion()); SameLine();
 	if (SmallButton("about")) {
 		show.imgui_about = true;
@@ -322,6 +321,7 @@ void pong::menu_state::aboutSfPong()
 	if (IsItemHovered())
 		SetTooltip("ImGui about window");
 
+	constexpr auto libver = "%10s: %d.%d.%d";
 	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
 	Text(libver, "Boost",
 		BOOST_VERSION / 100000,

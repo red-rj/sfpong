@@ -10,8 +10,7 @@
 
 namespace pong
 {
-    inline auto LOGGER_NAME = "sfPong";
-    inline auto gamelog() { return spdlog::get(LOGGER_NAME); }
+    namespace log = spdlog;
 
     // position type
     using pos = sf::Vector2f;
@@ -21,6 +20,9 @@ namespace pong
     using rect = sf::FloatRect;
     // direction type
     enum class dir { up, down, left, right };
+
+    template<class T>
+    using size_2d = sf::Vector2<T>;
 
     using size2d = sf::Vector2f;
 
