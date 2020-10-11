@@ -241,7 +241,7 @@ void pong::menu_t::guiOptions(game&)
 
 				joystickCombobox(settings.joystickId);
 
-				ImGui::SliderFloat("Joystick deadzone", &settings.joystick_deadzone, 0, 35, "%.1f%%");
+				ImGui::SliderFloat("Joystick deadzone", &settings.joystick_deadzone, 0, 50, "%.1f%%");
 			};
 
 			auto rollback_if_eq = [&](playerid lhs, playerid rhs) mutable {
@@ -362,7 +362,7 @@ void pong::menu_t::joystickCombobox(int& joyid)
 	namespace gui = ImScoped;
 	using sf::Joystick;
 
-	const auto npos = unsigned(-1);
+	const auto npos = -1;
 	const auto nitem = "Nenhum";
 
 	auto& joynames = _joystick_list;

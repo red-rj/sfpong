@@ -118,20 +118,20 @@ struct sfenum_translator
         auto ss = std::istringstream(v);
         external_type i;
         ss >> i;
-        if (ss.good())
-            return i;
-        else
+        if (ss.fail())
             return boost::none;
+        else
+            return i;
     }
 
     auto put_value(external_type const& v) -> boost::optional<std::string>
     {
         auto ss = std::ostringstream();
         ss << v;
-        if (ss.good()) 
-            return ss.str();
-        else
+        if (ss.fail())
             return boost::none;
+        else
+            return ss.str();
     }
 };
 using keyboardkey_translator = sfenum_translator<sf::Keyboard::Key>;
