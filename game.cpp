@@ -24,7 +24,6 @@ namespace
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 
-	pong::menu_state Menu;
 	pong::rect Playarea;
 	pong::court Court;
 
@@ -128,7 +127,7 @@ void pong::setup_game(sf::Font* sans, sf::Font* mono)
 {
 	sansFont = sans;
 	monoFont = mono;
-	Menu.init();
+	game_menu.init();
 }
 
 
@@ -203,7 +202,7 @@ void pong::game::pollEvents(sf::RenderWindow& window)
 
 		case sf::Event::KeyReleased:
 		{
-			if (Menu.rebinding)
+			if (game_menu.rebinding)
 				break;
 
 			switch (event.key.code)
@@ -237,6 +236,10 @@ void pong::game::pollEvents(sf::RenderWindow& window)
 			generateLevel(visibleArea);
 		} break;
 
+		case sf::Event::JoystickConnected:
+		case sf::Event::JoystickDisconnected:
+			game_menu.refresh_joystick_list();
+			break;
 		}
 	}
 
@@ -282,7 +285,7 @@ void pong::game::update(sf::RenderWindow& window)
 		tickcount++;
 	}
 
-	Menu.draw(*this, window);
+	game_menu.draw(*this, window);
 }
 
 void pong::game::resetState()

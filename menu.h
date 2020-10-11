@@ -8,14 +8,25 @@ namespace pong
 {
 	struct game;
 
-	struct menu_state
+	struct menu_t
 	{
 		void draw(game& ctx, sf::Window& window);
 		void init();
 
 		bool rebinding = false;
+		
+		void refresh_joystick_list() const;
 
 	private:
+		// windows
+		void guiOptions(game& ctx);
+		void guiStats(game& ctx);
+		void aboutSfPong();
+
+		// ui
+		void joystickCombobox(int& joyid);
+
+		// show flags
 		struct {
 			bool options = false;
 			bool game_stats = false;
@@ -24,16 +35,9 @@ namespace pong
 			bool imgui_demo = false, imgui_about = false;
 		} show;
 
-		void guiOptions(game& ctx);
-		void guiStats(game& ctx);
-		void aboutSfPong();
-
-		struct input_t
-		{
-			std::array<player_input_cfg, 2> settings;
-			player_input_cfg& player1 = settings[0];
-			player_input_cfg& player2 = settings[1];
-
-		} input;
+		// copia de trabalho das configs de input
+		std::array<player_input_cfg, 2> input_settings;
 	};
+
+	extern menu_t game_menu;
 }

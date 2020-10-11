@@ -59,7 +59,4 @@ namespace pong
 
     auto get_input_cfg(playerid player) noexcept ->player_input_cfg;
     void set_input_cfg(player_input_cfg input, playerid player) noexcept;
-
-    auto get_joystick_names()->std::vector<std::string> const&;
-    void refresh_joystick_names();
 }

@@ -7,8 +7,6 @@
 
 namespace pong
 {
-	template<typename T, typename E = T>
-	using pair = std::pair<T, E>;
 
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
@@ -134,11 +132,11 @@ namespace pong
 
 	void constrain_pos(pos& p);
 	
-	struct menu_state;
+	struct menu_t;
 
 	struct game
 	{
-		friend menu_state;
+		friend menu_t;
 
 		enum class mode
 		{

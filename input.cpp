@@ -19,9 +19,6 @@ namespace
 			{Keyboard::Up, Keyboard::Down, Keyboard::RControl}
 	};
 	float player_deadzone[2];
-
-	bool refresh_jsinfo = true;
-	std::vector<std::string> list_of_joysticks;
 }
 
 
@@ -150,32 +147,6 @@ void pong::set_input_cfg(player_input_cfg input, playerid player) noexcept
 	player_keyboard_controls[p] = input.keyboard_controls;
 	player_joystick[p] = input.joystickId;
 	player_deadzone[p] = input.joystick_deadzone;
-}
-
-auto pong::get_joystick_names() -> const std::vector<std::string>&
-{
-	if (refresh_jsinfo)
-	{
-		list_of_joysticks.reserve(Joystick::Count);
-		list_of_joysticks.clear();
-
-		for (unsigned id = 0; id < Joystick::Count; id++)
-		{
-			if (Joystick::isConnected(id)) {
-				auto info = Joystick::getIdentification(id);
-				list_of_joysticks.emplace_back(info.name);
-			}
-		}
-
-		refresh_jsinfo = false;
-	}
-
-	return list_of_joysticks;
-}
-
-void pong::refresh_joystick_names()
-{
-	refresh_jsinfo = true;
 }
 
 

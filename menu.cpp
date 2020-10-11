@@ -1,13 +1,13 @@
 #include "menu.h"
 #include "convert.h"
 #include "game.h"
-#include "common.h"
 #include "input.h"
 #include "imgui_ext.h"
 
 #include <algorithm>
 #include <optional>
 #include <tuple>
+#include <vector>
 
 #include <imgui-SFML.h>
 #include <fmt/ostream.h>
@@ -63,21 +63,26 @@ static auto scan_joy_btn() noexcept
 	}
 }
 
-static void selectJoystick(int& joyid);
 
 namespace
 {
 	ImFont* ui_default_font, *ui_bigger_font;
+
+	std::vector<std::string> _joystick_list;
 }
 
+pong::menu_t pong::game_menu;
 
-void pong::menu_state::draw(game& ctx, sf::Window& window)
+void pong::menu_t::draw(game& ctx, sf::Window& window)
 {
 	using namespace ImGui;
 	using namespace ImScoped;
 
 	if (!ctx.paused) return;
 
+	// update
+
+	// draw
 	if (show.options)
 		guiOptions(ctx);
 
@@ -121,37 +126,54 @@ void pong::menu_state::draw(game& ctx, sf::Window& window)
 	MenuItem(u8"Opções", nullptr, &show.options);
 
 	{
-		auto _s0_ = StyleColor(ImGuiCol_Button, sf::Color::Transparent);
-		auto _s1_ = StyleColor(ImGuiCol_ButtonHovered, sf::Color::Red);
-		auto _s2_ = StyleColor(ImGuiCol_ButtonActive, sf::Color::Red);
+		auto _s_ = {
+			StyleColor(ImGuiCol_Button, sf::Color::Transparent),
+			StyleColor(ImGuiCol_ButtonHovered, sf::Color::Red),
+			StyleColor(ImGuiCol_ButtonActive, sf::Color::Red)
+		};
 
-		if (Button("Sair"))
+		if (Button("Sair")) {
+			log::info("Tchau! :)");
 			window.close();
+		}
 	}
 }
 
-void pong::menu_state::init()
+void pong::menu_t::init()
 {
-	input.player1 = get_input_cfg(playerid::one);
-	input.player2 = get_input_cfg(playerid::two);
+	input_settings[(int)playerid::one] = get_input_cfg(playerid::one);
+	input_settings[(int)playerid::two] = get_input_cfg(playerid::two);
+	refresh_joystick_list();
 
 	auto* fontAtlas = ImGui::GetIO().Fonts;
 	ui_default_font = fontAtlas->Fonts.front();
 	ui_bigger_font = fontAtlas->Fonts[1];
 }
 
-void pong::menu_state::guiOptions(game&)
+void pong::menu_t::refresh_joystick_list() const
+{
+	using sf::Joystick;
+	_joystick_list.clear();
+	_joystick_list.reserve(Joystick::Count);
+
+	for (unsigned id = 0; id < Joystick::Count; id++)
+	{
+		if (Joystick::isConnected(id)) {
+			auto info = Joystick::getIdentification(id);
+			_joystick_list.emplace_back(info.name);
+		}
+	}
+}
+
+void pong::menu_t::guiOptions(game&)
 {
 	namespace gui = ImScoped;
-
-	input_t active_input;
-	active_input.settings = {
+	std::array<player_input_cfg, 2> active_settings = {
 		get_input_cfg(playerid::one),
 		get_input_cfg(playerid::two)
 	};
 
-	auto wflags = input.settings != active_input.settings ? ImGuiWindowFlags_UnsavedDocument : 0;
-
+	auto wflags = input_settings != active_settings ? ImGuiWindowFlags_UnsavedDocument : 0;
 	gui::Window guiwindow(u8"Opções", &show.options, wflags);
 	if (!guiwindow)
 		return;
@@ -170,20 +192,19 @@ void pong::menu_state::guiOptions(game&)
 				auto constexpr popup_id = "Rebind popup";
 				auto keystr = fmt::format("{}", curKey);
 
-				Text("%s: ", label); SameLine();
-				AlignTextToFramePadding();
+				Text("%5s:", label);
+				SameLine(75);
 				if (Button(keystr.c_str())) {
 					OpenPopup(popup_id);
 					rebinding = true;
 				}
 
-				
-				gui::Font sansBig{ ui_bigger_font };
-
 				const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
 				if (auto popup = gui::PopupModal(popup_id, &rebinding, flags))
 				{
 					using Key = sf::Keyboard::Key;
+
+					gui::Font sansBig{ ui_bigger_font };
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 					auto key = scan_kb();
@@ -211,32 +232,32 @@ void pong::menu_state::guiOptions(game&)
 				ImGui::Text("%s:", title);
 				gui::Indent _ind_{ 5.f };
 
-				auto& settings = input.settings[int(pl)];
+				auto& settings = input_settings[int(pl)];
 				auto& player_ctrls = settings.keyboard_controls;
 
 				InputControl("Up", player_ctrls.up);
 				InputControl("Down", player_ctrls.down);
 				InputControl("Fast", player_ctrls.fast);
 
-				selectJoystick(settings.joystickId);
+				joystickCombobox(settings.joystickId);
 
 				ImGui::SliderFloat("Joystick deadzone", &settings.joystick_deadzone, 0, 35, "%.1f%%");
 			};
 
+			auto rollback_if_eq = [&](playerid lhs, playerid rhs) mutable {
+				if (input_settings[int(lhs)].joystickId != -1 
+					&& input_settings[int(lhs)].joystickId == input_settings[int(rhs)].joystickId)
+				{
+					input_settings[int(rhs)].joystickId = -1;
+				}
+			};
+
 			// ---
 			InputPlayerCtrls(playerid::one);
-
-			if (input.player1.joystickId != -1 && input.player1.joystickId == input.player2.joystickId)
-			{
-				input.player2.joystickId = -1;
-			}
+			rollback_if_eq(playerid::one, playerid::two);
 			
 			InputPlayerCtrls(playerid::two);
-			
-			if (input.player2.joystickId != -1 && input.player2.joystickId == input.player2.joystickId)
-			{
-				input.player1.joystickId = -1;
-			}
+			rollback_if_eq(playerid::two, playerid::one);
 		}
 		if (auto tab = gui::TabBarItem("DEV"))
 		{
@@ -257,20 +278,19 @@ void pong::menu_state::guiOptions(game&)
 	ImGui::Separator();
 
 	if (ImGui::Button("Descartar")) {
-		input.settings = active_input.settings;
+		input_settings = active_settings;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Salvar") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0)
 	{
 		for (auto player : { playerid::one, playerid::two })
 		{
-			auto& setting = input.settings[int(player)];
-			set_input_cfg(setting, player);
+			set_input_cfg(input_settings[int(player)], player);
 		}
 	}
 }
 
-void pong::menu_state::guiStats(game& ctx)
+void pong::menu_t::guiStats(game& ctx)
 {
 	using namespace ImScoped;
 
@@ -302,7 +322,7 @@ void pong::menu_state::guiStats(game& ctx)
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void pong::menu_state::aboutSfPong()
+void pong::menu_t::aboutSfPong()
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
@@ -314,7 +334,7 @@ void pong::menu_state::aboutSfPong()
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
 	
-	Text("%10s %s", "Dear ImGui", ImGui::GetVersion()); SameLine();
+	Text("%10s %s", "ImGui", ImGui::GetVersion()); SameLine();
 	if (SmallButton("about")) {
 		show.imgui_about = true;
 	}
@@ -336,23 +356,26 @@ void pong::menu_state::aboutSfPong()
 	Text(libver, "spdlog", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
 }
 
-void selectJoystick(int& joyid)
+void pong::menu_t::joystickCombobox(int& joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
 	using sf::Joystick;
 
-	auto& jsnames = pong::get_joystick_names();
+	const auto npos = unsigned(-1);
+	const auto nitem = "Nenhum";
 
-	auto previewItem = joyid == -1 ? "None" : jsnames[joyid];
-	if (auto cb = gui::Combo("Select joystick", previewItem.c_str()))
+	auto& joynames = _joystick_list;
+	auto previewItem = joyid == npos ? nitem : joynames[joyid];
+
+	if (auto cb = gui::Combo("Joystick", previewItem.c_str()))
 	{
-		if (Selectable("None", joyid==-1)) {
-			joyid = -1;
+		if (Selectable(nitem, joyid==npos)) {
+			joyid = npos;
 		}
 
-		auto s=0;
-		for (auto& name : jsnames)
+		auto s = 0u;
+		for (auto& name : joynames)
 		{
 			bool is_selected = s == joyid;
 			if (Selectable(name.c_str(), is_selected))
