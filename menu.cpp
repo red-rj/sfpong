@@ -14,6 +14,7 @@
 #include <SFML/Window/Window.hpp>
 #include <boost/range/algorithm.hpp>
 
+
 static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 {
 	using sf::Keyboard;
@@ -64,6 +65,11 @@ static auto scan_joy_btn() noexcept
 
 static void selectJoystick(int& joyid);
 
+namespace
+{
+	ImFont* ui_default_font, *ui_bigger_font;
+}
+
 
 void pong::menu_state::draw(game& ctx, sf::Window& window)
 {
@@ -99,11 +105,11 @@ void pong::menu_state::draw(game& ctx, sf::Window& window)
 		if (auto m1 = Menu("Novo")) {
 			auto size = static_cast<size2d>(window.getSize());
 
-			if (MenuItem("1 jogador", nullptr, singleplayer)) {
+			if (MenuItem("1 jogador", nullptr, false, !singleplayer)) {
 				ctx = game(size, game::mode::singleplayer);
 				ctx.paused = false;
 			}
-			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
+			if (MenuItem("2 jogadores", nullptr, false, !multiplayer)) {
 				ctx = game(size, game::mode::multiplayer);
 				ctx.paused = false;
 			}
@@ -128,11 +134,15 @@ void pong::menu_state::init()
 {
 	input.player1 = get_input_cfg(playerid::one);
 	input.player2 = get_input_cfg(playerid::two);
+
+	auto* fontAtlas = ImGui::GetIO().Fonts;
+	ui_default_font = fontAtlas->Fonts.front();
+	ui_bigger_font = fontAtlas->Fonts[1];
 }
 
 void pong::menu_state::guiOptions(game&)
 {
-	using namespace ImScoped;
+	namespace gui = ImScoped;
 
 	input_t active_input;
 	active_input.settings = {
@@ -142,13 +152,13 @@ void pong::menu_state::guiOptions(game&)
 
 	auto wflags = input.settings != active_input.settings ? ImGuiWindowFlags_UnsavedDocument : 0;
 
-	Window guiwindow(u8"Opções", &show.options, wflags);
+	gui::Window guiwindow(u8"Opções", &show.options, wflags);
 	if (!guiwindow)
 		return;
 
-	if (auto tabbar = TabBar("##Tabs"))
+	if (auto tabbar = gui::TabBar("##Tabs"))
 	{
-		if (auto tab = TabBarItem("Controls"))
+		if (auto tab = gui::TabBarItem("Controles"))
 		{
 
 			auto InputControl = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
@@ -156,7 +166,7 @@ void pong::menu_state::guiOptions(game&)
 			{
 				using namespace ImGui;
 
-				ID _id_ = id++;
+				gui::ID _id_ = id++;
 				auto constexpr popup_id = "Rebind popup";
 				auto keystr = fmt::format("{}", curKey);
 
@@ -167,8 +177,11 @@ void pong::menu_state::guiOptions(game&)
 					rebinding = true;
 				}
 
+				
+				gui::Font sansBig{ ui_bigger_font };
+
 				const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
-				if (auto popup = PopupModal(popup_id, &rebinding, flags))
+				if (auto popup = gui::PopupModal(popup_id, &rebinding, flags))
 				{
 					using Key = sf::Keyboard::Key;
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
@@ -187,7 +200,7 @@ void pong::menu_state::guiOptions(game&)
 
 			auto InputPlayerCtrls = [&](pong::playerid pl) mutable
 			{
-				ID _id_ = int(pl);
+				gui::ID _id_ = int(pl);
 				auto* title = "Player ???";
 				switch (pl)
 				{
@@ -196,7 +209,7 @@ void pong::menu_state::guiOptions(game&)
 				}
 
 				ImGui::Text("%s:", title);
-				Indent _ind_{ 5.f };
+				gui::Indent _ind_{ 5.f };
 
 				auto& settings = input.settings[int(pl)];
 				auto& player_ctrls = settings.keyboard_controls;
@@ -225,7 +238,7 @@ void pong::menu_state::guiOptions(game&)
 				input.player1.joystickId = -1;
 			}
 		}
-		if (auto tab = TabBarItem("DEV"))
+		if (auto tab = gui::TabBarItem("DEV"))
 		{
 			using ImGui::Button;
 
@@ -300,7 +313,8 @@ void pong::menu_state::aboutSfPong()
 	Text("sfPong %s", "0.0.0");
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
-	constexpr auto libver = "%10s %d.%d.%d";
+	
+	constexpr auto libver = "%10s: %d.%d.%d";
 	Text("%10s %s", "Dear ImGui", ImGui::GetVersion()); SameLine();
 	if (SmallButton("about")) {
 		show.imgui_about = true;
@@ -308,6 +322,7 @@ void pong::menu_state::aboutSfPong()
 	if (IsItemHovered())
 		SetTooltip("ImGui about window");
 
+	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
 	Text(libver, "Boost",
 		BOOST_VERSION / 100000,
 		BOOST_VERSION / 100 % 1000,

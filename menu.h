@@ -11,7 +11,6 @@ namespace pong
 	struct menu_state
 	{
 		void draw(game& ctx, sf::Window& window);
-
 		void init();
 
 		bool rebinding = false;
@@ -29,7 +28,6 @@ namespace pong
 		void guiStats(game& ctx);
 		void aboutSfPong();
 
-
 		struct input_t
 		{
 			std::array<player_input_cfg, 2> settings;
@@ -38,5 +36,4 @@ namespace pong
 
 		} input;
 	};
-
 }

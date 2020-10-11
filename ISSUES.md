@@ -9,4 +9,4 @@ sfPong TODOs
 3. [ ] Sound Fx?
 4. [ ] Renomear tags (v0.0.0)
 5. [ ] Não usar absolute path do ttf
-6. [ ] Menu de seleção de modo (1 ou 2 jogadores)
+6. [x] Menu de seleção de modo (1 ou 2 jogadores)

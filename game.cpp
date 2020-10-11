@@ -60,10 +60,9 @@ namespace
 		/*radius*/		20,
 	};
 
+	sf::Font* sansFont, *monoFont;
 }
 
-sf::Font* pong::monoFont = nullptr;
-sf::Font* pong::sansFont = nullptr;
 
 int pong::random_num(int min, int max)
 {
@@ -125,6 +124,13 @@ void pong::constrain_pos(pos& p)
 	while (p.y < Playarea.top)		p.x += Playarea.top;
 }
 
+void pong::setup_game(sf::Font* sans, sf::Font* mono)
+{
+	sansFont = sans;
+	monoFont = mono;
+	Menu.init();
+}
+
 
 pong::cfgtree pong::overrideGuts(const fs::path& gutsFile)
 {
@@ -177,8 +183,6 @@ pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
 	generateLevel(area);
 	Score.create(area, *monoFont, 55);
 	resetState();
-	Menu.init();
-
 }
 
 pong::game::game(mode mode_) : game({Playarea.width, Playarea.height}, mode_) {}

@@ -10,7 +10,6 @@ namespace pong
 	template<typename T, typename E = T>
 	using pair = std::pair<T, E>;
 
-	// game entities
 	struct net_shape : public sf::Drawable, public sf::Transformable
 	{
         explicit net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
@@ -28,9 +27,6 @@ namespace pong
 		sf::VertexArray m_net{ sf::Quads };
 	};
 
-	extern sf::Font* monoFont;
-	extern sf::Font* sansFont;
-	
 	struct score : public sf::Drawable
 	{
 		score() = default;
@@ -176,5 +172,5 @@ namespace pong
 		ball Ball;
 	};
 
-
+	void setup_game(sf::Font* sans, sf::Font* mono);
 }
