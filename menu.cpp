@@ -65,9 +65,11 @@ static auto scan_joy_btn() noexcept
 static void selectJoystick(int& joyid);
 
 
-
 void pong::menu_state::draw(game& ctx, sf::Window& window)
 {
+	using namespace ImGui;
+	using namespace ImScoped;
+
 	if (!ctx.paused) return;
 
 	if (show.options)
@@ -76,26 +78,50 @@ void pong::menu_state::draw(game& ctx, sf::Window& window)
 	if (show.game_stats)
 		guiStats(ctx);
 
-	using namespace ImGui;
-	using namespace ImScoped;
+	if (show.about)
+		aboutSfPong();
 
 	if (show.imgui_demo)
 		ShowDemoWindow(&show.imgui_demo);
+	if (show.imgui_about)
+		ImGui::ShowAboutWindow(&show.imgui_about);
 
-	Window menu("Menu", &ctx.paused);
-	auto btnSize = sf::Vector2i(100, 30);
+	MainMenuBar mmb;
+	if (!mmb) return;
+	TextDisabled("sfPong");
 
-	if (Button("Jogar", btnSize)) {
-		ctx.paused = false;
-	}
-	if (Button(u8"Opções", btnSize)) {
-		show.options = true;
-	}
-	if (Button("Sair", btnSize)) {
-		window.close();
-		gamelog()->info("ate a proxima! ;D");
+	if (auto m = Menu("Jogo")) {
+		bool singleplayer = ctx.currentMode == game::mode::singleplayer,
+			 multiplayer = ctx.currentMode == game::mode::multiplayer;
+
+		if (MenuItem("Continuar", "ESC"))
+			ctx.paused = false;
+		if (auto m1 = Menu("Novo")) {
+			auto size = static_cast<size2d>(window.getSize());
+
+			if (MenuItem("1 jogador", nullptr, singleplayer)) {
+				ctx = game(size, game::mode::singleplayer);
+				ctx.paused = false;
+			}
+			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
+				ctx = game(size, game::mode::multiplayer);
+				ctx.paused = false;
+			}
+		}
+		Separator();
+		MenuItem("Sobre", nullptr, &show.about);
 	}
 
+	MenuItem(u8"Opções", nullptr, &show.options);
+
+	{
+		auto _s0_ = StyleColor(ImGuiCol_Button, sf::Color::Transparent);
+		auto _s1_ = StyleColor(ImGuiCol_ButtonHovered, sf::Color::Red);
+		auto _s2_ = StyleColor(ImGuiCol_ButtonActive, sf::Color::Red);
+
+		if (Button("Sair"))
+			window.close();
+	}
 }
 
 void pong::menu_state::init()
@@ -113,12 +139,6 @@ void pong::menu_state::guiOptions(game&)
 		get_input_cfg(playerid::one),
 		get_input_cfg(playerid::two)
 	};
-
-	{
-		ImGui::SetNextWindowSize({ 500, 400 }, ImGuiCond_FirstUseEver);
-		auto lastPos = ImGui::GetWindowPos();
-		ImGui::SetNextWindowPos({ lastPos.x + 10, lastPos.y + 10 }, ImGuiCond_FirstUseEver);
-	}
 
 	auto wflags = input.settings != active_input.settings ? ImGuiWindowFlags_UnsavedDocument : 0;
 
@@ -140,14 +160,15 @@ void pong::menu_state::guiOptions(game&)
 				auto constexpr popup_id = "Rebind popup";
 				auto keystr = fmt::format("{}", curKey);
 
-				Text("%8s:\t%s", label, keystr.c_str());
-				SameLine(200);
-				if (Button("Trocar")) {
+				Text("%s: ", label); SameLine();
+				AlignTextToFramePadding();
+				if (Button(keystr.c_str())) {
 					OpenPopup(popup_id);
 					rebinding = true;
 				}
 
-				if (auto popup = PopupModal(popup_id, &rebinding, ImGuiWindowFlags_NoMove))
+				const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
+				if (auto popup = PopupModal(popup_id, &rebinding, flags))
 				{
 					using Key = sf::Keyboard::Key;
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
@@ -222,11 +243,11 @@ void pong::menu_state::guiOptions(game&)
 	ImGui::Spacing();
 	ImGui::Separator();
 
-	if (ImGui::Button("Discard")) {
+	if (ImGui::Button("Descartar")) {
 		input.settings = active_input.settings;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Save") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0)
+	if (ImGui::Button("Salvar") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0)
 	{
 		for (auto player : { playerid::one, playerid::two })
 		{
@@ -266,6 +287,38 @@ void pong::menu_state::guiStats(game& ctx)
 		P1.velocity.y, P2.velocity.y, Ball.velocity.x, Ball.velocity.y);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
+}
+
+void pong::menu_state::aboutSfPong()
+{
+	using namespace ImGui;
+	namespace gui = ImScoped;
+
+	auto win = gui::Window("Sobre sfPong", &show.about, ImGuiWindowFlags_AlwaysAutoResize);
+	if (!win) return;
+
+	Text("sfPong %s", "0.0.0");
+	Text("Criado por Pedro Oliva Rodrigues.");
+	Separator();
+	constexpr auto libver = "%10s %d.%d.%d";
+	Text("%10s %s", "Dear ImGui", ImGui::GetVersion()); SameLine();
+	if (SmallButton("about")) {
+		show.imgui_about = true;
+	}
+	if (IsItemHovered())
+		SetTooltip("ImGui about window");
+
+	Text(libver, "Boost",
+		BOOST_VERSION / 100000,
+		BOOST_VERSION / 100 % 1000,
+		BOOST_VERSION % 100
+	);
+	Text(libver, "fmtlib",
+		FMT_VERSION / 10000,
+		FMT_VERSION / 100 % 100,
+		FMT_VERSION % 100
+	);
+	Text(libver, "spdlog", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
 }
 
 void selectJoystick(int& joyid)

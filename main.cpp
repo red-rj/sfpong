@@ -36,7 +36,11 @@ int main(int argcount, const char* args[])
 		return 0;
 	}
 
+#ifndef NDEBUG
+	spdlog::set_level(spdlog::level::debug);
+#endif // DEBUG
 	auto logger = spdlog::stdout_color_st(pong::LOGGER_NAME);
+
 
 	pong::cfgtree guts, gamecfg;
 	try
@@ -62,12 +66,27 @@ int main(int argcount, const char* args[])
 		return 5;
 	}
 
-
 	unsigned const framelimit = guts.get("framerate_limit", 60u);
 	// ---
 	sf::RenderWindow window{ sf::VideoMode(1280, 1024), "Sf Pong!" };
 	window.setFramerateLimit(framelimit);
 	ImGui::SFML::Init(window);
+	
+	logger->debug("PWD: {}", fs::current_path().string());
+
+	logger->info("carregando tff");
+	sf::Font sansFont, monoFont;
+	sansFont.loadFromFile("support\\liberation-sans.ttf");
+	monoFont.loadFromFile("support\\liberation-mono.ttf");
+	pong::sansFont = &sansFont;
+	pong::monoFont = &monoFont;
+
+	auto& io = ImGui::GetIO();
+	io.Fonts->Clear();
+	auto* imfont = io.Fonts->AddFontFromFileTTF("support\\liberation-sans.ttf", 18.f);
+	io.Fonts->AddFontDefault();
+
+	ImGui::SFML::UpdateFontTexture();
 
 	auto vg = pong::game(window);
 	sf::Clock deltaClock;

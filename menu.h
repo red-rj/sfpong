@@ -20,13 +20,15 @@ namespace pong
 		struct {
 			bool options = false;
 			bool game_stats = false;
+			bool about = false;
 
-			bool imgui_demo = false; 
-		//---
+			bool imgui_demo = false, imgui_about = false;
 		} show;
 
 		void guiOptions(game& ctx);
 		void guiStats(game& ctx);
+		void aboutSfPong();
+
 
 		struct input_t
 		{

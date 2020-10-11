@@ -45,7 +45,6 @@ namespace
 		float radius;
 	};
 
-
 	paddle_cfg CfgPaddle{
 		/*speed*/		10,
 		/*max speed*/	30,
@@ -60,8 +59,11 @@ namespace
 
 		/*radius*/		20,
 	};
+
 }
 
+sf::Font* pong::monoFont = nullptr;
+sf::Font* pong::sansFont = nullptr;
 
 int pong::random_num(int min, int max)
 {
@@ -168,15 +170,19 @@ void pong::score::update()
 	text.setString(fmt::format("{}    {}", val.first, val.second));
 }
 
-pong::game::game(sf::RenderWindow& window)
+pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
 {
 	// pong court
-	auto area = rect{ {0.f,0.f}, static_cast<sf::Vector2f>(window.getSize()) };
+	auto area = rect{ {0.f,0.f}, playsize };
 	generateLevel(area);
-	Score.create(area, R"(C:\Windows\Fonts\LiberationMono-Regular.ttf)", 55);
+	Score.create(area, *monoFont, 55);
 	resetState();
 	Menu.init();
+
 }
+
+pong::game::game(mode mode_) : game({Playarea.width, Playarea.height}, mode_) {}
+
 
 void pong::game::pollEvents(sf::RenderWindow& window)
 {
@@ -226,6 +232,10 @@ void pong::game::pollEvents(sf::RenderWindow& window)
 			window.setView(sf::View(visibleArea));
 			generateLevel(visibleArea);
 		} break;
+		
+		case sf::Event::MouseWheelScrolled: {
+			auto delta = event.mouseWheelScroll.delta;
+		} break;
 
 		}
 	}
@@ -239,12 +249,13 @@ void pong::game::update(sf::RenderWindow& window)
 	window.clear();
 	window.draw(Court);
 	window.draw(Score);
-	window.draw(Ball);
-	window.draw(Player1);
-	window.draw(Player2);
 
 	if (!paused)
 	{
+		window.draw(Ball);
+		window.draw(Player1);
+		window.draw(Player2);
+		
 		updateBall();
 		updatePlayer(Player1);
 		updatePlayer(Player2);
@@ -284,9 +295,19 @@ void pong::game::resetState()
 	Player1.setPosition(20, area.height / 2);
 
 	Player2 = Player1;
-	Player2.ai = true;
 	Player2.id = playerid::two;
 	Player2.setPosition(area.width - 20, area.height / 2);
+
+	if (currentMode==mode::singleplayer) {
+		Player1.ai = false;
+		Player2.ai = true;
+	}
+	else if (currentMode == mode::multiplayer) {
+		Player1.ai = Player2.ai = false;
+	}
+	//else if (currentMode == mode::aitest) {
+	//	Player1.ai = Player2.ai = true;
+	//}
 
 	Ball.setPosition(area.width / 2, area.height / 2);
 	Ball.setRadius(CfgBall.radius);

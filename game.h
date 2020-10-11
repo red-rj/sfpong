@@ -27,19 +27,21 @@ namespace pong
 		int m_piece_count;
 		sf::VertexArray m_net{ sf::Quads };
 	};
+
+	extern sf::Font* monoFont;
+	extern sf::Font* sansFont;
 	
 	struct score : public sf::Drawable
 	{
 		score() = default;
 
-		score(rect playarea, std::filesystem::path const& fontfile, unsigned size)
+		score(rect playarea, sf::Font const& font, unsigned size)
 		{
-			create(playarea, fontfile, size);
+			create(playarea, font, size);
 		}
 
-		void create(rect playarea, std::filesystem::path const& fontfile, unsigned size)
+		void create(rect playarea, sf::Font const& font, unsigned size)
 		{
-			font.loadFromFile(fontfile.string());
 			text = sf::Text("", font, size);
 			text.setPosition(playarea.width / 2 - 100, 50);
 			update();
@@ -69,7 +71,6 @@ namespace pong
 
 		pair<short> val{};
 		sf::Text text;
-		sf::Font font;
 	};
 
 	struct court : public sf::Drawable
@@ -143,12 +144,20 @@ namespace pong
 	{
 		friend menu_state;
 
-		game(sf::RenderWindow& window);
+		enum class mode
+		{
+			singleplayer, multiplayer
+		};
+
+		game(size2d playarea, mode mode_ = mode::singleplayer);
+		game(sf::RenderWindow& window) : game(static_cast<size2d>(window.getSize()))
+		{}
 
 		void serve(dir direction);
 		void update(sf::RenderWindow& window);
 
 	private:
+		game(mode mode_);
 
 		void resetState();
 		void pollEvents(sf::RenderWindow& window);
@@ -159,6 +168,7 @@ namespace pong
 
 		bool paused = true;
 		uint64_t tickcount = 0;
+		mode currentMode;
 
 		score Score;
 
