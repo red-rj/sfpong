@@ -1,7 +1,6 @@
 #include "menu.h"
 #include "convert.h"
 #include "game.h"
-#include "input.h"
 #include "imgui_ext.h"
 
 #include <algorithm>
@@ -66,9 +65,21 @@ static auto scan_joy_btn() noexcept
 
 namespace
 {
-	ImFont* ui_default_font, *ui_bigger_font;
+	ImFont *rebinding_popup_font,
+		*sect_title_font, *font_default;
 
 	std::vector<std::string> _joystick_list;
+
+	constexpr auto nameof(pong::playerid pl)
+	{
+		auto* title = "Player ???";
+		switch (pl)
+		{
+		case pong::playerid::one: title = "Player 1"; break;
+		case pong::playerid::two: title = "Player 2"; break;
+		}
+		return title;
+	}
 }
 
 pong::menu_t pong::game_menu;
@@ -145,9 +156,12 @@ void pong::menu_t::init()
 	input_settings[(int)playerid::two] = get_input_cfg(playerid::two);
 	refresh_joystick_list();
 
-	auto* fontAtlas = ImGui::GetIO().Fonts;
-	ui_default_font = fontAtlas->Fonts.front();
-	ui_bigger_font = fontAtlas->Fonts[1];
+	auto* atlas = ImGui::GetIO().Fonts;
+	auto font_size = ImGui::GetFontSize();
+
+	font_default = atlas->Fonts.front();
+	rebinding_popup_font = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size * 2);
+	sect_title_font = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size * 1.25f);
 }
 
 void pong::menu_t::refresh_joystick_list() const
@@ -182,8 +196,9 @@ void pong::menu_t::guiOptions(game&)
 	{
 		if (auto tab = gui::TabBarItem("Controles"))
 		{
+			ImGui::Text("Teclado");
 
-			auto InputControl = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
+			auto inputKbKey = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
 			#pragma region Block
 			{
 				using namespace ImGui;
@@ -204,7 +219,7 @@ void pong::menu_t::guiOptions(game&)
 				{
 					using Key = sf::Keyboard::Key;
 
-					gui::Font sansBig{ ui_bigger_font };
+					gui::Font sansBig{ rebinding_popup_font };
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 					auto key = scan_kb();
@@ -219,45 +234,62 @@ void pong::menu_t::guiOptions(game&)
 			};
 			#pragma endregion
 
-			auto InputPlayerCtrls = [&](pong::playerid pl) mutable
+			auto inputKbCtrls = [&](pong::playerid pl) mutable
 			{
-				gui::ID _id_ = int(pl);
-				auto* title = "Player ???";
-				switch (pl)
-				{
-				case pong::playerid::one: title = "Player 1"; break;
-				case pong::playerid::two: title = "Player 2"; break;
-				}
+				auto title = nameof(pl);
+				gui::ID _id_ = title;
+				gui::Group _g_;
 
 				ImGui::Text("%s:", title);
-				gui::Indent _ind_{ 5.f };
+				//gui::Indent _ind_{ 5.f };
 
 				auto& settings = input_settings[int(pl)];
 				auto& player_ctrls = settings.keyboard_controls;
 
-				InputControl("Up", player_ctrls.up);
-				InputControl("Down", player_ctrls.down);
-				InputControl("Fast", player_ctrls.fast);
-
-				joystickCombobox(settings.joystickId);
-
-				ImGui::SliderFloat("Joystick deadzone", &settings.joystick_deadzone, 0, 50, "%.1f%%");
-			};
-
-			auto rollback_if_eq = [&](playerid lhs, playerid rhs) mutable {
-				if (input_settings[int(lhs)].joystickId != -1 
-					&& input_settings[int(lhs)].joystickId == input_settings[int(rhs)].joystickId)
-				{
-					input_settings[int(rhs)].joystickId = -1;
-				}
+				inputKbKey("Up", player_ctrls.up);
+				inputKbKey("Down", player_ctrls.down);
+				inputKbKey("Fast", player_ctrls.fast);
 			};
 
 			// ---
-			InputPlayerCtrls(playerid::one);
-			rollback_if_eq(playerid::one, playerid::two);
+			inputKbCtrls(playerid::one);
+			ImGui::SameLine();
+			inputKbCtrls(playerid::two);
+
+			ImGui::Spacing();
+
+			ImGui::Text("Joystick:");
+
+			auto inputJoystickSettings = [&](playerid pid) mutable {
+				const auto other_pid = pid == playerid::one ? playerid::two : playerid::one;
+
+				auto& joyid = input_settings[int(pid)].joystickId;
+				auto& deadzone = input_settings[int(pid)].joystick_deadzone;
+				auto title = nameof(pid);
+				
+				gui::GroupID _grp_ = title;
+				ImGui::Text(title);
+				//gui::ItemWidth _iw_ = ImGui::GetWindowWidth() * 0.5f;
+
+				auto selected = joystickCombobox("", joyid);
+
+				if (selected != -1) {
+					auto& other_joyid = input_settings[int(other_pid)].joystickId;
+
+					if (selected == other_joyid) {
+						std::swap(joyid, other_joyid);
+					}
+				}
+
+				joyid = selected;
+
+				ImGui::SliderFloat("Deadzone", &deadzone, 0, 50, "%.1f%%");
+			};
 			
-			InputPlayerCtrls(playerid::two);
-			rollback_if_eq(playerid::two, playerid::one);
+			inputJoystickSettings(playerid::one);
+			ImGui::NewLine();
+			inputJoystickSettings(playerid::two);
+
 		}
 		if (auto tab = gui::TabBarItem("DEV"))
 		{
@@ -356,7 +388,7 @@ void pong::menu_t::aboutSfPong()
 	Text(libver, "spdlog", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
 }
 
-void pong::menu_t::joystickCombobox(int& joyid)
+int pong::menu_t::joystickCombobox(const char* label, int current_joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
@@ -366,20 +398,21 @@ void pong::menu_t::joystickCombobox(int& joyid)
 	const auto nitem = "Nenhum";
 
 	auto& joynames = _joystick_list;
-	auto previewItem = joyid == npos ? nitem : joynames[joyid];
+	auto previewItem = current_joyid == npos ? nitem : joynames[current_joyid];
 
-	if (auto cb = gui::Combo("Joystick", previewItem.c_str()))
+	if (auto cb = gui::Combo(label, previewItem.c_str()))
 	{
-		if (Selectable(nitem, joyid==npos)) {
-			joyid = npos;
+		bool is_selected = current_joyid == npos;
+		if (Selectable(nitem, is_selected)) {
+			current_joyid = npos;
 		}
 
 		auto s = 0u;
 		for (auto& name : joynames)
 		{
-			bool is_selected = s == joyid;
+			is_selected = s == current_joyid;
 			if (Selectable(name.c_str(), is_selected))
-				joyid = s;
+				current_joyid = s;
 
 			if (is_selected)
 				SetItemDefaultFocus();
@@ -387,4 +420,6 @@ void pong::menu_t::joystickCombobox(int& joyid)
 			s++;
 		}
 	}
+
+	return current_joyid;
 }

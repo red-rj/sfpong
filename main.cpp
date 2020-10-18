@@ -7,6 +7,7 @@
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/info_parser.hpp>
 #include <lyra/lyra.hpp>
 #include <fmt/format.h>
 
@@ -58,7 +59,12 @@ int main(int argcount, const char* args[])
 	{
 		logger->info("Setting up...");
 		pong::applyConfig(gamecfg);
-		guts = pong::overrideGuts(guts_file);
+		
+		if (fs::exists(guts_file)) {
+			logger->debug("GUTS file: {}", guts_file.string());
+			read_info(guts_file.string(), guts);
+			pong::overrideGuts(guts);
+		}
 	}
 	catch (std::exception& e)
 	{
@@ -75,17 +81,17 @@ int main(int argcount, const char* args[])
 	logger->debug("PWD: {}", fs::current_path().string());
 
 	logger->info("carregando tff");
+
 	sf::Font sansFont, monoFont;
-	sansFont.loadFromFile("support\\liberation-sans.ttf");
-	monoFont.loadFromFile("support\\liberation-mono.ttf");
+	sansFont.loadFromFile(pong::files::sans_tff);
+	monoFont.loadFromFile(pong::files::mono_tff);
 	
 	{
 		auto& io = ImGui::GetIO();
 		io.Fonts->Clear();
 		const auto ui_font_size = 18.f;
-		io.Fonts->AddFontFromFileTTF("support\\liberation-sans.ttf", ui_font_size);
-		io.Fonts->AddFontFromFileTTF("support\\liberation-sans.ttf", ui_font_size * 2);
-		io.Fonts->AddFontFromFileTTF("support\\liberation-mono.ttf", ui_font_size);
+		io.Fonts->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
+		io.Fonts->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 		
 		ImGui::SFML::UpdateFontTexture();
 	}

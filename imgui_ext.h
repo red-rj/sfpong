@@ -292,6 +292,14 @@ namespace ImScoped
         float Width;
     };
 
+    struct GroupID : ID
+    {
+        using ID::ID;
+
+    private:
+        Group _g_;
+    };
+
 } // namespace ImScoped
 
 

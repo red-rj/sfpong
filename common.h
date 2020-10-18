@@ -26,9 +26,17 @@ namespace pong
 
     using size2d = sf::Vector2f;
 
-    enum class playerid { invalid=-1, one, two };
+    enum class playerid { one, two };
 
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
+
+namespace files
+{
+    constexpr auto
+        sans_tff = "support/liberation-sans.ttf",
+        mono_tff = "support/liberation-mono.ttf"
+        ;
+}
 
 }

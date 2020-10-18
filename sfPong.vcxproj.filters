@@ -10,7 +10,7 @@
     <ClInclude Include="convert.h" />
     <ClInclude Include="imgui_ext.h" />
     <ClInclude Include="menu.h" />
-    <ClInclude Include="input.h" />
+    <ClInclude Include="joyinput.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />
@@ -18,6 +18,6 @@
     <ClCompile Include="imgui_ext.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="input.cpp" />
+    <ClCompile Include="joyinput.cpp" />
   </ItemGroup>
 </Project>

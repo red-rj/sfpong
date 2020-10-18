@@ -5,10 +5,10 @@
 
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Mouse.hpp>
+#include <SFML/Window/Joystick.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <fmt/ostream.h>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 
 #include "common.h"
 #include "ci_string.h"
@@ -16,6 +16,17 @@
 #include "game_config.h"
 #include "convert.h"
 
+
+using sf::Keyboard;
+using sf::Joystick;
+using sf::Mouse;
+
+namespace // user config vars
+{
+    unsigned player_joystick[2] = { -1, -1 };
+    pong::keyboard_ctrls player_keyboard_controls[2];
+    float player_deadzone[2];
+}
 
 struct ci_compare
 {
@@ -32,14 +43,16 @@ struct ci_compare
 
 using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
 
-using iof = std::ios_base;
-
 /*
 * enum tables
 */
 auto sf_keyboard_table()->enum_name_table const&;
 auto sf_mouse_table()->enum_name_table const&;
 
+using iof = std::ios_base;
+
+
+// convert
 
 std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
 {
@@ -184,6 +197,61 @@ pong::cfgtree pong::getGameConfig()
     return tree;
 }
 
+
+pong::keyboard_ctrls pong::get_keyboard_controls(playerid pl) noexcept
+{
+    return player_keyboard_controls[int(pl)];
+}
+
+void pong::set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept
+{
+    player_keyboard_controls[int(pl)] = ctrls;
+}
+
+unsigned pong::get_joystick(playerid pl) noexcept
+{
+    return player_joystick[int(pl)];
+}
+
+void pong::set_joystick(playerid pl, unsigned joyid) noexcept
+{
+    player_joystick[int(pl)] = joyid;
+}
+
+auto pong::get_input_cfg(playerid player) noexcept -> player_input_cfg
+{
+    const auto p = int(player);
+    player_input_cfg cfg;
+    cfg.joystickId = player_joystick[p];
+    cfg.joystick_deadzone = player_deadzone[p];
+    cfg.keyboard_controls = player_keyboard_controls[p];
+    return cfg;
+}
+
+void pong::set_input_cfg(player_input_cfg input, playerid player) noexcept
+{
+    const auto p = int(player);
+    player_keyboard_controls[p] = input.keyboard_controls;
+    player_joystick[p] = input.joystickId;
+    player_deadzone[p] = input.joystick_deadzone;
+}
+
+
+bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
+{
+    using std::tie;
+    return tie(up, down, fast) == tie(rhs.up, rhs.down, rhs.fast);
+}
+
+bool pong::player_input_cfg::operator==(const player_input_cfg& rhs) const noexcept
+{
+    using std::tie;
+    return tie(keyboard_controls, joystickId, joystick_deadzone) ==
+        tie(rhs.keyboard_controls, rhs.joystickId, rhs.joystick_deadzone);
+}
+
+
+// enum name tables
 
 auto sf_keyboard_table() ->enum_name_table const&
 {

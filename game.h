@@ -1,7 +1,6 @@
 #pragma once
 #include "common.h"
 #include <utility>
-#include <filesystem>
 
 #include "SFML/Graphics.hpp"
 
@@ -106,7 +105,7 @@ namespace pong
 	struct paddle : sf::RectangleShape
 	{
 		bool ai = false;
-		playerid id = playerid::invalid;
+		playerid id = playerid(-1);
 		vel velocity;
 
 		void update();
@@ -170,5 +169,5 @@ namespace pong
 		ball Ball;
 	};
 
-	void setup_game(sf::Font* sans, sf::Font* mono);
+	void setup_game();
 }

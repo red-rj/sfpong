@@ -6,17 +6,15 @@
 #include "imgui_ext.h"
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/info_parser.hpp>
 
 #include "common.h"
 #include "game.h"
 #include "rng.h"
 #include "menu.h"
-#include "input.h"
+#include "game_config.h"
 
 
 using namespace std::literals;
-namespace fs = std::filesystem;
 
 
 namespace
@@ -59,7 +57,9 @@ namespace
 		/*radius*/		20,
 	};
 
-	sf::Font* sansFont, *monoFont;
+	sf::Font font_sans, font_mono;
+
+	bool setup_needed = true;
 }
 
 
@@ -123,22 +123,18 @@ void pong::constrain_pos(pos& p)
 	while (p.y < Playarea.top)		p.x += Playarea.top;
 }
 
-void pong::setup_game(sf::Font* sans, sf::Font* mono)
+void pong::setup_game()
 {
-	sansFont = sans;
-	monoFont = mono;
+	font_sans.loadFromFile(pong::files::sans_tff);
+	font_mono.loadFromFile(pong::files::mono_tff);
+
 	game_menu.init();
+	setup_needed = false;
 }
 
 
-pong::cfgtree pong::overrideGuts(const fs::path& gutsFile)
+void pong::overrideGuts(const cfgtree& guts)
 {
-	if (!fs::exists(gutsFile))
-		return {};
-
-	cfgtree guts;
-	read_info(gutsFile.string(), guts);
-
 	if (auto p = guts.get_child_optional("paddle")) try
 	{
 		paddle_cfg cfg;
@@ -167,7 +163,6 @@ pong::cfgtree pong::overrideGuts(const fs::path& gutsFile)
 		log::debug("{} ball error: {}", __func__, e.what());
 	}
 
-	return guts;
 }
 
 void pong::score::update()
@@ -180,7 +175,7 @@ pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
 	// pong court
 	auto area = rect{ {0.f,0.f}, playsize };
 	generateLevel(area);
-	Score.create(area, *monoFont, 55);
+	Score.create(area, font_mono, 55);
 	resetState();
 }
 
