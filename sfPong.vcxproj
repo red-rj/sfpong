@@ -33,7 +33,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />
-    <ClCompile Include="imgui_ext.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="joyinput.cpp" />
     <ClCompile Include="main.cpp" />
