@@ -24,7 +24,7 @@ namespace pong
     template<class T>
     using size_2d = sf::Vector2<T>;
 
-    using size2d = sf::Vector2f;
+    using size2d = size_2d<float>;
 
     enum class playerid { one, two };
 

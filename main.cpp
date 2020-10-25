@@ -33,7 +33,7 @@ int main(int argcount, const char* args[])
 	spdlog::set_default_logger(logger);
 #ifndef NDEBUG
 	spdlog::set_level(spdlog::level::debug);
-#endif // DEBUG
+#endif // !NDEBUG
 
 	auto cli_result = cli.parse({ argcount, args });
 	if (!cli_result) {
@@ -79,25 +79,9 @@ int main(int argcount, const char* args[])
 	window.setFramerateLimit(framelimit);
 	ImGui::SFML::Init(window);
 	
-	logger->debug("PWD: {}", fs::current_path().string());
+	logger->debug("CWD: {}", fs::current_path().string());
 
-	logger->info("carregando tff");
-
-	sf::Font sansFont, monoFont;
-	sansFont.loadFromFile(pong::files::sans_tff);
-	monoFont.loadFromFile(pong::files::mono_tff);
-	
-	{
-		auto& io = ImGui::GetIO();
-		io.Fonts->Clear();
-		const auto ui_font_size = 18.f;
-		io.Fonts->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
-		io.Fonts->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
-		
-		ImGui::SFML::UpdateFontTexture();
-	}
-
-	pong::setup_game();
+	pong::setup_game(&window);
 
 	auto vg = pong::game(window);
 	sf::Clock deltaClock;

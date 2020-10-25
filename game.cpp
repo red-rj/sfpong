@@ -59,7 +59,48 @@ namespace
 
 	sf::Font font_sans, font_mono;
 
-	bool setup_needed = true;
+	sf::RenderTarget* rtarget = nullptr;
+
+	struct drawable_message : sf::Drawable
+	{
+		drawable_message(const sf::Font& font, unsigned chSize)
+			: text("", font, chSize)
+		{
+			bg.setFillColor(sf::Color(0, 0, 0, 128));
+			bg.setOutlineColor(sf::Color::White);
+			bg.setOutlineThickness(5);
+		}
+
+		void write(const std::string& message, pong::size2d coords)
+		{
+			text.setString(message);
+
+			pong::size_2d<float> bgsize;
+			const auto margin = pong::size2d{ 10.f, 10.f };
+			
+			bgsize.x = (text.getCharacterSize() + text.getLetterSpacing()) * message.length() / 2;
+			bgsize.y = (text.getCharacterSize() + text.getLineSpacing()) * 3;
+
+			bg.setSize(bgsize);
+			bg.setPosition(coords);
+			text.setPosition(coords + pong::size2d{ 10.f, 10.f });
+		}
+		void clear() {
+			text.setString("");
+		}
+
+	private:
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+		{
+			if (!text.getString().isEmpty()) {
+				target.draw(bg);
+				target.draw(text, states);
+			}
+		}
+
+		sf::Text text;
+		sf::RectangleShape bg;
+	};
 }
 
 
@@ -123,13 +164,13 @@ void pong::constrain_pos(pos& p)
 	while (p.y < Playarea.top)		p.x += Playarea.top;
 }
 
-void pong::setup_game()
+void pong::setup_game(sf::RenderTarget* target)
 {
+	rtarget = target;
 	font_sans.loadFromFile(pong::files::sans_tff);
 	font_mono.loadFromFile(pong::files::mono_tff);
 
 	game_menu.init();
-	setup_needed = false;
 }
 
 
@@ -188,6 +229,7 @@ void pong::game::pollEvents(sf::RenderWindow& window, sf::Time time)
 	while (window.pollEvent(event)) {
 
 		ImGui::SFML::ProcessEvent(event);
+		devEvents(event);
 
 		switch (event.type)
 		{
@@ -202,17 +244,8 @@ void pong::game::pollEvents(sf::RenderWindow& window, sf::Time time)
 
 			switch (event.key.code)
 			{
-			case sf::Keyboard::F1:
-				Player1.ai = !Player1.ai;
-				break;
-			case sf::Keyboard::F2:
-				Player2.ai = !Player2.ai;
-				break;
 			case sf::Keyboard::Enter:
 				serve(dir::left);
-				break;
-			case sf::Keyboard::F12:
-				resetState();
 				break;
 			case sf::Keyboard::Escape:
 				paused = !paused;
@@ -240,14 +273,39 @@ void pong::game::pollEvents(sf::RenderWindow& window, sf::Time time)
 
 	ImGui::SFML::Update(window, time);
 }
+void pong::game::devEvents(const sf::Event& event)
+{
+	switch (event.type)
+	{
+	case sf::Event::KeyReleased:
+	{
+		switch (event.key.code)
+		{
+		case sf::Keyboard::F1:
+			Player1.ai = !Player1.ai;
+			break;
+		case sf::Keyboard::F2:
+			Player2.ai = !Player2.ai;
+			break;
+		case sf::Keyboard::F12:
+			resetState();
+			break;
+		}
+	} break;
+	}
+}
 
 void pong::game::update(sf::RenderWindow& window)
 {
-	pollEvents(window);
+	//pollEvents(window);
 
 	window.clear();
 	window.draw(Court);
 	window.draw(Score);
+
+	//auto msg = drawable_message(font_sans, 45);
+	//msg.write("Bem-vindo! Isto é um teste...", { 250.f, 150.f });
+	//window.draw(msg);
 
 	if (!paused)
 	{
@@ -283,6 +341,7 @@ void pong::game::update(sf::RenderWindow& window)
 
 	game_menu.draw(*this, window);
 }
+
 
 void pong::game::resetState()
 {

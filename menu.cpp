@@ -65,8 +65,11 @@ static auto scan_joy_btn() noexcept
 
 namespace
 {
-	ImFont *rebinding_popup_font,
-		*sect_title_font, *font_default;
+	ImFont *font_rebinding_popup,
+		*font_sect_title,
+		*font_default,
+		*font_monospace
+		;
 
 	std::vector<std::string> _joystick_list;
 
@@ -157,11 +160,15 @@ void pong::menu_t::init()
 	refresh_joystick_list();
 
 	auto* atlas = ImGui::GetIO().Fonts;
-	auto font_size = ImGui::GetFontSize();
+	const auto ui_font_size = 18.f;
 
-	font_default = atlas->Fonts.front();
-	rebinding_popup_font = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size * 2);
-	sect_title_font = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size * 1.25f);
+	atlas->Clear();
+	font_default = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
+	font_rebinding_popup = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
+	font_sect_title = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
+	font_monospace = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
+
+	ImGui::SFML::UpdateFontTexture();
 }
 
 void pong::menu_t::refresh_joystick_list() const
@@ -219,7 +226,7 @@ void pong::menu_t::guiOptions(game&)
 				{
 					using Key = sf::Keyboard::Key;
 
-					gui::Font sansBig{ rebinding_popup_font };
+					gui::Font sansBig{ font_rebinding_popup };
 					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 					auto key = scan_kb();

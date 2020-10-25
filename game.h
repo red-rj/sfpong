@@ -154,10 +154,10 @@ namespace pong
 		game(mode mode_);
 
 		void resetState();
+		void devEvents(const sf::Event& event);
 		void updatePlayer(paddle& player);
 		void updateBall();
 		void generateLevel(rect area);
-
 
 		bool paused = true;
 		uint64_t tickcount = 0;
@@ -169,5 +169,5 @@ namespace pong
 		ball Ball;
 	};
 
-	void setup_game();
+	void setup_game(sf::RenderTarget* target);
 }
