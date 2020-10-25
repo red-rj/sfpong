@@ -140,7 +140,7 @@ void pong::menu_t::draw(game& ctx, sf::Window& window)
 	MenuItem(u8"Opções", nullptr, &show.options);
 
 	{
-		auto _s_ = {
+		auto _styles_ = {
 			StyleColor(ImGuiCol_Button, sf::Color::Transparent),
 			StyleColor(ImGuiCol_ButtonHovered, sf::Color::Red),
 			StyleColor(ImGuiCol_ButtonActive, sf::Color::Red)
@@ -194,28 +194,36 @@ void pong::menu_t::guiOptions(game&)
 		get_input_cfg(playerid::two)
 	};
 
-	auto wflags = input_settings != active_settings ? ImGuiWindowFlags_UnsavedDocument : 0;
+	bool isDirty = input_settings != active_settings;
+	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
+
 	gui::Window guiwindow(u8"Opções", &show.options, wflags);
 	if (!guiwindow)
 		return;
 
-	if (auto tabbar = gui::TabBar("##Tabs"))
 	{
-		if (auto tab = gui::TabBarItem("Controles"))
-		{
-			controlsUi();
-		}
-		if (auto tab = gui::TabBarItem("DEV"))
-		{
-			using ImGui::Button;
+		auto guiwindowsize = ImGui::GetWindowSize();
+		gui::Child _content_{ "conteudo opções", { guiwindowsize.x - 10, guiwindowsize.y - 100 } };
 
-			if (Button("game stats"))
+		if (auto tabbar = gui::TabBar("##Tabs"))
+		{
+			if (auto tab = gui::TabBarItem("Controles"))
 			{
-				show.game_stats = true;
+				controlsUi();
 			}
-			if (Button("ImGui demo window"))
+			if (auto tab = gui::TabBarItem("DEV"))
 			{
-				show.imgui_demo = true;
+				using ImGui::Button;
+
+				if (Button("game stats"))
+				{
+					show.game_stats = true;
+				}
+				if (Button("ImGui demo window"))
+				{
+					show.imgui_demo = true;
+				}
 			}
 		}
 	}
@@ -227,7 +235,7 @@ void pong::menu_t::guiOptions(game&)
 		input_settings = active_settings;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Salvar") && (wflags & ImGuiWindowFlags_UnsavedDocument) != 0)
+	if (ImGui::Button("Salvar") && isDirty)
 	{
 		for (auto player : { playerid::one, playerid::two })
 		{
@@ -307,7 +315,7 @@ void pong::menu_t::controlsUi()
 	namespace gui = ImScoped;
 	{
 		gui::Font title = font_sect_title;
-		ImGui::Text("Teclado");
+		ImGui::Text("Teclado:");
 	}
 
 	auto inputKbKey = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable

@@ -274,14 +274,14 @@ namespace ImScoped
         ~TabBarItem() { if (IsOpen) ImGui::EndTabItem(); }
     };
 
-    struct TabBar : VisibleGui
+    struct TabBar : OpenableGui
     {
         using Item = TabBarItem;
 
         TabBar(const char* str_id, ImGuiTabBarFlags flags = 0) {
-            IsContentVisible = ImGui::BeginTabBar(str_id, flags);
+            IsOpen = ImGui::BeginTabBar(str_id, flags);
         }
-        ~TabBar() { ImGui::EndTabBar(); }
+        ~TabBar() { if (IsOpen) ImGui::EndTabBar(); }
     };
 
     struct Indent : BaseGui
