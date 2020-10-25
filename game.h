@@ -148,12 +148,12 @@ namespace pong
 
 		void serve(dir direction);
 		void update(sf::RenderWindow& window);
+		void pollEvents(sf::RenderWindow& window, sf::Time time);
 
 	private:
 		game(mode mode_);
 
 		void resetState();
-		void pollEvents(sf::RenderWindow& window);
 		void updatePlayer(paddle& player);
 		void updateBall();
 		void generateLevel(rect area);

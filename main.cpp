@@ -104,8 +104,7 @@ int main(int argcount, const char* args[])
 
 	while (window.isOpen())
 	{
-		ImGui::SFML::Update(window, deltaClock.restart());
-
+		vg.pollEvents(window, deltaClock.restart());
 		vg.update(window);
 
 		ImGui::SFML::Render(window);

@@ -182,7 +182,7 @@ pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
 pong::game::game(mode mode_) : game({Playarea.width, Playarea.height}, mode_) {}
 
 
-void pong::game::pollEvents(sf::RenderWindow& window)
+void pong::game::pollEvents(sf::RenderWindow& window, sf::Time time)
 {
 	sf::Event event;
 	while (window.pollEvent(event)) {
@@ -238,6 +238,7 @@ void pong::game::pollEvents(sf::RenderWindow& window)
 		}
 	}
 
+	ImGui::SFML::Update(window, time);
 }
 
 void pong::game::update(sf::RenderWindow& window)
