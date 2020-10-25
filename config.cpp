@@ -20,6 +20,7 @@
 using sf::Keyboard;
 using sf::Joystick;
 using sf::Mouse;
+using namespace std::literals;
 
 namespace // user config vars
 {
@@ -64,7 +65,6 @@ std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
     }
     catch (const std::out_of_range&)
     {
-        os << "unknown";
         os.setstate(iof::failbit);
         return os;
     }
@@ -79,7 +79,6 @@ std::ostream& operator<<(std::ostream& os, sf::Mouse::Button btn)
     }
     catch (const std::out_of_range&)
     {
-        os << "unknown";
         os.setstate(iof::failbit);
         return os;
     }
@@ -119,57 +118,58 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     return is;
 }
 
+template<class E, class Traits = std::char_traits<char>>
+using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<char>, E>;
 
-template<class Enum>
-struct sfenum_translator
+template<>
+struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyboard::Key>
 {
-    using internal_type = std::string;
-    using external_type = Enum;
-
-    auto get_value(std::string const& v)->boost::optional<external_type>
+    static void insert(std::ostream& os, Keyboard::Key key)
     {
-        auto ss = std::istringstream(v);
-        external_type i;
-        ss >> i;
-        if (ss.fail())
-            return boost::none;
-        else
-            return i;
+        auto const& table = sf_keyboard_table();
+        os << table[key];
     }
 
-    auto put_value(external_type const& v) -> boost::optional<std::string>
+    static void extract(std::istream& is, Keyboard::Key& key)
     {
-        auto ss = std::ostringstream();
-        ss << v;
-        if (ss.fail())
-            return boost::none;
-        else
-            return ss.str();
+        auto const& table = sf_keyboard_table();
+        std::string token; is >> token;
+        key = Keyboard::Key(table[token]);
     }
 };
-using keyboardkey_translator = sfenum_translator<sf::Keyboard::Key>;
+
+class joyid_translator : iostream_translator<int>
+{
+public:
+    using iostream_translator<int>::get_value;
+
+    auto put_value(int id)
+    {
+        return id < 0 ? ""s : iostream_translator<int>::put_value(id);
+    }
+};
+
 
 void pong::applyConfig(const cfgtree& tree)
 {
-    using sf::Keyboard;
     using namespace ckey;
 
     player_input_cfg P1, P2;
-    keyboardkey_translator tr;
+    //keyboardkey_translator tr;
 
     // player one
-    P1.keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP, Keyboard::W, tr);
-    P1.keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, Keyboard::S, tr);
-    P1.keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, Keyboard::LShift, tr);
-    P1.joystickId = tree.get(P1_JOYSTICK, -1);
+    P1.keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP, Keyboard::W);
+    P1.keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, Keyboard::S);
+    P1.keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, Keyboard::LShift);
+    P1.joystickId = tree.get(P1_JOYSTICK, -1, joyid_translator());
     P1.joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
     set_input_cfg(P1, playerid::one);
     
     // player two
-    P2.keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP, Keyboard::Up, tr);
-    P2.keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, Keyboard::Down, tr);
-    P2.keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, Keyboard::RControl, tr);
-    P2.joystickId = tree.get(P2_JOYSTICK, -1);
+    P2.keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP, Keyboard::Up);
+    P2.keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, Keyboard::Down);
+    P2.keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, Keyboard::RControl);
+    P2.joystickId = tree.get(P2_JOYSTICK, -1, joyid_translator());
     P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
     set_input_cfg(P2, playerid::two);
 }
@@ -180,18 +180,18 @@ pong::cfgtree pong::getGameConfig()
     auto tree = cfgtree();
 
     player_input_cfg P1 = get_input_cfg(playerid::one), P2 = get_input_cfg(playerid::two);
-    keyboardkey_translator tr;
+    //keyboardkey_translator tr;
 
-    tree.put(P1_UP, P1.keyboard_controls.up, tr);
-    tree.put(P1_DOWN, P1.keyboard_controls.down, tr);
-    tree.put(P1_FAST, P1.keyboard_controls.fast, tr);
-    tree.put(P1_JOYSTICK, P1.joystickId);
+    tree.put(P1_UP, P1.keyboard_controls.up);
+    tree.put(P1_DOWN, P1.keyboard_controls.down);
+    tree.put(P1_FAST, P1.keyboard_controls.fast);
+    tree.put(P1_JOYSTICK, P1.joystickId, joyid_translator());
     tree.put(P1_JSDEADZONE, P1.joystick_deadzone);
     
-    tree.put(P2_UP, P2.keyboard_controls.up, tr);
-    tree.put(P2_DOWN, P2.keyboard_controls.down, tr);
-    tree.put(P2_FAST, P2.keyboard_controls.fast, tr);
-    tree.put(P2_JOYSTICK, P2.joystickId);
+    tree.put(P2_UP, P2.keyboard_controls.up);
+    tree.put(P2_DOWN, P2.keyboard_controls.down);
+    tree.put(P2_FAST, P2.keyboard_controls.fast);
+    tree.put(P2_JOYSTICK, P2.joystickId, joyid_translator());
     tree.put(P2_JSDEADZONE, P2.joystick_deadzone);
 
     return tree;

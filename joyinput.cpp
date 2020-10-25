@@ -13,24 +13,31 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 	constexpr auto AXIS_ID = INPUT_ID+2;
 	constexpr auto AXIS_DIR = "+-";
 
-	auto text = red::to_ci(arg);
-
 	joy_input js;
+
+	if (arg.length() < 5) {
+		js.type = js.invalid;
+		return js;
+	}
+
+	auto text = red::to_ci(arg);
 
 	auto pos = text.find("Joy");
 	pos = text.find_first_of(INPUT_ID, pos + 3);
 	if (pos == npos) {
+		js.type = js.invalid;
 		return js;
 	}
 
 	const auto input_id = text[pos];
 
 	if (input_id == 'B') { // joybtn
+		js.type = js.button;
+
 		try
 		{
 			auto num = std::string(arg.substr(pos+1));
 			js.btn_number = std::stoi(num);
-			js.type = js.button;
 		}
 		catch (const std::invalid_argument&)
 		{
@@ -40,37 +47,61 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 		return js;
 	}
 	else if (input_id == 'P') { // joy povhat
-		pos = text.find_first_of(AXIS_ID, pos, 2); // "XY"
-		auto pos_dir = text.find_first_of(AXIS_DIR, pos);
-		if (pos == npos or pos_dir == npos) {
+		js.type = js.axis;
+
+		try
+		{
+			const auto axis = text.substr(pos+1, 1);
+			const auto dir = text.substr(pos+2, 1);
+
+			if (axis=="X") {
+				js.axis_id = Joystick::Axis::PovX;
+			}
+			else if (axis=="Y") {
+				js.axis_id = Joystick::Axis::PovY;
+			}
+			else {
+				js.type = js.invalid;
+			}
+
+			if (dir=="-") {
+				js.axis_dir = dir::up;
+			}
+			else if (dir=="+") {
+				js.axis_dir = dir::down;
+			}
+			else {
+				js.type = js.invalid;
+			}
+		}
+		catch (const std::exception&)
+		{
 			js.type = js.invalid;
-			return js;
-		}
-		else js.type = js.axis;
-
-		const auto axis = text[pos];
-		const auto axd = text[pos_dir];
-
-		if (axis == 'X') {
-			js.axis_id = Joystick::Axis::PovX;
-		}
-		else {
-			js.axis_id = Joystick::Axis::PovY;
 		}
 
-		js.axis_dir = axd == '-' ? dir::up : dir::down;
+		return js;
 	}
 	else { // joyaxis
 		auto const axis = input_id;
-		pos = text.find_first_of(AXIS_DIR, pos, 2);
-		if (pos == npos) {
-			js.type = js.invalid;
-			return js;
+		js.type = js.axis;
+
+		try
+		{
+			auto dir = text.substr(pos + 1, 1);
+
+			if (dir == "-") {
+				js.axis_dir = dir::up;
+			}
+			else if (dir == "+") {
+				js.axis_dir = dir::down;
+			}
+			else {
+				js.type = js.invalid;
+			}
 		}
-		else {
-			js.type = js.axis;
-			auto const axd = text[pos];
-			js.axis_dir = axd == '-' ? dir::up : dir::down;
+		catch (const std::exception&)
+		{
+			js.type = js.invalid;
 		}
 
 		switch (axis)
@@ -97,7 +128,7 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 			js.type = js.invalid;
 			break;
 		}
-	}
 
-	return js;
+		return js;
+	}
 }

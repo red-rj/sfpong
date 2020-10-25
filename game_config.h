@@ -2,6 +2,7 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
+#include "common.h"
 
 namespace pong
 {

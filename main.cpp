@@ -10,6 +10,7 @@
 #include <boost/property_tree/info_parser.hpp>
 #include <lyra/lyra.hpp>
 #include <fmt/format.h>
+#include <filesystem>
 
 namespace fs = std::filesystem;
 namespace ckey = pong::ckey;
@@ -96,7 +97,7 @@ int main(int argcount, const char* args[])
 		ImGui::SFML::UpdateFontTexture();
 	}
 
-	pong::setup_game(&sansFont, &monoFont);
+	pong::setup_game();
 
 	auto vg = pong::game(window);
 	sf::Clock deltaClock;
