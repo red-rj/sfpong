@@ -10,7 +10,7 @@ struct StringUserData
         : Str(str), ChainCallback(chain_cb), ChainCallbackUserData(chain_data) {}
 };
 
-static int InputTextCallback(ImGuiInputTextCallbackData* data)
+static int InputStringCallback(ImGuiInputTextCallbackData* data)
 {
     auto user_data = (StringUserData*)data->UserData;
     if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
@@ -38,7 +38,7 @@ bool ImGui::InputText(const char* label, std::string* str, ImGuiInputTextFlags f
     flags |= ImGuiInputTextFlags_CallbackResize;
 
     auto cb_user_data = StringUserData(str, callback, user_data);
-    return InputText(label, str->data(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
+    return InputText(label, str->data(), str->capacity() + 1, flags, InputStringCallback, &cb_user_data);
 }
 
 bool ImGui::InputTextMultiline(const char* label, std::string* str, const ImVec2& size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
@@ -47,7 +47,7 @@ bool ImGui::InputTextMultiline(const char* label, std::string* str, const ImVec2
     flags |= ImGuiInputTextFlags_CallbackResize;
 
     auto cb_user_data = StringUserData(str, callback, user_data);
-    return InputTextMultiline(label, str->data(), str->capacity() + 1, size, flags, InputTextCallback, &cb_user_data);
+    return InputTextMultiline(label, str->data(), str->capacity() + 1, size, flags, InputStringCallback, &cb_user_data);
 }
 
 bool ImGui::InputTextWithHint(const char* label, const char* hint, std::string* str, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
@@ -56,5 +56,5 @@ bool ImGui::InputTextWithHint(const char* label, const char* hint, std::string* 
     flags |= ImGuiInputTextFlags_CallbackResize;
 
     auto cb_user_data = StringUserData(str, callback, user_data);
-    return InputTextWithHint(label, hint, str->data(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
+    return InputTextWithHint(label, hint, str->data(), str->capacity() + 1, flags, InputStringCallback, &cb_user_data);
 }

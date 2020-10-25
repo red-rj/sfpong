@@ -13,6 +13,7 @@
 #include "menu.h"
 #include "game_config.h"
 
+const char pong::version[] = "0.2.2";
 
 using namespace std::literals;
 
@@ -100,8 +101,6 @@ namespace
 		sf::RectangleShape bg;
 	};
 }
-
-const char pong::version[] = "0.2.2";
 
 
 int pong::random_num(int min, int max)

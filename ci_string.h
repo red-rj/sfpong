@@ -18,9 +18,9 @@ namespace red
         }
         static int compare(const char_type* s1, const char_type* s2, size_t n) {
             while (n-- != 0) {
-                char const us[] = { to_upper(*s1), to_upper(*s2) };
-                if (us[0] < us[1]) return -1;
-                if (us[0] > us[1]) return 1;
+                char_type uc1 = to_upper(*s1), uc2 = to_upper(*s2);
+                if (uc1 < uc2) return -1;
+                if (uc1 > uc2) return 1;
                 ++s1; ++s2;
             }
             return 0;

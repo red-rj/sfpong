@@ -143,7 +143,7 @@ void pong::menu_t::draw(game& ctx, sf::Window& window)
 		auto _styles_ = {
 			StyleColor(ImGuiCol_Button, sf::Color::Transparent),
 			StyleColor(ImGuiCol_ButtonHovered, sf::Color::Red),
-			StyleColor(ImGuiCol_ButtonActive, sf::Color::Red)
+			StyleColor(ImGuiCol_ButtonActive, sf::Color(255, 50, 50))
 		};
 
 		if (Button("Sair")) {
