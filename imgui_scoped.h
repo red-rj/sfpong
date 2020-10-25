@@ -1,6 +1,5 @@
 // imgui helpers and extensions
 #pragma once
-#define IMGUI_USER_CONFIG "imconfig-sfml.h"
 #include <imgui.h>
 
 
@@ -301,21 +300,3 @@ namespace ImScoped
     };
 
 } // namespace ImScoped
-
-
-// dear imgui: wrappers for C++ standard library (STL) types (std::string, etc.)
-#include <string>
-
-namespace ImGui
-{
-    // ImGui::InputText() with std::string
-    IMGUI_API bool  InputText(const char* label, std::string* str, ImGuiInputTextFlags flags = 0, 
-                              ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
-
-    IMGUI_API bool  InputTextMultiline(const char* label, std::string* str, const ImVec2& size = ImVec2(0, 0), 
-                                       ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, 
-                                       void* user_data = NULL);
-    
-    IMGUI_API bool  InputTextWithHint(const char* label, const char* hint, std::string* str, ImGuiInputTextFlags flags = 0, 
-                                      ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
-}

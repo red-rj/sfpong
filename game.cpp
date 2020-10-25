@@ -3,7 +3,7 @@
 #include <random>
 
 #include <fmt/format.h>
-#include "imgui_ext.h"
+#include <imgui.h>
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
 

@@ -1,7 +1,8 @@
 #include "menu.h"
 #include "convert.h"
 #include "game.h"
-#include "imgui_ext.h"
+#include "imgui_inc.h"
+#include "imgui_scoped.h"
 
 #include <algorithm>
 #include <optional>
