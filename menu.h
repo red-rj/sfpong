@@ -24,6 +24,7 @@ namespace pong
 		void aboutSfPong();
 
 		// ui
+		void controlsUi();
 		int joystickCombobox(const char* label, int current_joyid);
 
 		// show flags

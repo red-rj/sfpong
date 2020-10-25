@@ -203,100 +203,7 @@ void pong::menu_t::guiOptions(game&)
 	{
 		if (auto tab = gui::TabBarItem("Controles"))
 		{
-			ImGui::Text("Teclado");
-
-			auto inputKbKey = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
-			#pragma region Block
-			{
-				using namespace ImGui;
-
-				gui::ID _id_ = id++;
-				auto constexpr popup_id = "Rebind popup";
-				auto keystr = fmt::format("{}", curKey);
-
-				Text("%5s:", label);
-				SameLine(75);
-				if (Button(keystr.c_str())) {
-					OpenPopup(popup_id);
-					rebinding = true;
-				}
-
-				const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
-				if (auto popup = gui::PopupModal(popup_id, &rebinding, flags))
-				{
-					using Key = sf::Keyboard::Key;
-
-					gui::Font sansBig{ font_rebinding_popup };
-					Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
-
-					auto key = scan_kb();
-					if (key)
-					{
-						if (key.value() != Key::Escape)
-							curKey = key.value();
-
-						CloseCurrentPopup();
-					}
-				}
-			};
-			#pragma endregion
-
-			auto inputKbCtrls = [&](pong::playerid pl) mutable
-			{
-				auto title = nameof(pl);
-				gui::ID _id_ = title;
-				gui::Group _g_;
-
-				ImGui::Text("%s:", title);
-				//gui::Indent _ind_{ 5.f };
-
-				auto& settings = input_settings[int(pl)];
-				auto& player_ctrls = settings.keyboard_controls;
-
-				inputKbKey("Up", player_ctrls.up);
-				inputKbKey("Down", player_ctrls.down);
-				inputKbKey("Fast", player_ctrls.fast);
-			};
-
-			// ---
-			inputKbCtrls(playerid::one);
-			ImGui::SameLine();
-			inputKbCtrls(playerid::two);
-
-			ImGui::Spacing();
-
-			ImGui::Text("Joystick:");
-
-			auto inputJoystickSettings = [&](playerid pid) mutable {
-				const auto other_pid = pid == playerid::one ? playerid::two : playerid::one;
-
-				auto& joyid = input_settings[int(pid)].joystickId;
-				auto& deadzone = input_settings[int(pid)].joystick_deadzone;
-				auto title = nameof(pid);
-				
-				gui::GroupID _grp_ = title;
-				ImGui::Text(title);
-				//gui::ItemWidth _iw_ = ImGui::GetWindowWidth() * 0.5f;
-
-				auto selected = joystickCombobox("", joyid);
-
-				if (selected != -1) {
-					auto& other_joyid = input_settings[int(other_pid)].joystickId;
-
-					if (selected == other_joyid) {
-						std::swap(joyid, other_joyid);
-					}
-				}
-
-				joyid = selected;
-
-				ImGui::SliderFloat("Deadzone", &deadzone, 0, 50, "%.1f%%");
-			};
-			
-			inputJoystickSettings(playerid::one);
-			ImGui::NewLine();
-			inputJoystickSettings(playerid::two);
-
+			controlsUi();
 		}
 		if (auto tab = gui::TabBarItem("DEV"))
 		{
@@ -366,21 +273,21 @@ void pong::menu_t::aboutSfPong()
 	using namespace ImGui;
 	namespace gui = ImScoped;
 
-	auto win = gui::Window("Sobre sfPong", &show.about, ImGuiWindowFlags_AlwaysAutoResize);
+	auto win = gui::Window("Sobre sfPong", &show.about, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 	if (!win) return;
 
 	Text("sfPong %s", pong::version);
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
 	
-	Text("%10s %s", "ImGui", ImGui::GetVersion()); SameLine();
+	Text("%s: %5s", "ImGui", ImGui::GetVersion()); SameLine();
 	if (SmallButton("about")) {
 		show.imgui_about = true;
 	}
 	if (IsItemHovered())
 		SetTooltip("ImGui about window");
 
-	constexpr auto libver = "%10s: %d.%d.%d";
+	constexpr auto libver = "%s: %5d.%d.%d";
 	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
 	Text(libver, "Boost",
 		BOOST_VERSION / 100000,
@@ -393,6 +300,110 @@ void pong::menu_t::aboutSfPong()
 		FMT_VERSION % 100
 	);
 	Text(libver, "spdlog", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
+}
+
+void pong::menu_t::controlsUi()
+{
+	namespace gui = ImScoped;
+	{
+		gui::Font title = font_sect_title;
+		ImGui::Text("Teclado");
+	}
+
+	auto inputKbKey = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
+	#pragma region Block
+	{
+		using namespace ImGui;
+
+		gui::ID _id_ = id++;
+		auto constexpr popup_id = "Rebind popup";
+		auto keystr = fmt::format("{}", curKey);
+
+		Text("%5s:", label);
+		SameLine(75);
+		if (Button(keystr.c_str())) {
+			OpenPopup(popup_id);
+			rebinding = true;
+		}
+
+		const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
+		if (auto popup = gui::PopupModal(popup_id, &rebinding, flags))
+		{
+			using Key = sf::Keyboard::Key;
+
+			gui::Font sansBig{ font_rebinding_popup };
+			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
+
+			auto key = scan_kb();
+			if (key)
+			{
+				if (key.value() != Key::Escape)
+					curKey = key.value();
+
+				CloseCurrentPopup();
+			}
+		}
+	};
+	#pragma endregion
+
+	auto inputKbCtrls = [&](pong::playerid pl) mutable
+	{
+		auto title = nameof(pl);
+		gui::ID _id_ = title;
+		gui::Group _g_;
+
+		ImGui::Text("%s:", title);
+		//gui::Indent _ind_{ 5.f };
+
+		auto& settings = input_settings[int(pl)];
+		auto& player_ctrls = settings.keyboard_controls;
+
+		inputKbKey("Up", player_ctrls.up);
+		inputKbKey("Down", player_ctrls.down);
+		inputKbKey("Fast", player_ctrls.fast);
+	};
+
+	// ---
+	inputKbCtrls(playerid::one);
+	ImGui::SameLine();
+	inputKbCtrls(playerid::two);
+
+	ImGui::Spacing();
+
+	{
+		gui::Font title = font_sect_title;
+		ImGui::Text("Joystick:");
+	}
+
+	auto inputJoystickSettings = [&](playerid pid) mutable {
+		const auto other_pid = pid == playerid::one ? playerid::two : playerid::one;
+
+		auto& joyid = input_settings[int(pid)].joystickId;
+		auto& deadzone = input_settings[int(pid)].joystick_deadzone;
+		auto title = nameof(pid);
+
+		gui::GroupID _grp_ = title;
+		ImGui::Text(title);
+		//gui::ItemWidth _iw_ = ImGui::GetWindowWidth() * 0.5f;
+
+		auto selected = joystickCombobox("", joyid);
+
+		if (selected != -1) {
+			auto& other_joyid = input_settings[int(other_pid)].joystickId;
+
+			if (selected == other_joyid) {
+				std::swap(joyid, other_joyid);
+			}
+		}
+
+		joyid = selected;
+
+		ImGui::SliderFloat("Deadzone", &deadzone, 0, 50, "%.1f%%");
+	};
+
+	inputJoystickSettings(playerid::one);
+	ImGui::NewLine();
+	inputJoystickSettings(playerid::two);
 }
 
 int pong::menu_t::joystickCombobox(const char* label, int current_joyid)
