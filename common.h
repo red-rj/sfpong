@@ -39,4 +39,5 @@ namespace files
         ;
 }
 
+    extern const char version[];
 }

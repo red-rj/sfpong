@@ -16,7 +16,6 @@
 
 using namespace std::literals;
 
-
 namespace
 {
 	auto rnd_dev = std::random_device();
@@ -58,7 +57,6 @@ namespace
 	};
 
 	sf::Font font_sans, font_mono;
-
 	sf::RenderTarget* rtarget = nullptr;
 
 	struct drawable_message : sf::Drawable
@@ -102,6 +100,8 @@ namespace
 		sf::RectangleShape bg;
 	};
 }
+
+const char pong::version[] = "0.2.2";
 
 
 int pong::random_num(int min, int max)
@@ -257,13 +257,6 @@ void pong::game::pollEvents(sf::RenderWindow& window, sf::Time time)
 			}
 		} break;
 
-		case sf::Event::Resized:
-		{
-			rect visibleArea{ 0, 0, (float)event.size.width, (float)event.size.height };
-			window.setView(sf::View(visibleArea));
-			generateLevel(visibleArea);
-		} break;
-
 		case sf::Event::JoystickConnected:
 		case sf::Event::JoystickDisconnected:
 			game_menu.refresh_joystick_list();
@@ -297,8 +290,6 @@ void pong::game::devEvents(const sf::Event& event)
 
 void pong::game::update(sf::RenderWindow& window)
 {
-	//pollEvents(window);
-
 	window.clear();
 	window.draw(Court);
 	window.draw(Score);

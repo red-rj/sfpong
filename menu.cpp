@@ -369,7 +369,7 @@ void pong::menu_t::aboutSfPong()
 	auto win = gui::Window("Sobre sfPong", &show.about, ImGuiWindowFlags_AlwaysAutoResize);
 	if (!win) return;
 
-	Text("sfPong %s", "0.0.0");
+	Text("sfPong %s", pong::version);
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
 	
