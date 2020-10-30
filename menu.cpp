@@ -18,32 +18,30 @@
 static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 {
 	using sf::Keyboard;
-	
-	auto& io = ImGui::GetIO();
-	auto const begin = io.KeysDown;
-	auto const end = begin + Keyboard::KeyCount;
-	auto it = std::find(begin, end, true);
 
-	if (it != end) {
-		return Keyboard::Key(it - begin);
+	for (int i = 0; i < Keyboard::KeyCount; i++)
+	{
+		auto key = Keyboard::Key(i);
+		if (Keyboard::isKeyPressed(key)) {
+			return key;
+		}
 	}
-	else return {};
+
+	return {};
 }
 
 static auto scan_mouse_btn() noexcept -> std::optional<sf::Mouse::Button>
 {
 	using sf::Mouse;
-	constexpr auto Count = Mouse::ButtonCount;
 
-	auto& io = ImGui::GetIO();
-	auto const begin = io.MouseDown;
-	auto const end = begin + Count;
-	auto it = std::find(begin, end, true);
-
-	if (it != end) {
-		return Mouse::Button(it - begin);
+	for (int i = 0; i < Mouse::ButtonCount; i++)
+	{
+		auto btn = Mouse::Button(i);
+		if (Mouse::isButtonPressed(btn))
+			return btn;
 	}
-	else return {};
+
+	return {};
 }
 
 static auto scan_joy_btn() noexcept
@@ -73,6 +71,8 @@ namespace
 		;
 
 	std::vector<std::string> _joystick_list;
+
+	std::array<pong::player_input_cfg, 2> active_input_settings;
 
 	constexpr auto nameof(pong::playerid pl)
 	{
@@ -158,6 +158,7 @@ void pong::menu_t::init()
 {
 	input_settings[(int)playerid::one] = get_input_cfg(playerid::one);
 	input_settings[(int)playerid::two] = get_input_cfg(playerid::two);
+	active_input_settings = input_settings;
 	refresh_joystick_list();
 
 	auto* atlas = ImGui::GetIO().Fonts;
@@ -190,12 +191,8 @@ void pong::menu_t::refresh_joystick_list() const
 void pong::menu_t::guiOptions(game&)
 {
 	namespace gui = ImScoped;
-	std::array<player_input_cfg, 2> active_settings = {
-		get_input_cfg(playerid::one),
-		get_input_cfg(playerid::two)
-	};
 
-	bool isDirty = input_settings != active_settings;
+	bool isDirty = input_settings != active_input_settings;
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
@@ -233,7 +230,7 @@ void pong::menu_t::guiOptions(game&)
 	ImGui::Separator();
 
 	if (ImGui::Button("Descartar")) {
-		input_settings = active_settings;
+		input_settings = active_input_settings;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Salvar") && isDirty)
@@ -242,6 +239,8 @@ void pong::menu_t::guiOptions(game&)
 		{
 			set_input_cfg(input_settings[int(player)], player);
 		}
+
+		active_input_settings = input_settings;
 	}
 }
 
@@ -362,7 +361,6 @@ void pong::menu_t::controlsUi()
 		gui::Group _g_;
 
 		ImGui::Text("%s:", title);
-		//gui::Indent _ind_{ 5.f };
 
 		auto& settings = input_settings[int(pl)];
 		auto& player_ctrls = settings.keyboard_controls;
@@ -385,24 +383,22 @@ void pong::menu_t::controlsUi()
 	}
 
 	auto inputJoystickSettings = [&](playerid pid) mutable {
-		const auto other_pid = pid == playerid::one ? playerid::two : playerid::one;
-
 		auto& joyid = input_settings[int(pid)].joystickId;
 		auto& deadzone = input_settings[int(pid)].joystick_deadzone;
 		auto title = nameof(pid);
 
 		gui::GroupID _grp_ = title;
 		ImGui::Text(title);
-		//gui::ItemWidth _iw_ = ImGui::GetWindowWidth() * 0.5f;
 
 		auto selected = joystickCombobox("", joyid);
 
-		if (selected != -1) {
-			auto& other_joyid = input_settings[int(other_pid)].joystickId;
+		auto dup = std::find_if(input_settings.begin(), input_settings.end(),
+		[=](const player_input_cfg& input) {
+			return selected != -1 && input.joystickId == selected;
+		});
 
-			if (selected == other_joyid) {
-				std::swap(joyid, other_joyid);
-			}
+		if (dup != input_settings.end()) {
+			std::swap(joyid, dup->joystickId);
 		}
 
 		joyid = selected;
@@ -434,7 +430,7 @@ int pong::menu_t::joystickCombobox(const char* label, int current_joyid)
 			current_joyid = npos;
 		}
 
-		auto s = 0u;
+		auto s = 0;
 		for (auto& name : joynames)
 		{
 			is_selected = s == current_joyid;

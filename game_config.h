@@ -65,11 +65,11 @@ namespace ckey
     auto get_keyboard_controls(playerid pl) noexcept -> keyboard_ctrls;
     void set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept;
 
-    unsigned get_joystick(playerid pl) noexcept;
-    void set_joystick(playerid pl, unsigned joyid) noexcept;
+    int get_joystick(playerid pl) noexcept;
+    void set_joystick(playerid pl, int joyid) noexcept;
 
     inline void unset_joystick(playerid pl) noexcept {
-        set_joystick(pl, unsigned(-1));
+        set_joystick(pl, -1);
     }
 
     auto get_input_cfg(playerid player) noexcept ->player_input_cfg;

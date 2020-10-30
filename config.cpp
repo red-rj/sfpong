@@ -24,7 +24,7 @@ using namespace std::literals;
 
 namespace // user config vars
 {
-    unsigned player_joystick[2] = { -1, -1 };
+    int player_joystick[2] = { -1, -1 };
     pong::keyboard_ctrls player_keyboard_controls[2];
     float player_deadzone[2];
 }
@@ -158,17 +158,17 @@ void pong::applyConfig(const cfgtree& tree)
     joyid_translator joyid_tr;
 
     // player one
-    P1.keyboard_controls.up = tree.get<Keyboard::Key>  (P1_UP, Keyboard::W);
-    P1.keyboard_controls.down = tree.get<Keyboard::Key>(P1_DOWN, Keyboard::S);
-    P1.keyboard_controls.fast = tree.get<Keyboard::Key>(P1_FAST, Keyboard::LShift);
+    P1.keyboard_controls.up = tree.get(P1_UP, Keyboard::W);
+    P1.keyboard_controls.down = tree.get(P1_DOWN, Keyboard::S);
+    P1.keyboard_controls.fast = tree.get(P1_FAST, Keyboard::LShift);
     P1.joystickId = tree.get(P1_JOYSTICK, -1, joyid_tr);
     P1.joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
     set_input_cfg(P1, playerid::one);
     
     // player two
-    P2.keyboard_controls.up = tree.get<Keyboard::Key>  (P2_UP, Keyboard::Up);
-    P2.keyboard_controls.down = tree.get<Keyboard::Key>(P2_DOWN, Keyboard::Down);
-    P2.keyboard_controls.fast = tree.get<Keyboard::Key>(P2_FAST, Keyboard::RControl);
+    P2.keyboard_controls.up = tree.get(P2_UP, Keyboard::Up);
+    P2.keyboard_controls.down = tree.get(P2_DOWN, Keyboard::Down);
+    P2.keyboard_controls.fast = tree.get(P2_FAST, Keyboard::RControl);
     P2.joystickId = tree.get(P2_JOYSTICK, -1, joyid_tr);
     P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
     set_input_cfg(P2, playerid::two);
@@ -208,12 +208,12 @@ void pong::set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept
     player_keyboard_controls[int(pl)] = ctrls;
 }
 
-unsigned pong::get_joystick(playerid pl) noexcept
+int pong::get_joystick(playerid pl) noexcept
 {
     return player_joystick[int(pl)];
 }
 
-void pong::set_joystick(playerid pl, unsigned joyid) noexcept
+void pong::set_joystick(playerid pl, int joyid) noexcept
 {
     player_joystick[int(pl)] = joyid;
 }
