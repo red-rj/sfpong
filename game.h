@@ -70,13 +70,30 @@ namespace pong
 	{
 		court() = default;
 
-		court(rect playarea, float heigth, sf::Vector2f margin) : m_playarea(playarea), m_hOffset(margin.y+heigth)
+		//court(rect playarea, float heigth, sf::Vector2f margin) : m_playarea(playarea), m_hOffset(margin.y+heigth)
+		//{
+		//	top = bottom = sf::RectangleShape({ playarea.width - margin.x * 2, heigth });
+		//	top.setPosition(margin);
+		//	bottom.setOrigin(0, heigth);
+		//	bottom.setPosition(margin + sf::Vector2f(0, playarea.height - margin.y * 2));
+		//	net.setPosition(playarea.width / 2, 20);
+		//}
+
+		court(rect playarea, size2d border_size) : m_playarea(playarea), top(border_size), bottom(border_size)
 		{
-			top = bottom = sf::RectangleShape({ playarea.width - margin.x * 2, heigth });
-			top.setPosition(margin);
-			bottom.setOrigin(0, heigth);
-			bottom.setPosition(margin + sf::Vector2f(0, playarea.height - margin.y * 2));
-			net.setPosition(playarea.width / 2, 20);
+			const auto margin = size2d(0, 5);
+			auto origin = size2d(border_size.x / 2, 0);
+			
+			top.setOrigin(origin);
+			top.setPosition(playarea.width / 2, margin.y);
+
+			//bottom = top;
+			origin.y = border_size.y;
+
+			bottom.setOrigin(origin);
+			bottom.setPosition(playarea.width / 2, playarea.height - margin.y);
+
+			net.setPosition(playarea.width / 2, margin.y);
 		}
 
 		auto getCenter() const noexcept {
@@ -147,8 +164,10 @@ namespace pong
 		{}
 
 		void serve(dir direction);
-		void update(sf::RenderWindow& window);
-		void pollEvents(sf::RenderWindow& window, sf::Time time);
+		void update();
+		void processEvent(sf::Event& event);
+
+		static void setup(sf::RenderWindow& window);
 
 	private:
 		game(mode mode_);
@@ -168,6 +187,4 @@ namespace pong
 		paddle Player1, Player2;
 		ball Ball;
 	};
-
-	void setup_game(sf::RenderTarget* target);
 }

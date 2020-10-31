@@ -136,8 +136,8 @@
       <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>pwsh -noni -nop scripts\robocopy.ps1 .\support $(outdir)support  /NP </Command>
+      <Message>copiar extras</Message>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -184,8 +184,8 @@
       <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>pwsh -noni -nop scripts\robocopy.ps1 .\support $(outdir)support  /NP </Command>
+      <Message>copiar extras</Message>
     </PostBuildEvent>
     <PreLinkEvent>
       <Command>

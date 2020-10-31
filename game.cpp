@@ -58,7 +58,7 @@ namespace
 	};
 
 	sf::Font font_sans, font_mono;
-	sf::RenderTarget* rtarget = nullptr;
+	sf::RenderWindow* sfwindow;
 
 	struct drawable_message : sf::Drawable
 	{
@@ -163,15 +163,6 @@ void pong::constrain_pos(pos& p)
 	while (p.y < Playarea.top)		p.x += Playarea.top;
 }
 
-void pong::setup_game(sf::RenderTarget* target)
-{
-	rtarget = target;
-	font_sans.loadFromFile(pong::files::sans_tff);
-	font_mono.loadFromFile(pong::files::mono_tff);
-
-	game_menu.init();
-}
-
 
 void pong::overrideGuts(const cfgtree& guts)
 {
@@ -180,6 +171,7 @@ void pong::overrideGuts(const cfgtree& guts)
 		paddle_cfg cfg;
 		cfg.move.speed = p->get<float>("speed");
 		cfg.move.acceleration = p->get<float>("acceleration");
+		cfg.move.max_speed = p->get<float>("max_speed");
 		cfg.size.x = p->get<float>("width");
 		cfg.size.y = p->get<float>("height");
 		CfgPaddle = cfg;
@@ -188,13 +180,14 @@ void pong::overrideGuts(const cfgtree& guts)
 	{
 		log::debug("{} paddle error: {}", __func__, e.what());
 	}
+	log::trace("{} paddle cfg loaded", __func__);
 
 	if (auto node = guts.get_child_optional("ball")) try
 	{
 		ball_cfg cfg;
 		cfg.move.speed = node->get<float>("speed");
 		cfg.move.acceleration = node->get<float>("acceleration");
-		cfg.move.max_speed = node->get<float>("maxspeed");
+		cfg.move.max_speed = node->get<float>("max_speed");
 		cfg.radius = node->get<float>("radius");
 		CfgBall = cfg;
 	}
@@ -202,12 +195,44 @@ void pong::overrideGuts(const cfgtree& guts)
 	{
 		log::debug("{} ball error: {}", __func__, e.what());
 	}
+	log::trace("{} ball cfg loaded", __func__);
 
+	log::debug("{} success!", __func__);
+}
+
+pong::cfgtree pong::createGuts()
+{
+	auto guts = cfgtree();
+	guts.put("version", version);
+
+	guts.put("paddle.speed", CfgPaddle.move.speed);
+	guts.put("paddle.acceleration", CfgPaddle.move.acceleration);
+	guts.put("paddle.max_speed", CfgPaddle.move.max_speed);
+	guts.put("paddle.width", CfgPaddle.size.x);
+	guts.put("paddle.height", CfgPaddle.size.y);
+
+	guts.put("ball.speed", CfgBall.move.speed);
+	guts.put("ball.acceleration", CfgBall.move.acceleration);
+	guts.put("ball.max_speed", CfgBall.move.max_speed);
+	guts.put("ball.radius", CfgBall.radius);
+
+	return guts;
 }
 
 void pong::score::update()
 {
 	text.setString(fmt::format("{}    {}", val.first, val.second));
+}
+
+
+void pong::game::setup(sf::RenderWindow& window)
+{
+	sfwindow = &window;
+
+	font_sans.loadFromFile(pong::files::sans_tff);
+	font_mono.loadFromFile(pong::files::mono_tff);
+
+	game_menu.init();
 }
 
 pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
@@ -222,48 +247,42 @@ pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
 pong::game::game(mode mode_) : game({Playarea.width, Playarea.height}, mode_) {}
 
 
-void pong::game::pollEvents(sf::RenderWindow& window, sf::Time time)
+void pong::game::processEvent(sf::Event& event)
 {
-	sf::Event event;
-	while (window.pollEvent(event)) {
+	devEvents(event);
 
-		ImGui::SFML::ProcessEvent(event);
-		devEvents(event);
+	switch (event.type)
+	{
+	case sf::Event::Closed:
+		sfwindow->close();
+		break;
 
-		switch (event.type)
-		{
-		case sf::Event::Closed:
-			window.close();
+	case sf::Event::KeyReleased:
+	{
+		if (game_menu.rebinding)
 			break;
 
-		case sf::Event::KeyReleased:
+		switch (event.key.code)
 		{
-			if (game_menu.rebinding)
-				break;
-
-			switch (event.key.code)
-			{
-			case sf::Keyboard::Enter:
-				serve(dir::left);
-				break;
-			case sf::Keyboard::Escape:
-				paused = !paused;
-				// imgui deve capturar input só com o jogo pausado
-				auto& io = ImGui::GetIO();
-				io.WantCaptureKeyboard = paused;
-				io.WantCaptureMouse = paused;
-				break;
-			}
-		} break;
-
-		case sf::Event::JoystickConnected:
-		case sf::Event::JoystickDisconnected:
-			game_menu.refresh_joystick_list();
+		case sf::Keyboard::Enter:
+			serve(dir::left);
+			break;
+		case sf::Keyboard::Escape:
+			paused = !paused;
+			// imgui deve capturar input só com o jogo pausado
+			auto& io = ImGui::GetIO();
+			io.WantCaptureKeyboard = paused;
+			io.WantCaptureMouse = paused;
 			break;
 		}
+	} break;
+
+	case sf::Event::JoystickConnected:
+	case sf::Event::JoystickDisconnected:
+		game_menu.refresh_joystick_list();
+		break;
 	}
 
-	ImGui::SFML::Update(window, time);
 }
 void pong::game::devEvents(const sf::Event& event)
 {
@@ -287,8 +306,10 @@ void pong::game::devEvents(const sf::Event& event)
 	}
 }
 
-void pong::game::update(sf::RenderWindow& window)
+void pong::game::update()
 {
+	auto& window = *sfwindow;
+
 	window.clear();
 	window.draw(Court);
 	window.draw(Score);
@@ -409,14 +430,12 @@ void pong::game::updatePlayer(paddle& player)
 			// deadzone
 			if (abs(axis) > input.joystick_deadzone)
 				movement = axis / 5;
-			else
-				movement /= 3; // desacelerar
 
 			gofast = Joystick::isButtonPressed(input.joystickId, 0);
 		}
 		else
-		{
-			auto offset = cfg.move.speed * cfg.move.acceleration;
+		{ // keyboard
+			auto offset = cfg.move.speed + cfg.move.speed * cfg.move.acceleration;
 
 			if (Keyboard::isKeyPressed(controls.up))
 				movement -= offset;
@@ -478,7 +497,8 @@ void pong::game::updateBall()
 void pong::game::generateLevel(rect area)
 {
 	Playarea = area;
-	Court = pong::court(Playarea, 25, { 15, 20 });
+	//Court = pong::court(Playarea, 25, { 15, 20 });
+	Court = pong::court(Playarea, { area.width * 0.95f, 25 });
 }
 
 void pong::game::serve(dir direction)

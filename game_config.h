@@ -10,7 +10,9 @@ namespace pong
 
     void set_user_config(const cfgtree& tree);
     cfgtree get_user_config();
+
     void overrideGuts(const cfgtree& tree);
+    cfgtree createGuts();
 
 // config keys
 namespace ckey

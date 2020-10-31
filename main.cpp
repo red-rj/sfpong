@@ -18,16 +18,29 @@ using namespace std::literals;
 using fmt::print;
 
 
-int main(int argcount, const char* args[])
+int main(int argc, const char* argv[])
 {
-	fs::path guts_file, config_file = "game.cfg";
+	fs::path guts_file = "guts.info", config_file = "game.cfg";
 	bool show_help=false;
 
 	auto cli = lyra::cli()
 		| lyra::help(show_help)
-		| lyra::opt(config_file, "arquivo")["--config"]("arquivo config (padrão: game.cfg).")
-		| lyra::opt(guts_file, "arquivo")["--guts"]("usar arquivo GUTS.")
+		| lyra::opt(config_file, "game.cfg")["--config"]("arquivo config.")
+		| lyra::opt(guts_file, "guts.info")["--guts"]("usar arquivo GUTS.")
+		//| lyra::opt(guts_file, "guts.info")["--spit-guts"]("criar arquivo GUTS.")
 		;
+
+	auto arguments = lyra::args(argc, argv);
+	auto cli_result = cli.parse(arguments);
+	if (!cli_result) {
+		print("CLI error: {}\n", cli_result.errorMessage());
+		return 5;
+	}
+	else if (show_help) {
+		std::cout << cli << '\n';
+		return 0;
+	}
+
 
 	auto logger = spdlog::stdout_color_st("sfPong");
 	spdlog::set_default_logger(logger);
@@ -35,16 +48,10 @@ int main(int argcount, const char* args[])
 	spdlog::set_level(spdlog::level::debug);
 #endif // !NDEBUG
 
-	auto cli_result = cli.parse({ argcount, args });
-	if (!cli_result) {
-		print("CLI error: {}\n", cli_result.errorMessage());
-	}
-	else if (show_help) {
-		std::cout << cli << '\n';
-		return 0;
-	}
+	logger->debug("CWD: {}", fs::current_path().string());
 
-	pong::cfgtree guts, gamecfg;
+
+	pong::cfgtree gamecfg;
 	try
 	{
 		logger->info("loading config file");
@@ -61,10 +68,23 @@ int main(int argcount, const char* args[])
 		logger->info("Setting up...");
 		pong::set_user_config(gamecfg);
 		
-		if (fs::exists(guts_file)) {
+		// guts
+		pong::cfgtree guts;
+		// arg foi especificado?
+		bool guts_arg = std::find_if(arguments.begin(), arguments.end(), 
+			[](const std::string& arg) { return arg.find("--guts") != arg.npos; }) != arguments.end();
+
+		if (guts_arg and fs::exists(guts_file)) {
 			logger->debug("GUTS file: {}", guts_file.string());
 			read_info(guts_file.string(), guts);
 			pong::overrideGuts(guts);
+		}
+		else if (guts_arg) {
+			guts = pong::createGuts();
+			write_info(guts_file.string(), guts);
+			logger->debug("GUTS file created: {}", fs::absolute(guts_file).string());
+			logger->debug("exiting...");
+			return 0;
 		}
 	}
 	catch (std::exception& e)
@@ -73,24 +93,28 @@ int main(int argcount, const char* args[])
 		return 5;
 	}
 
-	unsigned const framelimit = guts.get("framerate_limit", 60u);
 	// ---
 	sf::RenderWindow window{ sf::VideoMode(1280, 1024), "Sf Pong!" };
-	window.setFramerateLimit(framelimit);
+	window.setFramerateLimit(60u);
 	ImGui::SFML::Init(window);
 	
-	logger->debug("CWD: {}", fs::current_path().string());
 
-	pong::setup_game(&window);
+	pong::game::setup(window);
 
 	auto vg = pong::game(window);
 	sf::Clock deltaClock;
 
 	while (window.isOpen())
 	{
-		vg.pollEvents(window, deltaClock.restart());
-		vg.update(window);
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			ImGui::SFML::ProcessEvent(event);
+			vg.processEvent(event);
+		}
+		ImGui::SFML::Update(window, deltaClock.restart());
 
+		vg.update();
 		ImGui::SFML::Render(window);
 		window.display();
 	}
