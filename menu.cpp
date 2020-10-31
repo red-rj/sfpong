@@ -12,7 +12,7 @@
 #include <imgui-SFML.h>
 #include <fmt/ostream.h>
 #include <SFML/Window/Window.hpp>
-#include <boost/range/algorithm.hpp>
+#include <boost/version.hpp>
 
 
 static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
@@ -88,7 +88,7 @@ namespace
 
 pong::menu_t pong::game_menu;
 
-void pong::menu_t::draw(game& ctx, sf::Window& window)
+void pong::menu_t::update(game& ctx, sf::Window& window)
 {
 	using namespace ImGui;
 	using namespace ImScoped;

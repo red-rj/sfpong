@@ -8,8 +8,8 @@ namespace pong
 {
     using cfgtree = boost::property_tree::ptree;
 
-    void applyConfig(const cfgtree& tree);
-    cfgtree getGameConfig();
+    void set_user_config(const cfgtree& tree);
+    cfgtree get_user_config();
     void overrideGuts(const cfgtree& tree);
 
 // config keys

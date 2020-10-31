@@ -140,17 +140,18 @@ struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyb
 
 class joyid_translator : iostream_translator<int>
 {
+    using base = iostream_translator<int>;
 public:
-    using iostream_translator<int>::get_value;
+    using base::get_value;
 
     auto put_value(int id)
     {
-        return id < 0 ? ""s : iostream_translator<int>::put_value(id);
+        return id < 0 ? ""s : base::put_value(id);
     }
 };
 
 
-void pong::applyConfig(const cfgtree& tree)
+void pong::set_user_config(const cfgtree& tree)
 {
     using namespace ckey;
 
@@ -174,7 +175,7 @@ void pong::applyConfig(const cfgtree& tree)
     set_input_cfg(P2, playerid::two);
 }
 
-pong::cfgtree pong::getGameConfig()
+pong::cfgtree pong::get_user_config()
 {
     using namespace ckey;
     auto tree = cfgtree();

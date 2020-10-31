@@ -59,7 +59,7 @@ int main(int argcount, const char* args[])
 	try
 	{
 		logger->info("Setting up...");
-		pong::applyConfig(gamecfg);
+		pong::set_user_config(gamecfg);
 		
 		if (fs::exists(guts_file)) {
 			logger->debug("GUTS file: {}", guts_file.string());
@@ -97,7 +97,7 @@ int main(int argcount, const char* args[])
 
 	ImGui::SFML::Shutdown();
 	
-	auto config = pong::getGameConfig();
+	auto config = pong::get_user_config();
 	if (gamecfg != config) {
 		write_ini(config_file.string(), config);
 	}

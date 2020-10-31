@@ -10,7 +10,7 @@ namespace pong
 
 	struct menu_t
 	{
-		void draw(game& ctx, sf::Window& window);
+		void update(game& ctx, sf::Window& window);
 		void init();
 
 		bool rebinding = false;

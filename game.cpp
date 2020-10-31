@@ -329,7 +329,7 @@ void pong::game::update(sf::RenderWindow& window)
 		tickcount++;
 	}
 
-	game_menu.draw(*this, window);
+	game_menu.update(*this, window);
 }
 
 
