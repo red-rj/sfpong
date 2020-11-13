@@ -1,7 +1,6 @@
 ; sfPong guts
-; 13:25 31/10/2020
 
-version 0.2.2
+version 0.8.0
 
 paddle
 {

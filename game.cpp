@@ -13,7 +13,7 @@
 #include "menu.h"
 #include "game_config.h"
 
-const char pong::version[] = "0.2.2";
+const char pong::version[] = "0.8.0";
 
 using namespace std::literals;
 
