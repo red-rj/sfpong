@@ -70,15 +70,6 @@ namespace pong
 	{
 		court() = default;
 
-		//court(rect playarea, float heigth, sf::Vector2f margin) : m_playarea(playarea), m_hOffset(margin.y+heigth)
-		//{
-		//	top = bottom = sf::RectangleShape({ playarea.width - margin.x * 2, heigth });
-		//	top.setPosition(margin);
-		//	bottom.setOrigin(0, heigth);
-		//	bottom.setPosition(margin + sf::Vector2f(0, playarea.height - margin.y * 2));
-		//	net.setPosition(playarea.width / 2, 20);
-		//}
-
 		court(rect playarea, size2d border_size) : m_playarea(playarea), top(border_size), bottom(border_size)
 		{
 			const auto margin = size2d(0, 5);
@@ -159,8 +150,8 @@ namespace pong
 			singleplayer, multiplayer
 		};
 
-		game(size2d playarea, mode mode_ = mode::singleplayer);
-		game(sf::RenderWindow& window) : game(static_cast<size2d>(window.getSize()))
+		game(sf::Vector2u resolution, mode mode_ = mode::singleplayer);
+		game(sf::RenderWindow& window) : game(window.getSize())
 		{}
 
 		void serve(dir direction);

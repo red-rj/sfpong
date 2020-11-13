@@ -23,13 +23,17 @@ namespace ckey
         P1_DOWN = "player1.down",
         P1_FAST = "player1.fast",
         P1_JOYSTICK = "player1.joystick",
+        P1_JSDEADZONE = "player1.joystick_deadzone",
+        
         P2_UP = "player2.up",
         P2_DOWN = "player2.down",
         P2_FAST = "player2.fast",
         P2_JOYSTICK = "player2.joystick",
+        P2_JSDEADZONE = "player2.joystick_deadzone",
 
-        P1_JSDEADZONE = "player1.joystick_deadzone",
-        P2_JSDEADZONE = "player2.joystick_deadzone"
+        RESOLUTION = "game.resolution",
+        FRAMERATE = "game.framerate"
+
         ;
 }
 

@@ -235,10 +235,15 @@ void pong::game::setup(sf::RenderWindow& window)
 	game_menu.init();
 }
 
-pong::game::game(size2d playsize, mode mode_) : currentMode(mode_)
+pong::game::game(sf::Vector2u resolution, mode mode_) : currentMode(mode_)
 {
 	// pong court
-	auto area = rect{ {0.f,0.f}, playsize };
+	auto p = pos();
+	auto area = rect{ p, static_cast<size2d>(resolution) };
+
+	//const auto target_ar = 1.3;
+	//auto asz = size_2d<unsigned>(target_ar * area.height, area.height);
+
 	generateLevel(area);
 	Score.create(area, font_mono, 55);
 	resetState();

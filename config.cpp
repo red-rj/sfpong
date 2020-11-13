@@ -27,6 +27,8 @@ namespace // user config vars
     int player_joystick[2] = { -1, -1 };
     pong::keyboard_ctrls player_keyboard_controls[2];
     float player_deadzone[2];
+
+    pong::size_2d<unsigned> resolution = { 1024, 768 };
 }
 
 struct ci_compare
