@@ -123,14 +123,13 @@ void pong::menu_t::update(game& ctx, sf::Window& window)
 		if (MenuItem("Continuar", "ESC"))
 			ctx.paused = false;
 		if (auto m1 = Menu("Novo")) {
-			auto size = static_cast<size2d>(window.getSize());
 
 			if (MenuItem("1 jogador", nullptr, false, !singleplayer)) {
-				ctx = game(size, game::mode::singleplayer);
+				ctx = game(game::mode::singleplayer);
 				ctx.paused = false;
 			}
 			if (MenuItem("2 jogadores", nullptr, false, !multiplayer)) {
-				ctx = game(size, game::mode::multiplayer);
+				ctx = game(game::mode::multiplayer);
 				ctx.paused = false;
 			}
 		}

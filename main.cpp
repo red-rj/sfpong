@@ -75,8 +75,8 @@ int main(int argc, const char* argv[])
 			[](const std::string& arg) { return arg.find("--guts") != arg.npos; }) != arguments.end();
 
 		if (guts_arg and fs::exists(guts_file)) {
-			logger->debug("GUTS file: {}", guts_file.string());
 			read_info(guts_file.string(), guts);
+			logger->debug("got GUTS file: {}", guts_file.string());
 			pong::overrideGuts(guts);
 		}
 		else if (guts_arg) {
@@ -94,14 +94,14 @@ int main(int argc, const char* argv[])
 	}
 
 	// ---
-	sf::RenderWindow window{ sf::VideoMode(1280, 1024), "Sf Pong!" };
+	sf::RenderWindow window{ sf::VideoMode(1920, 1080), "Sf Pong!" };
 	window.setFramerateLimit(60u);
 	ImGui::SFML::Init(window);
 	
 
 	pong::game::setup(window);
 
-	auto vg = pong::game(window);
+	auto vg = pong::game(pong::game::mode::singleplayer);
 	sf::Clock deltaClock;
 
 	while (window.isOpen())

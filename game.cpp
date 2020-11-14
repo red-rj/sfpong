@@ -17,13 +17,106 @@ const char pong::version[] = "0.8.0";
 
 using namespace std::literals;
 
+struct net_shape : public sf::Drawable, public sf::Transformable
+{
+	explicit net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
+
+private:
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+	{
+		states.transform *= getTransform();
+		target.draw(m_net, states);
+	}
+
+
+	float m_piece_size;
+	int m_piece_count;
+	sf::VertexArray m_net{ sf::Quads };
+};
+
+net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
+{
+	m_net.clear();
+
+	auto piece_size = sf::Vector2f(m_piece_size, m_piece_size);
+	auto current_pt = sf::Vector2f();
+
+	for (int gap = false, p = 0; p < m_piece_count; gap = !gap)
+	{
+		if (gap)
+		{
+			current_pt.y += piece_size.y * 2;
+			continue;
+		}
+
+		m_net.append({ current_pt });
+		m_net.append(sf::Vector2f{ current_pt.x + piece_size.x, current_pt.y });
+		m_net.append({ piece_size + current_pt });
+		m_net.append(sf::Vector2f{ current_pt.x, current_pt.y + piece_size.y });
+		p++;
+	}
+
+	setOrigin(piece_size.x / 2, 0);
+}
+
+
+struct pong_court : public sf::Drawable
+{
+	pong_court() = default;
+
+	pong_court(pong::rect playarea, pong::size2d border_size) : m_playarea(playarea), top(border_size), bottom(border_size)
+	{
+		const auto margin = pong::size2d(0, 5);
+		auto origin = pong::size2d(border_size.x / 2, 0);
+
+		top.setOrigin(origin);
+		top.setPosition(playarea.width / 2, margin.y);
+
+		//bottom = top;
+		origin.y = border_size.y;
+
+		bottom.setOrigin(origin);
+		bottom.setPosition(playarea.width / 2, playarea.height - margin.y);
+
+		net.setPosition(playarea.width / 2, margin.y);
+	}
+
+	auto getCenter() const noexcept {
+		auto center = m_playarea;
+		center.top += m_hOffset;
+		center.height -= m_hOffset * 2;
+		return center;
+	}
+
+	sf::RectangleShape top, bottom;
+	net_shape net;
+
+private:
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+	{
+		target.draw(top, states);
+		target.draw(bottom, states);
+		target.draw(net, states);
+	}
+
+	pong::rect m_playarea;
+	float m_hOffset;
+};
+
+
 namespace
 {
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 
 	pong::rect Playarea;
-	pong::court Court;
+	pong_court Court;
+
+	void generateLevel(pong::rect area)
+	{
+		Playarea = area;
+		Court = pong_court(Playarea, { area.width * 0.95f, 25 });
+	}
 
 	struct movement
 	{
@@ -58,6 +151,13 @@ namespace
 	};
 
 	sf::Font font_sans, font_mono;
+	sf::Text txtScore;
+
+	void update_score(pong::pair<short> const& val)
+	{
+		txtScore.setString(fmt::format("{}    {}", val.first, val.second));
+	}
+
 	sf::RenderWindow* sfwindow;
 
 	struct drawable_message : sf::Drawable
@@ -113,32 +213,6 @@ bool pong::coin_flip()
 {
 	static std::bernoulli_distribution dist;
 	return dist(rnd_eng);
-}
-
-
-pong::net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
-{
-	m_net.clear();
-
-	auto piece_size = sf::Vector2f(m_piece_size, m_piece_size);
-	auto current_pt = sf::Vector2f();
-
-	for (int gap = false, p = 0; p < m_piece_count; gap = !gap)
-	{
-		if (gap)
-		{
-			current_pt.y += piece_size.y * 2;
-			continue;
-		}
-
-		m_net.append({ current_pt });
-		m_net.append(sf::Vector2f{ current_pt.x + piece_size.x, current_pt.y });
-		m_net.append({ piece_size + current_pt });
-		m_net.append(sf::Vector2f{ current_pt.x, current_pt.y + piece_size.y });
-		p++;
-	}
-
-	setOrigin(piece_size.x / 2, 0);
 }
 
 
@@ -219,37 +293,25 @@ pong::cfgtree pong::createGuts()
 	return guts;
 }
 
-void pong::score::update()
-{
-	text.setString(fmt::format("{}    {}", val.first, val.second));
-}
-
 
 void pong::game::setup(sf::RenderWindow& window)
 {
 	sfwindow = &window;
+	generateLevel(rect{ pos(), size2d(1280, 1024) });
 
 	font_sans.loadFromFile(pong::files::sans_tff);
 	font_mono.loadFromFile(pong::files::mono_tff);
 
+	txtScore.setFont(font_mono);
+	txtScore.setCharacterSize(55);
+
 	game_menu.init();
 }
 
-pong::game::game(sf::Vector2u resolution, mode mode_) : currentMode(mode_)
-{
-	// pong court
-	auto p = pos();
-	auto area = rect{ p, static_cast<size2d>(resolution) };
 
-	//const auto target_ar = 1.3;
-	//auto asz = size_2d<unsigned>(target_ar * area.height, area.height);
-
-	generateLevel(area);
-	Score.create(area, font_mono, 55);
+pong::game::game(mode mode_) : currentMode(mode_) {
 	resetState();
 }
-
-pong::game::game(mode mode_) : game({Playarea.width, Playarea.height}, mode_) {}
 
 
 void pong::game::processEvent(sf::Event& event)
@@ -314,14 +376,25 @@ void pong::game::devEvents(const sf::Event& event)
 void pong::game::update()
 {
 	auto& window = *sfwindow;
+	auto view = sf::View(Playarea);
+
+	{
+		auto winrect = rect({}, static_cast<size2d>(window.getSize()));
+		rect vp;
+		vp.width = Playarea.width / winrect.width;
+		vp.height = 1;
+		auto remaining_space = winrect.width - Playarea.width;
+		auto margin = (remaining_space / 2) / winrect.width;
+		vp.left = margin;
+
+		view.setViewport(vp);
+	}
 
 	window.clear();
-	window.draw(Court);
-	window.draw(Score);
+	window.setView(view);
 
-	//auto msg = drawable_message(font_sans, 45);
-	//msg.write("Bem-vindo! Isto é um teste...", { 250.f, 150.f });
-	//window.draw(msg);
+	window.draw(Court);
+	window.draw(txtScore);
 
 	if (!paused)
 	{
@@ -334,28 +407,32 @@ void pong::game::update()
 		updatePlayer(Player2);
 
 		if (tickcount % 30 == 0) {
-			// check score
+			// score
 			if (!Playarea.intersects(Ball.getGlobalBounds()))
 			{
 				// ponto!
-				if (Ball.getPosition().x < 0)
+				if (Ball.velocity.x < 0)
 				{
 					// indo p/ direita, ponto player 1
-					Score.add(1, 0);
+					score.first++;
 					serve(dir::left);
 				}
 				else
 				{
 					// indo p/ esquerda, ponto player 2
-					Score.add(0, 1);
+					score.second++;
 					serve(dir::right);
 				}
+
+				update_score(score);
 			}
 		}
 		tickcount++;
 	}
 
-	game_menu.update(*this, window);
+	window.setView(window.getDefaultView());
+
+	game_menu.update(*this, *sfwindow);
 }
 
 
@@ -499,12 +576,7 @@ void pong::game::updateBall()
 	else Ball.update();
 }
 
-void pong::game::generateLevel(rect area)
-{
-	Playarea = area;
-	//Court = pong::court(Playarea, 25, { 15, 20 });
-	Court = pong::court(Playarea, { area.width * 0.95f, 25 });
-}
+
 
 void pong::game::serve(dir direction)
 {
