@@ -109,14 +109,8 @@ namespace
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 
-	pong::rect Playarea;
+	const pong::rect Playarea = { 0.f, 0.f, 1280.f, 1024.f };
 	pong_court Court;
-
-	void generateLevel(pong::rect area)
-	{
-		Playarea = area;
-		Court = pong_court(Playarea, { area.width * 0.95f, 25 });
-	}
 
 	struct movement
 	{
@@ -297,7 +291,7 @@ pong::cfgtree pong::createGuts()
 void pong::game::setup(sf::RenderWindow& window)
 {
 	sfwindow = &window;
-	generateLevel(rect{ pos(), size2d(1280, 1024) });
+	Court = pong_court(Playarea, { Playarea.width * 0.95f, 25 });
 
 	font_sans.loadFromFile(pong::files::sans_tff);
 	font_mono.loadFromFile(pong::files::mono_tff);
@@ -379,13 +373,13 @@ void pong::game::update()
 	auto view = sf::View(Playarea);
 
 	{
-		auto winrect = rect({}, static_cast<size2d>(window.getSize()));
+		// scale 2 fit, center, preserve aspect ratio
+		const auto win_w = window.getSize().x;
+		auto space_ratio = (win_w - Playarea.width) / win_w;
 		rect vp;
-		vp.width = Playarea.width / winrect.width;
+		vp.width = Playarea.width / win_w;
 		vp.height = 1;
-		auto remaining_space = winrect.width - Playarea.width;
-		auto margin = (remaining_space / 2) / winrect.width;
-		vp.left = margin;
+		vp.left = space_ratio / 2;
 
 		view.setViewport(vp);
 	}
@@ -394,14 +388,14 @@ void pong::game::update()
 	window.setView(view);
 
 	window.draw(Court);
-	window.draw(txtScore);
 
 	if (!paused)
 	{
 		window.draw(Ball);
 		window.draw(Player1);
 		window.draw(Player2);
-		
+		window.draw(txtScore);
+
 		updateBall();
 		updatePlayer(Player1);
 		updatePlayer(Player2);
@@ -439,15 +433,19 @@ void pong::game::update()
 void pong::game::resetState()
 {
 	auto area = Playarea;
+	auto margin = area.width * .05f;
+	auto center = pos(area.width / 2, area.height / 2);
 
 	Player1.id = playerid::one;
 	Player1.setSize(CfgPaddle.size);
-	Player1.setOrigin(CfgPaddle.size.x / 2, CfgPaddle.size.y / 2);
-	Player1.setPosition(20, area.height / 2);
+	Player1.setPosition(margin, 0);
+	Player1.setOrigin(CfgPaddle.size.x, CfgPaddle.size.y / 2);
+	Player1.move(0, center.y);
 
 	Player2 = Player1;
 	Player2.id = playerid::two;
-	Player2.setPosition(area.width - 20, area.height / 2);
+	Player2.setPosition(area.width - margin, area.height / 2);
+	Player2.setOrigin(0, CfgPaddle.size.y / 2);
 
 	if (currentMode==mode::singleplayer) {
 		Player1.ai = false;
@@ -460,8 +458,10 @@ void pong::game::resetState()
 	//	Player1.ai = Player2.ai = true;
 	//}
 
-	Ball.setPosition(area.width / 2, area.height / 2);
 	Ball.setRadius(CfgBall.radius);
+	Ball.setOrigin(CfgBall.radius, CfgBall.radius);
+	Ball.setPosition(center);
+	Ball.setFillColor(sf::Color::Red);
 }
 
 
@@ -503,38 +503,41 @@ void pong::game::updatePlayer(paddle& player)
 		using sf::Joystick;
 
 		float movement = velocity.y;
-		bool gofast = false;
+
 		auto input = pong::get_input_cfg(player.id);
-		const auto& controls = input.keyboard_controls;
+		const auto& kb_controls = input.keyboard_controls;
 
-		if (input.use_joystick()) {
-			auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
-			// deadzone
-			if (abs(axis) > input.joystick_deadzone)
-				movement = axis / 5;
+		// keyboard
+		const auto kb_offset = cfg.move.speed * cfg.move.acceleration;
 
-			gofast = Joystick::isButtonPressed(input.joystickId, 0);
+		if (Keyboard::isKeyPressed(kb_controls.up))
+			movement -= kb_offset;
+		else if (Keyboard::isKeyPressed(kb_controls.down))
+			movement += kb_offset;
+
+		bool gofast_kb = Keyboard::isKeyPressed(kb_controls.fast);
+
+		// joystick
+		auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
+		// deadzone
+		if (abs(axis) > input.joystick_deadzone)
+			movement = axis / 5;
+
+		bool gofast_js = Joystick::isButtonPressed(input.joystickId, 0);
+
+		if (movement != velocity.y) {
+			velocity.y = std::clamp(movement, -cfg.move.max_speed, cfg.move.max_speed);
+			auto gofast = gofast_kb || gofast_js;
+
+			if (velocity != vel() && gofast)
+			{
+				velocity.y *= 1.25f;
+			}
 		}
-		else
-		{ // keyboard
-			auto offset = cfg.move.speed + cfg.move.speed * cfg.move.acceleration;
-
-			if (Keyboard::isKeyPressed(controls.up))
-				movement -= offset;
-			else if (Keyboard::isKeyPressed(controls.down))
-				movement += offset;
-			else
-				movement /= 3; // desacelerar
-
-			gofast = Keyboard::isKeyPressed(controls.fast);
+		else {
+			velocity.y /= 2; // desacelerar
 		}
 
-		velocity.y = std::clamp(movement, -cfg.move.max_speed, cfg.move.max_speed);
-
-		if (velocity != vel() && gofast)
-		{
-			velocity.y *= 1.25f;
-		}
 	}
 
 	player.update();

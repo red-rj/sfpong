@@ -12,5 +12,4 @@ sfPong TODOs
 6. [x] Menu de seleção de modo (1 ou 2 jogadores)
 7. [z] Variavel de versão do programa (SFPONG_VERSION)
 8. [x] BUG: Mousewheel não funciona no menu
-9. [ ] tornar posicionamento independende da resolução da janela
-	- renderizar para uma textura em tamanho fixo e escalar para a janela?
+9. [x] tornar posicionamento independende da resolução da janela (sf::View)

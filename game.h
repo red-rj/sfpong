@@ -18,14 +18,7 @@ namespace pong
 
 	struct ball : sf::CircleShape
 	{
-		explicit ball(float radius = 0) : CircleShape(radius)
-		{
-			setOrigin(radius, radius);
-			setFillColor(sf::Color::Red);
-		}
-
 		void update();
-
 		vel velocity;
 	};
 
@@ -42,7 +35,7 @@ namespace pong
 	{
 		friend menu_t;
 
-		enum class mode
+		enum mode
 		{
 			singleplayer, multiplayer
 		};
@@ -61,11 +54,11 @@ namespace pong
 		void updatePlayer(paddle& player);
 		void updateBall();
 
+
+
 		bool paused = true;
 		uint64_t tickcount = 0;
 		mode currentMode;
-
-		//score Score;
 
 		paddle Player1, Player2;
 		ball Ball;
