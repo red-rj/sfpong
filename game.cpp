@@ -298,6 +298,8 @@ void pong::game::setup(sf::RenderWindow& window)
 
 	txtScore.setFont(font_mono);
 	txtScore.setCharacterSize(55);
+	txtScore.setPosition(Playarea.width / 2 - 100, 30);
+	update_score({});
 
 	game_menu.init();
 }
@@ -388,13 +390,13 @@ void pong::game::update()
 	window.setView(view);
 
 	window.draw(Court);
+	window.draw(txtScore);
 
 	if (!paused)
 	{
 		window.draw(Ball);
 		window.draw(Player1);
 		window.draw(Player2);
-		window.draw(txtScore);
 
 		updateBall();
 		updatePlayer(Player1);
@@ -409,13 +411,11 @@ void pong::game::update()
 				{
 					// indo p/ direita, ponto player 1
 					score.first++;
-					serve(dir::left);
 				}
 				else
 				{
 					// indo p/ esquerda, ponto player 2
 					score.second++;
-					serve(dir::right);
 				}
 
 				update_score(score);
@@ -432,20 +432,16 @@ void pong::game::update()
 
 void pong::game::resetState()
 {
-	auto area = Playarea;
-	auto margin = area.width * .05f;
-	auto center = pos(area.width / 2, area.height / 2);
+	const auto center = pos(Playarea.width / 2, Playarea.height / 2);
 
 	Player1.id = playerid::one;
 	Player1.setSize(CfgPaddle.size);
-	Player1.setPosition(margin, 0);
-	Player1.setOrigin(CfgPaddle.size.x, CfgPaddle.size.y / 2);
-	Player1.move(0, center.y);
+	Player1.setOrigin(0, CfgPaddle.size.y / 2);
+	resetPos(Player1);
 
 	Player2 = Player1;
 	Player2.id = playerid::two;
-	Player2.setPosition(area.width - margin, area.height / 2);
-	Player2.setOrigin(0, CfgPaddle.size.y / 2);
+	resetPos(Player2);
 
 	if (currentMode==mode::singleplayer) {
 		Player1.ai = false;
@@ -460,8 +456,8 @@ void pong::game::resetState()
 
 	Ball.setRadius(CfgBall.radius);
 	Ball.setOrigin(CfgBall.radius, CfgBall.radius);
-	Ball.setPosition(center);
 	Ball.setFillColor(sf::Color::Red);
+	resetPos(Ball);
 }
 
 
@@ -479,7 +475,7 @@ void pong::game::updatePlayer(paddle& player)
 		auto diff = (myPos - ball_pos).y;
 		auto spd = diff < 0 ? -diff + reaction : diff - reaction;
 
-		auto ySpeed = spd / 50.0f;
+		auto ySpeed = spd / 30.0f;
 
 		if (spd > ball_bounds.height)
 		{
@@ -577,6 +573,30 @@ void pong::game::updateBall()
 		} while (collision(*player, Ball));
 	}
 	else Ball.update();
+}
+
+void pong::game::resetPos(ball& b)
+{
+	b.velocity = vel();
+	b.setPosition(Playarea.width / 2, Playarea.height / 2);
+}
+
+void pong::game::resetPos(paddle& p)
+{
+	const auto margin = Playarea.width * .05f;
+	const auto center = pos(Playarea.width / 2, Playarea.height / 2);
+
+	if (p.id == playerid::one) {
+		p.setPosition(margin - CfgPaddle.size.x, center.y);
+	}
+	else if (p.id == playerid::two) {
+		p.setPosition(Playarea.width - margin, center.y);
+	}
+}
+
+bool pong::game::waiting_to_serve() const noexcept
+{
+	return Ball.velocity == vel() && Ball.getPosition() == pos(Playarea.width / 2, Playarea.height / 2);
 }
 
 

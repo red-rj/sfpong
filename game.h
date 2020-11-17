@@ -19,6 +19,7 @@ namespace pong
 	struct ball : sf::CircleShape
 	{
 		void update();
+
 		vel velocity;
 	};
 
@@ -54,7 +55,11 @@ namespace pong
 		void updatePlayer(paddle& player);
 		void updateBall();
 
+		void resetPos(ball& b);
+		void resetPos(paddle& p);
 
+
+		bool waiting_to_serve() const noexcept;
 
 		bool paused = true;
 		uint64_t tickcount = 0;

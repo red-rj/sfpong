@@ -21,17 +21,15 @@ using fmt::print;
 int main(int argc, const char* argv[])
 {
 	fs::path guts_file = "guts.info", config_file = "game.cfg";
-	bool show_help=false;
+	bool show_help=false, guts_arg = false;
 
 	auto cli = lyra::cli()
-		| lyra::help(show_help)
+		| lyra::help(show_help).description("sfPong cmd options")
 		| lyra::opt(config_file, "game.cfg")["--config"]("arquivo config.")
-		| lyra::opt(guts_file, "guts.info")["--guts"]("usar arquivo GUTS.")
-		//| lyra::opt(guts_file, "guts.info")["--spit-guts"]("criar arquivo GUTS.")
+		| lyra::opt(guts_arg)["--guts"]("usar/criar arquivo GUTS.")
 		;
 
-	auto arguments = lyra::args(argc, argv);
-	auto cli_result = cli.parse(arguments);
+	auto cli_result = cli.parse({ argc, argv });
 	if (!cli_result) {
 		print("CLI error: {}\n", cli_result.errorMessage());
 		return 5;
@@ -70,9 +68,6 @@ int main(int argc, const char* argv[])
 		
 		// guts
 		pong::cfgtree guts;
-		// arg foi especificado?
-		bool guts_arg = std::find_if(arguments.begin(), arguments.end(), 
-			[](const std::string& arg) { return arg.find("--guts") != arg.npos; }) != arguments.end();
 
 		if (guts_arg and fs::exists(guts_file)) {
 			read_info(guts_file.string(), guts);

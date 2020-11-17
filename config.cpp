@@ -28,7 +28,7 @@ namespace // user config vars
     pong::keyboard_ctrls player_keyboard_controls[2];
     float player_deadzone[2];
 
-    pong::size_2d<unsigned> resolution = { 1024, 768 };
+    pong::size_2d<unsigned> game_resolution = { 1024, 768 };
 }
 
 struct ci_compare
