@@ -68,5 +68,6 @@ namespace pong
 		paddle Player1, Player2;
 		ball Ball;
 		pair<short> score;
+		dir resume_serve_dir = dir::left;
 	};
 }

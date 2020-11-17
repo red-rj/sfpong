@@ -71,19 +71,7 @@ namespace
 		;
 
 	std::vector<std::string> _joystick_list;
-
 	std::array<pong::player_input_cfg, 2> active_input_settings;
-
-	constexpr auto nameof(pong::playerid pl)
-	{
-		auto* title = "Player ???";
-		switch (pl)
-		{
-		case pong::playerid::one: title = "Player 1"; break;
-		case pong::playerid::two: title = "Player 2"; break;
-		}
-		return title;
-	}
 }
 
 pong::menu_t pong::game_menu;
@@ -338,7 +326,7 @@ void pong::menu_t::controlsUi()
 		{
 			using Key = sf::Keyboard::Key;
 
-			gui::Font sansBig{ font_rebinding_popup };
+			gui::Font _font_{ font_rebinding_popup };
 			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 			auto key = scan_kb();
@@ -355,7 +343,7 @@ void pong::menu_t::controlsUi()
 
 	auto inputKbCtrls = [&](pong::playerid pl) mutable
 	{
-		auto title = nameof(pl);
+		auto title = to_string(pl);
 		gui::ID _id_ = title;
 		gui::Group _g_;
 
@@ -384,7 +372,7 @@ void pong::menu_t::controlsUi()
 	auto inputJoystickSettings = [&](playerid pid) mutable {
 		auto& joyid = input_settings[int(pid)].joystickId;
 		auto& deadzone = input_settings[int(pid)].joystick_deadzone;
-		auto title = nameof(pid);
+		auto title = to_string(pid);
 
 		gui::GroupID _grp_ = title;
 		ImGui::Text(title);

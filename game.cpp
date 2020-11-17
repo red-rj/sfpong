@@ -1,6 +1,7 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <tuple>
 
 #include <fmt/format.h>
 #include <imgui.h>
@@ -328,7 +329,9 @@ void pong::game::processEvent(sf::Event& event)
 		switch (event.key.code)
 		{
 		case sf::Keyboard::Enter:
-			serve(dir::left);
+			if (waiting_to_serve()) {
+				serve(resume_serve_dir);
+			}
 			break;
 		case sf::Keyboard::Escape:
 			paused = !paused;
@@ -409,16 +412,23 @@ void pong::game::update()
 				// ponto!
 				if (Ball.velocity.x < 0)
 				{
-					// indo p/ direita, ponto player 1
+					// indo p/ direita, ponto player 1, saque player 2
 					score.first++;
+					resume_serve_dir = dir::right;
 				}
 				else
 				{
-					// indo p/ esquerda, ponto player 2
+					// indo p/ esquerda, ponto player 2, saque player 1
 					score.second++;
+					resume_serve_dir = dir::left;
 				}
 
+				log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
+
 				update_score(score);
+				resetPos(Player1);
+				resetPos(Player2);
+				resetPos(Ball);
 			}
 		}
 		tickcount++;
@@ -459,7 +469,6 @@ void pong::game::resetState()
 	Ball.setFillColor(sf::Color::Red);
 	resetPos(Ball);
 }
-
 
 void pong::game::updatePlayer(paddle& player)
 {
@@ -505,7 +514,6 @@ void pong::game::updatePlayer(paddle& player)
 
 		// keyboard
 		const auto kb_offset = cfg.move.speed * cfg.move.acceleration;
-
 		if (Keyboard::isKeyPressed(kb_controls.up))
 			movement -= kb_offset;
 		else if (Keyboard::isKeyPressed(kb_controls.down))
@@ -535,7 +543,7 @@ void pong::game::updatePlayer(paddle& player)
 			}
 		}
 		else {
-			velocity.y /= 2; // desacelerar
+			velocity.y *= 0.6; // desacelerar
 		}
 
 	}

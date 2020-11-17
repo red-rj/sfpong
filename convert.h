@@ -4,7 +4,6 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Mouse.hpp>
 
-
 std::ostream& operator<< (std::ostream& os, sf::Keyboard::Key key);
 std::ostream& operator<< (std::ostream& os, sf::Mouse::Button btn);
 

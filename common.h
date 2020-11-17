@@ -40,4 +40,27 @@ namespace files
 }
 
     extern const char version[];
+
+    constexpr auto to_string(playerid pl) noexcept
+    {
+        auto* title = "Player ???";
+        switch (pl)
+        {
+        case pong::playerid::one: title = "Player 1"; break;
+        case pong::playerid::two: title = "Player 2"; break;
+        }
+        return title;
+    }
+
+    constexpr auto to_string(dir d) noexcept {
+        switch (d)
+        {
+        case dir::up: return "up";
+        case dir::down: return "down";
+        case dir::left: return "left";
+        case dir::right: return "right";
+        default: return "???";
+        }
+    }
+
 }
