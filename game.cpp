@@ -514,12 +514,16 @@ void pong::game::updatePlayer(paddle& player)
 		bool gofast_kb = Keyboard::isKeyPressed(kb_controls.fast);
 
 		// joystick
-		auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
-		// deadzone
-		if (abs(axis) > input.joystick_deadzone)
-			movement = axis / 5;
+		bool gofast_js = false;
+		if (input.use_joystick())
+		{
+			auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
+			// deadzone
+			if (abs(axis) > input.joystick_deadzone)
+				movement = axis / 5;
 
-		bool gofast_js = Joystick::isButtonPressed(input.joystickId, 0);
+			gofast_js = Joystick::isButtonPressed(input.joystickId, 0);
+		}
 
 		if (movement != velocity.y) {
 			velocity.y = std::clamp(movement, -cfg.move.max_speed, cfg.move.max_speed);
