@@ -5,6 +5,7 @@
 
 
 using sf::Joystick;
+using ci_string_view = std::basic_string_view<char, pong::util::ci_char_traits<char>>;
 
 auto pong::parse_joyinput(std::string_view arg) -> joy_input
 {
@@ -20,7 +21,7 @@ auto pong::parse_joyinput(std::string_view arg) -> joy_input
 		return js;
 	}
 
-	auto text = red::to_ci(arg);
+	auto text = ci_string_view(arg.data(), arg.length());
 
 	auto pos = text.find("Joy");
 	pos = text.find_first_of(INPUT_ID, pos + 3);

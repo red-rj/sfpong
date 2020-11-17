@@ -1,10 +1,9 @@
 #pragma once
 #include <string>
 #include <string_view>
-#include <iostream>
 #include <locale>
 
-namespace red
+namespace pong::util
 {
     template<class T>
     struct ci_char_traits : public std::char_traits<T> {
@@ -44,25 +43,12 @@ namespace red
 
     };
 
-    using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
-    using ci_string = std::basic_string<char, ci_char_traits<char>>;
-    using ci_wstring_view = std::basic_string_view<wchar_t, ci_char_traits<wchar_t>>;
-    using ci_wstring = std::basic_string<wchar_t, ci_char_traits<wchar_t>>;
 
-    constexpr ci_string_view to_ci(std::string_view sv) {
-        return { sv.data(), sv.size() };
+    inline int ci_compare(std::string_view lhs, std::string_view rhs, size_t n = std::string::npos)
+    {
+        using traits = ci_char_traits<char>;
+        if (n == lhs.npos)
+            n = lhs.size();
+        return traits::compare(lhs.data(), rhs.data(), n);
     }
-    constexpr ci_wstring_view to_ci(std::wstring_view sv) {
-        return { sv.data(), sv.size() };
-    }
-
-
-    constexpr std::string_view to_string_view(ci_string_view sv) {
-        return { sv.data(), sv.size() };
-    }
-
-    inline auto& operator<< (std::ostream& os, ci_string_view ciview) noexcept {
-        return os << to_string_view(ciview);
-    }
-
 }

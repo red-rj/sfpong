@@ -33,10 +33,9 @@ namespace // user config vars
 
 struct ci_compare
 {
-    constexpr bool operator()(std::string_view lhs, std::string_view rhs) const
+    bool operator()(std::string_view lhs, std::string_view rhs) const
     {
-        using red::to_ci;
-        return to_ci(lhs) < to_ci(rhs);
+        return pong::util::ci_compare(lhs, rhs) < 0;
     }
     constexpr bool operator()(int lhs, int rhs) const
     {
