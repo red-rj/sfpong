@@ -118,7 +118,7 @@ int main(int argc, const char* argv[])
 			vg.processEvent(event);
 		}
 		ImGui::SFML::Update(window, deltaClock.restart());
-
+		vg.draw();
 		vg.update();
 		ImGui::SFML::Render(window);
 		window.display();

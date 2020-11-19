@@ -374,40 +374,8 @@ void pong::game::devEvents(const sf::Event& event)
 
 void pong::game::update()
 {
-	auto& window = *sfwindow;
-	auto view = sf::View(Playarea);
-	const auto prev_view = window.getView();
-
-	{
-		// scale 2 fit, center, preserve aspect ratio
-		float to_w = window.getSize().x;
-		float from_w = Playarea.width;
-		rect vp;
-
-		if (from_w > to_w) {
-			std::swap(from_w, to_w);
-		}
-
-		auto space_ratio = (to_w - from_w) / to_w;
-		vp.width = from_w / to_w;
-		vp.height = 1;
-		vp.left = space_ratio / 2;
-
-		view.setViewport(vp);
-	}
-
-	window.clear();
-	window.setView(view);
-
-	window.draw(Court);
-	window.draw(txtScore);
-
 	if (!paused)
 	{
-		window.draw(Ball);
-		window.draw(Player1);
-		window.draw(Player2);
-
 		updateBall();
 		updatePlayer(Player1);
 		updatePlayer(Player2);
@@ -441,9 +409,50 @@ void pong::game::update()
 		tickcount++;
 	}
 
-	window.setView(prev_view);
-
 	game_menu.update(*this, *sfwindow);
+}
+
+// scale 2 fit, center, preserve aspect ratio
+static sf::View get_play_view(float target_width)
+{
+	float to_w = target_width;
+	float from_w = Playarea.width;
+	pong::rect vp;
+
+	if (from_w > to_w) {
+		std::swap(from_w, to_w);
+	}
+
+	auto space_ratio = (to_w - from_w) / to_w;
+	vp.width = from_w / to_w;
+	vp.height = 1;
+	vp.left = space_ratio / 2;
+
+	auto view = sf::View(Playarea);
+	view.setViewport(vp);
+
+	return view;
+}
+
+void pong::game::draw()
+{
+	auto& window = *sfwindow;
+	const auto prev_view = window.getView();
+	const auto play_view = get_play_view(window.getSize().x);
+
+	window.clear();
+	window.setView(play_view);
+
+	window.draw(Court);
+	window.draw(txtScore);
+
+	if (!paused) {
+		window.draw(Ball);
+		window.draw(Player1);
+		window.draw(Player2);
+	}
+
+	window.setView(prev_view);
 }
 
 

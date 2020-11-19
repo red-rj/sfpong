@@ -35,19 +35,18 @@ namespace pong
 	struct game
 	{
 		friend menu_t;
+		enum mode { singleplayer, multiplayer };
 
-		enum mode
-		{
-			singleplayer, multiplayer
-		};
+		game(mode mode_);
+
+		void update();
+		void draw();
 
 		void serve(dir direction);
-		void update();
 		void processEvent(sf::Event& event);
 
 		static void setup(sf::RenderWindow& window);
 
-		game(mode mode_);
 	private:
 
 		void resetState();
