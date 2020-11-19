@@ -18,7 +18,7 @@ namespace pong
 namespace ckey
 {
     // game.cfg
-    inline constexpr auto
+    constexpr auto
         P1_UP = "player1.up",
         P1_DOWN = "player1.down",
         P1_FAST = "player1.fast",
@@ -31,9 +31,9 @@ namespace ckey
         P2_JOYSTICK = "player2.joystick",
         P2_JSDEADZONE = "player2.joystick_deadzone",
 
-        RESOLUTION = "game.resolution",
-        FRAMERATE = "game.framerate"
-
+        RESOLUTION_X = "game.resolution_x",
+        RESOLUTION_Y = "game.resolution_y",
+        FULLSCREEN = "game.fullscreen"
         ;
 }
 

@@ -61,11 +61,20 @@ int main(int argc, const char* argv[])
 		logger->error("{}", e.what());
 	}
 
+	// game settings
+	sf::VideoMode vidmode;
+
 	try
 	{
 		logger->info("Setting up...");
+
+		vidmode.width = gamecfg.get(ckey::RESOLUTION_X, 1280u);
+		vidmode.height = gamecfg.get(ckey::RESOLUTION_Y, 1024u);
+		vidmode.bitsPerPixel = 32;
+
+		// controls
 		pong::set_user_config(gamecfg);
-		
+
 		// guts
 		pong::cfgtree guts;
 
@@ -75,9 +84,10 @@ int main(int argc, const char* argv[])
 			pong::overrideGuts(guts);
 		}
 		else if (guts_arg) {
+			logger->debug("{} not found! Creating new...", guts_file.string());
 			guts = pong::createGuts();
 			write_info(guts_file.string(), guts);
-			logger->debug("GUTS file created: {}", fs::absolute(guts_file).string());
+			logger->debug("{} - ok!", fs::absolute(guts_file).string());
 			logger->debug("exiting...");
 			return 0;
 		}
@@ -88,12 +98,12 @@ int main(int argc, const char* argv[])
 		return 5;
 	}
 
-	// ---
-	sf::RenderWindow window{ sf::VideoMode(1920, 1080), "Sf Pong!" };
+	sf::RenderWindow window{vidmode, "Sf Pong!"};
 	window.setFramerateLimit(60u);
+	window.setTitle("Sf Pong!");
+
 	ImGui::SFML::Init(window);
 	
-
 	pong::game::setup(window);
 
 	auto vg = pong::game(pong::game::mode::singleplayer);

@@ -169,9 +169,9 @@ namespace
 		{
 			text.setString(message);
 
-			pong::size_2d<float> bgsize;
 			const auto margin = pong::size2d{ 10.f, 10.f };
 			
+			sf::Vector2<float> bgsize;
 			bgsize.x = (text.getCharacterSize() + text.getLetterSpacing()) * message.length() / 2;
 			bgsize.y = (text.getCharacterSize() + text.getLineSpacing()) * 3;
 
@@ -376,13 +376,20 @@ void pong::game::update()
 {
 	auto& window = *sfwindow;
 	auto view = sf::View(Playarea);
+	const auto prev_view = window.getView();
 
 	{
 		// scale 2 fit, center, preserve aspect ratio
-		const auto win_w = window.getSize().x;
-		auto space_ratio = (win_w - Playarea.width) / win_w;
+		float to_w = window.getSize().x;
+		float from_w = Playarea.width;
 		rect vp;
-		vp.width = Playarea.width / win_w;
+
+		if (from_w > to_w) {
+			std::swap(from_w, to_w);
+		}
+
+		auto space_ratio = (to_w - from_w) / to_w;
+		vp.width = from_w / to_w;
 		vp.height = 1;
 		vp.left = space_ratio / 2;
 
@@ -434,7 +441,7 @@ void pong::game::update()
 		tickcount++;
 	}
 
-	window.setView(window.getDefaultView());
+	window.setView(prev_view);
 
 	game_menu.update(*this, *sfwindow);
 }

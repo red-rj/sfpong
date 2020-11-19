@@ -12,6 +12,12 @@ namespace pong
 {
     namespace log = spdlog;
 
+    template<class T>
+    using point = sf::Vector2<T>;
+
+    template<typename T, typename E = T>
+    using pair = std::pair<T, E>;
+
     // position type
     using pos = sf::Vector2f;
     // velocity type
@@ -21,15 +27,10 @@ namespace pong
     // direction type
     enum class dir { up, down, left, right };
 
-    template<class T>
-    using size_2d = sf::Vector2<T>;
+    using size2d = sf::Vector2<float>;
 
-    using size2d = size_2d<float>;
 
     enum class playerid { one, two };
-
-    template<typename T, typename E = T>
-    using pair = std::pair<T, E>;
 
 namespace files
 {
@@ -43,13 +44,12 @@ namespace files
 
     constexpr auto to_string(playerid pl) noexcept
     {
-        auto* title = "Player ???";
         switch (pl)
         {
-        case pong::playerid::one: title = "Player 1"; break;
-        case pong::playerid::two: title = "Player 2"; break;
+        case playerid::one: return "Player 1";
+        case playerid::two: return "Player 2";
+        default: return "Player ???";
         }
-        return title;
     }
 
     constexpr auto to_string(dir d) noexcept {
