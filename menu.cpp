@@ -76,7 +76,10 @@ namespace
 
 pong::menu_t pong::game_menu;
 
-void pong::menu_t::update(game& ctx, sf::Window& window)
+extern sf::RenderWindow* sfwindow;
+
+
+void pong::menu_t::update(game& ctx)
 {
 	using namespace ImGui;
 	using namespace ImScoped;
@@ -136,7 +139,7 @@ void pong::menu_t::update(game& ctx, sf::Window& window)
 
 		if (Button("Sair")) {
 			log::info("Tchau! :)");
-			window.close();
+			game_window->close();
 		}
 	}
 }
@@ -156,7 +159,6 @@ void pong::menu_t::init()
 	font_rebinding_popup = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
 	font_sect_title = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
 	font_monospace = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
-
 	ImGui::SFML::UpdateFontTexture();
 }
 
@@ -178,8 +180,14 @@ void pong::menu_t::refresh_joystick_list() const
 void pong::menu_t::guiOptions(game&)
 {
 	namespace gui = ImScoped;
+	static auto wip_resolution = game_window->getSize();
+	static auto active_resolution = wip_resolution;
 
-	bool isDirty = input_settings != active_input_settings;
+	bool isDirty = input_settings != active_input_settings
+		|| wip_resolution != active_resolution
+		;
+
+
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
@@ -193,6 +201,14 @@ void pong::menu_t::guiOptions(game&)
 
 		if (auto tabbar = gui::TabBar("##Tabs"))
 		{
+			if (auto tab = gui::TabBarItem("Game"))
+			{
+				static int win_size[2] = { active_resolution.x, active_resolution.y };
+				if (ImGui::InputInt2(u8"Resolução", win_size)) {
+					wip_resolution.x = win_size[0];
+					wip_resolution.y = win_size[1];
+				}
+			}
 			if (auto tab = gui::TabBarItem("Controles"))
 			{
 				controlsUi();
@@ -228,6 +244,8 @@ void pong::menu_t::guiOptions(game&)
 		}
 
 		active_input_settings = input_settings;
+		active_resolution = wip_resolution;
+		game_window->setSize(wip_resolution);
 	}
 }
 
@@ -301,7 +319,7 @@ void pong::menu_t::controlsUi()
 {
 	namespace gui = ImScoped;
 	{
-		gui::Font title = font_sect_title;
+		gui::Font _f_ = font_sect_title;
 		ImGui::Text("Teclado:");
 	}
 
@@ -365,7 +383,7 @@ void pong::menu_t::controlsUi()
 	ImGui::Spacing();
 
 	{
-		gui::Font title = font_sect_title;
+		gui::Font _f_ = font_sect_title;
 		ImGui::Text("Joystick:");
 	}
 

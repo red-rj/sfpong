@@ -69,4 +69,7 @@ namespace pong
 		pair<short> score;
 		dir resume_serve_dir = dir::left;
 	};
+
+	// shared
+	extern sf::Window* game_window;
 }

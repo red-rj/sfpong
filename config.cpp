@@ -29,6 +29,7 @@ namespace // user config vars
     float player_deadzone[2];
 }
 
+
 struct ci_compare
 {
     bool operator()(std::string_view lhs, std::string_view rhs) const
@@ -172,12 +173,14 @@ void pong::set_user_config(const cfgtree& tree)
     P2.joystickId = tree.get(P2_JOYSTICK, -1, joyid_tr);
     P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
     set_input_cfg(P2, playerid::two);
+
+    // game
 }
 
-pong::cfgtree pong::get_user_config()
+
+pong::cfgtree& pong::get_user_config(cfgtree& tree)
 {
     using namespace ckey;
-    auto tree = cfgtree();
 
     player_input_cfg P1 = get_input_cfg(playerid::one), P2 = get_input_cfg(playerid::two);
     joyid_translator joyid_tr;

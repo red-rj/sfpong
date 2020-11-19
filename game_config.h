@@ -9,7 +9,7 @@ namespace pong
     using cfgtree = boost::property_tree::ptree;
 
     void set_user_config(const cfgtree& tree);
-    cfgtree get_user_config();
+    cfgtree& get_user_config(cfgtree& tree);
 
     void overrideGuts(const cfgtree& tree);
     cfgtree createGuts();
@@ -80,5 +80,4 @@ namespace ckey
 
     auto get_input_cfg(playerid player) noexcept ->player_input_cfg;
     void set_input_cfg(player_input_cfg input, playerid player) noexcept;
-
 }

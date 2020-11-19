@@ -68,8 +68,8 @@ int main(int argc, const char* argv[])
 	{
 		logger->info("Setting up...");
 
-		vidmode.width = gamecfg.get(ckey::RESOLUTION_X, 1280u);
-		vidmode.height = gamecfg.get(ckey::RESOLUTION_Y, 1024u);
+		vidmode.width = gamecfg.get(ckey::RESOLUTION_X, 1024u);
+		vidmode.height = gamecfg.get(ckey::RESOLUTION_Y, 768u);
 		vidmode.bitsPerPixel = 32;
 
 		// controls
@@ -126,10 +126,12 @@ int main(int argc, const char* argv[])
 
 	ImGui::SFML::Shutdown();
 	
-	auto config = pong::get_user_config();
-	if (gamecfg != config) {
-		write_ini(config_file.string(), config);
-	}
+	pong::get_user_config(gamecfg);
+	auto res = window.getSize();
+	gamecfg.put(ckey::RESOLUTION_X, res.x);
+	gamecfg.put(ckey::RESOLUTION_Y, res.y);
+
+	write_ini(config_file.string(), gamecfg);
 
 	return 0;
 }

@@ -197,6 +197,8 @@ namespace
 	};
 }
 
+sf::Window* pong::game_window;
+
 
 int pong::random_num(int min, int max)
 {
@@ -292,6 +294,7 @@ pong::cfgtree pong::createGuts()
 void pong::game::setup(sf::RenderWindow& window)
 {
 	sfwindow = &window;
+	game_window = sfwindow;
 	Court = pong_court(Playarea, { Playarea.width * 0.95f, 25 });
 
 	font_sans.loadFromFile(pong::files::sans_tff);
@@ -409,7 +412,7 @@ void pong::game::update()
 		tickcount++;
 	}
 
-	game_menu.update(*this, *sfwindow);
+	game_menu.update(*this);
 }
 
 // scale 2 fit, center, preserve aspect ratio
