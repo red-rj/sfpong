@@ -44,11 +44,12 @@ namespace pong::util
     };
 
 
-    inline int ci_compare(std::string_view lhs, std::string_view rhs, size_t n = std::string::npos)
+    inline int ci_compare(std::string_view lhs, std::string_view rhs)
     {
-        using traits = ci_char_traits<char>;
-        if (n == lhs.npos)
-            n = lhs.size();
-        return traits::compare(lhs.data(), rhs.data(), n);
+        using ci_view = std::basic_string_view<char, ci_char_traits<char>>;
+        ci_view l(lhs.data(), lhs.size()), r(rhs.data(), rhs.size());
+        if (l < r) return -1;
+        else if (l > r) return 1;
+        else return 0;
     }
 }
