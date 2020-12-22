@@ -57,7 +57,6 @@ namespace pong
 		void resetPos(ball& b);
 		void resetPos(paddle& p);
 
-
 		bool waiting_to_serve() const noexcept;
 
 		bool paused = true;

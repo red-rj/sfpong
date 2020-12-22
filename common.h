@@ -5,8 +5,7 @@
 #include "SFML/System/Vector2.hpp"
 #include "spdlog/spdlog.h"
 
-#define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; \
-    __red_tu_main_t__::__red_tu_main_t__
+#define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; __red_tu_main_t__::__red_tu_main_t__
 
 namespace pong
 {
@@ -28,7 +27,6 @@ namespace pong
     enum class dir { up, down, left, right };
 
     using size2d = sf::Vector2<float>;
-
 
     enum class playerid { one, two };
 
@@ -62,5 +60,4 @@ namespace files
         default: return "???";
         }
     }
-
 }

@@ -2,7 +2,6 @@
 #include "convert.h"
 #include "game.h"
 #include "imgui_inc.h"
-#include "imgui_scoped.h"
 
 #include <algorithm>
 #include <optional>
@@ -75,8 +74,6 @@ namespace
 }
 
 pong::menu_t pong::game_menu;
-
-extern sf::RenderWindow* sfwindow;
 
 
 void pong::menu_t::update(game& ctx)
@@ -362,8 +359,7 @@ void pong::menu_t::controlsUi()
 	auto inputKbCtrls = [&](pong::playerid pl) mutable
 	{
 		auto title = to_string(pl);
-		gui::ID _id_ = title;
-		gui::Group _g_;
+		gui::GroupID _grp_ = title;
 
 		ImGui::Text("%s:", title);
 

@@ -104,6 +104,64 @@ private:
 	float m_hOffset;
 };
 
+struct movement
+{
+	float speed;
+	float max_speed;
+	float acceleration;
+};
+
+struct paddle_cfg {
+	movement move;
+	pong::size2d size;
+};
+
+struct ball_cfg {
+	movement move;
+	float radius;
+};
+
+struct drawable_message : sf::Drawable
+{
+	drawable_message(const sf::Font& font, unsigned chSize)
+		: text("", font, chSize)
+	{
+		bg.setFillColor(sf::Color(0, 0, 0, 128));
+		bg.setOutlineColor(sf::Color::White);
+		bg.setOutlineThickness(5);
+	}
+
+	void write(const std::string& message, pong::size2d coords)
+	{
+		text.setString(message);
+
+		const auto margin = pong::size2d{ 10.f, 10.f };
+
+		sf::Vector2<float> bgsize;
+		bgsize.x = (text.getCharacterSize() + text.getLetterSpacing()) * message.length() / 2;
+		bgsize.y = (text.getCharacterSize() + text.getLineSpacing()) * 3;
+
+		bg.setSize(bgsize);
+		bg.setPosition(coords);
+		text.setPosition(coords + pong::size2d{ 10.f, 10.f });
+	}
+	void clear() {
+		text.setString("");
+	}
+
+private:
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+	{
+		if (!text.getString().isEmpty()) {
+			target.draw(bg);
+			target.draw(text, states);
+		}
+	}
+
+	sf::Text text;
+	sf::RectangleShape bg;
+};
+
 
 namespace
 {
@@ -112,23 +170,6 @@ namespace
 
 	const pong::rect Playarea = { 0.f, 0.f, 1280.f, 1024.f };
 	pong_court Court;
-
-	struct movement
-	{
-		float speed;
-		float max_speed;
-		float acceleration;
-	};
-
-	struct paddle_cfg {
-		movement move;
-		pong::size2d size;
-	};
-
-	struct ball_cfg {
-		movement move;
-		float radius;
-	};
 
 	paddle_cfg CfgPaddle{
 		/*speed*/		10,
@@ -152,49 +193,6 @@ namespace
 	{
 		txtScore.setString(fmt::format("{}    {}", val.first, val.second));
 	}
-
-	sf::RenderWindow* sfwindow;
-
-	struct drawable_message : sf::Drawable
-	{
-		drawable_message(const sf::Font& font, unsigned chSize)
-			: text("", font, chSize)
-		{
-			bg.setFillColor(sf::Color(0, 0, 0, 128));
-			bg.setOutlineColor(sf::Color::White);
-			bg.setOutlineThickness(5);
-		}
-
-		void write(const std::string& message, pong::size2d coords)
-		{
-			text.setString(message);
-
-			const auto margin = pong::size2d{ 10.f, 10.f };
-			
-			sf::Vector2<float> bgsize;
-			bgsize.x = (text.getCharacterSize() + text.getLetterSpacing()) * message.length() / 2;
-			bgsize.y = (text.getCharacterSize() + text.getLineSpacing()) * 3;
-
-			bg.setSize(bgsize);
-			bg.setPosition(coords);
-			text.setPosition(coords + pong::size2d{ 10.f, 10.f });
-		}
-		void clear() {
-			text.setString("");
-		}
-
-	private:
-		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
-		{
-			if (!text.getString().isEmpty()) {
-				target.draw(bg);
-				target.draw(text, states);
-			}
-		}
-
-		sf::Text text;
-		sf::RectangleShape bg;
-	};
 }
 
 sf::Window* pong::game_window;
@@ -215,7 +213,7 @@ bool pong::coin_flip()
 
 bool pong::collision(const sf::Shape &a, const sf::Shape &b)
 {
-    return a.getGlobalBounds().intersects(b.getGlobalBounds());
+	return a.getGlobalBounds().intersects(b.getGlobalBounds());
 }
 bool pong::collision(const sf::Shape& a, const rect& b)
 {
@@ -293,8 +291,7 @@ pong::cfgtree pong::createGuts()
 
 void pong::game::setup(sf::RenderWindow& window)
 {
-	sfwindow = &window;
-	game_window = sfwindow;
+	game_window = &window;
 	Court = pong_court(Playarea, { Playarea.width * 0.95f, 25 });
 
 	font_sans.loadFromFile(pong::files::sans_tff);
@@ -321,7 +318,7 @@ void pong::game::processEvent(sf::Event& event)
 	switch (event.type)
 	{
 	case sf::Event::Closed:
-		sfwindow->close();
+		game_window->close();
 		break;
 
 	case sf::Event::KeyReleased:
@@ -439,7 +436,7 @@ static sf::View get_play_view(float target_width)
 
 void pong::game::draw()
 {
-	auto& window = *sfwindow;
+	auto& window = static_cast<sf::RenderWindow&>(*game_window);
 	const auto prev_view = window.getView();
 	const auto play_view = get_play_view(window.getSize().x);
 

@@ -61,16 +61,19 @@ int main(int argc, const char* argv[])
 		logger->error("{}", e.what());
 	}
 
-	// game settings
-	sf::VideoMode vidmode;
+	sf::RenderWindow window;
 
 	try
 	{
 		logger->info("Setting up...");
 
+		sf::VideoMode vidmode;
 		vidmode.width = gamecfg.get(ckey::RESOLUTION_X, 1024u);
 		vidmode.height = gamecfg.get(ckey::RESOLUTION_Y, 768u);
 		vidmode.bitsPerPixel = 32;
+
+		window.create(vidmode, "Sf Pong!");
+		window.setFramerateLimit(60u);
 
 		// controls
 		pong::set_user_config(gamecfg);
@@ -98,14 +101,10 @@ int main(int argc, const char* argv[])
 		return 5;
 	}
 
-	sf::RenderWindow window{vidmode, "Sf Pong!"};
-	window.setFramerateLimit(60u);
-	window.setTitle("Sf Pong!");
-
 	ImGui::SFML::Init(window);
-	
 	pong::game::setup(window);
 
+	// game instance
 	auto vg = pong::game(pong::game::mode::singleplayer);
 	sf::Clock deltaClock;
 
