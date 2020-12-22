@@ -473,10 +473,16 @@ float pong::game::aiMove(paddle const& pad)
 	const auto MAX = CfgPaddle.move.max_speed;
 
 	const auto myPos = pad.getPosition();
-	const auto ballPos = Ball.getPosition();
-	auto offset = (ballPos - myPos).y;
+	auto offset = Ball.getPosition() - myPos;
 
-	auto mov = clamp(offset, -MAX, MAX);
+	const auto optimal_mov = clamp(offset.y, -MAX, MAX); // melhor movimento possivel
+	auto mov = optimal_mov;
+
+	auto distance = abs(offset.x);
+	auto myBounds = pad.getGlobalBounds();
+	auto rowArea = rect(0, myBounds.top, Playarea.width, myBounds.height);
+
+	mov /= 5;
 
 	return mov;
 }
