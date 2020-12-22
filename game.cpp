@@ -189,13 +189,13 @@ namespace
 	sf::Font font_sans, font_mono;
 	sf::Text txtScore;
 
-	void update_score(pong::pair<short> const& val)
+	void set_score_txt(pong::pair<short> const& val)
 	{
 		txtScore.setString(fmt::format("{}    {}", val.first, val.second));
 	}
 }
 
-sf::Window* pong::game_window;
+sf::Window* pong::game_window = nullptr;
 
 
 int pong::random_num(int min, int max)
@@ -300,7 +300,7 @@ void pong::game::setup(sf::RenderWindow& window)
 	txtScore.setFont(font_mono);
 	txtScore.setCharacterSize(55);
 	txtScore.setPosition(Playarea.width / 2 - 100, 30);
-	update_score({});
+	set_score_txt({});
 
 	game_menu.init();
 }
@@ -372,7 +372,7 @@ void pong::game::devEvents(const sf::Event& event)
 	}
 }
 
-void pong::game::update()
+void pong::game::update(sf::Time delta)
 {
 	if (!paused)
 	{
@@ -380,36 +380,17 @@ void pong::game::update()
 		updatePlayer(Player1);
 		updatePlayer(Player2);
 
-		if (tickcount % 30 == 0) {
-			// score
-			if (!Playarea.intersects(Ball.getGlobalBounds()))
+		if (runTime.asMilliseconds() % 30 == 0) {
+			if (updateScore())
 			{
-				// ponto!
-				if (Ball.velocity.x < 0)
-				{
-					// indo p/ direita, ponto player 1, saque player 2
-					score.first++;
-					resume_serve_dir = dir::right;
-				}
-				else
-				{
-					// indo p/ esquerda, ponto player 2, saque player 1
-					score.second++;
-					resume_serve_dir = dir::left;
-				}
-
-				log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
-
-				update_score(score);
 				resetPos(Player1);
 				resetPos(Player2);
 				resetPos(Ball);
 			}
 		}
-		tickcount++;
+		
+		runTime += delta;
 	}
-
-	game_menu.update(*this);
 }
 
 // scale 2 fit, center, preserve aspect ratio
@@ -486,6 +467,20 @@ void pong::game::resetState()
 	resetPos(Ball);
 }
 
+float pong::game::aiMove(paddle const& pad)
+{
+	using std::clamp;
+	const auto MAX = CfgPaddle.move.max_speed;
+
+	const auto myPos = pad.getPosition();
+	const auto ballPos = Ball.getPosition();
+	auto offset = (ballPos - myPos).y;
+
+	auto mov = clamp(offset, -MAX, MAX);
+
+	return mov;
+}
+
 void pong::game::updatePlayer(paddle& player)
 {
 	auto& cfg = CfgPaddle;
@@ -494,29 +489,7 @@ void pong::game::updatePlayer(paddle& player)
 
 	if (player.ai)
 	{
-		auto myPos = player.getPosition();
-		auto ball_pos = pos(ball_bounds.left, ball_bounds.top);
-		auto reaction = random_num(20, 85);
-		auto diff = (myPos - ball_pos).y;
-		auto spd = diff < 0 ? -diff + reaction : diff - reaction;
-
-		auto ySpeed = spd / 30.0f;
-
-		if (spd > ball_bounds.height)
-		{
-			if (ball_pos.y < myPos.y)
-			{
-				velocity.y = std::clamp(-ySpeed, -cfg.move.speed * 2, 0.f);
-			}
-			else if (ball_pos.y > myPos.y)
-			{
-				velocity.y = std::clamp(ySpeed, 0.f, cfg.move.speed * 2);
-			}
-		}
-		else
-		{
-			velocity.y = 0;
-		}
+		velocity.y = aiMove(player);
 	}
 	else // player
 	{
@@ -525,11 +498,12 @@ void pong::game::updatePlayer(paddle& player)
 
 		float movement = velocity.y;
 
-		auto input = pong::get_input_cfg(player.id);
+		const auto input = pong::get_input_cfg(player.id);
 		const auto& kb_controls = input.keyboard_controls;
 
+
 		// keyboard
-		const auto kb_offset = cfg.move.speed * cfg.move.acceleration;
+		const auto kb_offset = 1;
 		if (Keyboard::isKeyPressed(kb_controls.up))
 			movement -= kb_offset;
 		else if (Keyboard::isKeyPressed(kb_controls.down))
@@ -544,7 +518,7 @@ void pong::game::updatePlayer(paddle& player)
 			auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
 			// deadzone
 			if (abs(axis) > input.joystick_deadzone)
-				movement = axis / 5;
+				movement = axis / 3;
 
 			gofast_js = Joystick::isButtonPressed(input.joystickId, 0);
 		}
@@ -601,6 +575,31 @@ void pong::game::updateBall()
 		} while (collision(*player, Ball));
 	}
 	else Ball.update();
+}
+
+bool pong::game::updateScore()
+{
+	if (!Playarea.intersects(Ball.getGlobalBounds()))
+	{
+		// ponto!
+		if (Ball.velocity.x < 0)
+		{
+			// indo p/ direita, ponto player 1, saque player 2
+			score.first++;
+			resume_serve_dir = dir::right;
+		}
+		else
+		{
+			// indo p/ esquerda, ponto player 2, saque player 1
+			score.second++;
+			resume_serve_dir = dir::left;
+		}
+		set_score_txt(score);
+		log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
+
+		return true;
+	}
+	else return false;
 }
 
 void pong::game::resetPos(ball& b)

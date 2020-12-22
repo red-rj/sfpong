@@ -156,13 +156,12 @@ void pong::set_user_config(const cfgtree& tree)
     using namespace ckey;
 
     player_input_cfg P1, P2;
-    joyid_translator joyid_tr;
 
     // player one
     P1.keyboard_controls.up = tree.get(P1_UP, Keyboard::W);
     P1.keyboard_controls.down = tree.get(P1_DOWN, Keyboard::S);
     P1.keyboard_controls.fast = tree.get(P1_FAST, Keyboard::LShift);
-    P1.joystickId = tree.get(P1_JOYSTICK, -1, joyid_tr);
+    P1.joystickId = tree.get(P1_JOYSTICK, -1, joyid_translator());
     P1.joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
     set_input_cfg(P1, playerid::one);
     
@@ -170,7 +169,7 @@ void pong::set_user_config(const cfgtree& tree)
     P2.keyboard_controls.up = tree.get(P2_UP, Keyboard::Up);
     P2.keyboard_controls.down = tree.get(P2_DOWN, Keyboard::Down);
     P2.keyboard_controls.fast = tree.get(P2_FAST, Keyboard::RControl);
-    P2.joystickId = tree.get(P2_JOYSTICK, -1, joyid_tr);
+    P2.joystickId = tree.get(P2_JOYSTICK, -1, joyid_translator());
     P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
     set_input_cfg(P2, playerid::two);
 
@@ -182,19 +181,19 @@ pong::cfgtree& pong::get_user_config(cfgtree& tree)
 {
     using namespace ckey;
 
-    player_input_cfg P1 = get_input_cfg(playerid::one), P2 = get_input_cfg(playerid::two);
-    joyid_translator joyid_tr;
+    player_input_cfg P1 = get_input_cfg(playerid::one),
+                     P2 = get_input_cfg(playerid::two);
 
     tree.put(P1_UP, P1.keyboard_controls.up);
     tree.put(P1_DOWN, P1.keyboard_controls.down);
     tree.put(P1_FAST, P1.keyboard_controls.fast);
-    tree.put(P1_JOYSTICK, P1.joystickId, joyid_tr);
+    tree.put(P1_JOYSTICK, P1.joystickId, joyid_translator());
     tree.put(P1_JSDEADZONE, P1.joystick_deadzone);
     
     tree.put(P2_UP, P2.keyboard_controls.up);
     tree.put(P2_DOWN, P2.keyboard_controls.down);
     tree.put(P2_FAST, P2.keyboard_controls.fast);
-    tree.put(P2_JOYSTICK, P2.joystickId, joyid_tr);
+    tree.put(P2_JOYSTICK, P2.joystickId, joyid_translator());
     tree.put(P2_JSDEADZONE, P2.joystick_deadzone);
 
     return tree;

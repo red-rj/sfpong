@@ -1,6 +1,3 @@
-#include "game.h"
-#include "game_config.h"
-#include "common.h"
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
@@ -11,6 +8,10 @@
 #include <lyra/lyra.hpp>
 #include <fmt/format.h>
 #include <filesystem>
+
+#include "game.h"
+#include "menu.h"
+#include "common.h"
 
 namespace fs = std::filesystem;
 namespace ckey = pong::ckey;
@@ -87,7 +88,7 @@ int main(int argc, const char* argv[])
 			pong::overrideGuts(guts);
 		}
 		else if (guts_arg) {
-			logger->debug("{} not found! Creating new...", guts_file.string());
+			logger->debug("{} not found! Creating...", guts_file.string());
 			guts = pong::createGuts();
 			write_info(guts_file.string(), guts);
 			logger->debug("{} - ok!", fs::absolute(guts_file).string());
@@ -116,9 +117,11 @@ int main(int argc, const char* argv[])
 			ImGui::SFML::ProcessEvent(event);
 			vg.processEvent(event);
 		}
-		ImGui::SFML::Update(window, deltaClock.restart());
+		auto dt = deltaClock.restart();
+		ImGui::SFML::Update(window, dt);
 		vg.draw();
-		vg.update();
+		vg.update(dt);
+		pong::game_menu.update(vg);
 		ImGui::SFML::Render(window);
 		window.display();
 	}

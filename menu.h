@@ -40,5 +40,6 @@ namespace pong
 		std::array<player_input_cfg, 2> input_settings;
 	};
 
+	// shared
 	extern menu_t game_menu;
 }

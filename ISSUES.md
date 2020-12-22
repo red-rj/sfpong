@@ -15,4 +15,6 @@ sfPong TODOs
 * [x] tornar posicionamento independende da resolução da janela (sf::View)
 * [] refatorar Cfg*
 	- CfgPaddle: move.speed e move.acceleration só são usados com input teclado
-* [] 
+* [] Melhorar IA
+	- [] refatorar
+	- [] Dificuldade ajustavel
