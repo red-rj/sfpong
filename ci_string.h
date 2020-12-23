@@ -3,7 +3,7 @@
 #include <string_view>
 #include <locale>
 
-namespace pong::util
+namespace util
 {
     template<class T>
     struct ci_char_traits : public std::char_traits<T> {
@@ -43,13 +43,11 @@ namespace pong::util
 
     };
 
+    using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
 
-    inline int ci_compare(std::string_view lhs, std::string_view rhs)
+    inline constexpr int ci_compare(std::string_view lhs, std::string_view rhs)
     {
-        using ci_view = std::basic_string_view<char, ci_char_traits<char>>;
-        ci_view l(lhs.data(), lhs.size()), r(rhs.data(), rhs.size());
-        if (l < r) return -1;
-        else if (l > r) return 1;
-        else return 0;
+        ci_string_view l(lhs.data(), lhs.size()), r(rhs.data(), rhs.size());
+        return l.compare(r);
     }
 }

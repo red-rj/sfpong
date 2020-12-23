@@ -21,6 +21,10 @@ using sf::Keyboard;
 using sf::Joystick;
 using sf::Mouse;
 using namespace std::literals;
+using iof = std::ios_base;
+
+struct ci_compare;
+using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
 
 namespace // user config vars
 {
@@ -30,28 +34,66 @@ namespace // user config vars
 }
 
 
-struct ci_compare
-{
-    bool operator()(std::string_view lhs, std::string_view rhs) const
-    {
-        return pong::util::ci_compare(lhs, rhs) < 0;
-    }
-    constexpr bool operator()(int lhs, int rhs) const
-    {
-        return lhs < rhs;
-    }
-};
-
-using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
-
 /*
 * enum tables
 */
 auto sf_keyboard_table()->enum_name_table const&;
 auto sf_mouse_table()->enum_name_table const&;
 
-using iof = std::ios_base;
+struct ci_compare
+{
+    constexpr bool operator()(std::string_view lhs, std::string_view rhs) const
+    {
+        return util::ci_compare(lhs, rhs) < 0;
+    }
+    constexpr bool operator()(int lhs, int rhs) const
+    {
+        return lhs < rhs;
+    }
 
+    constexpr bool operator()(std::pair<std::string_view, int> lhs, std::pair<std::string_view, int> rhs) const
+    {
+        //return (*this)(lhs.first, rhs.first) || (!(*this)(lhs.first, rhs.first) && (*this)(lhs.second, rhs.second));
+        using util::ci_string_view; using node = std::pair<ci_string_view, int>;
+        return node({ lhs.first.data(), lhs.first.size() }, lhs.second)
+            < node({ rhs.first.data(), rhs.first.size() }, rhs.second);
+    }
+
+};
+
+// helpers
+
+template<class E, class Traits = std::char_traits<char>>
+using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<char>, E>;
+
+template<>
+struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyboard::Key>
+{
+    static void insert(std::ostream& os, Keyboard::Key key)
+    {
+        auto const& table = sf_keyboard_table();
+        os << table[key];
+    }
+
+    static void extract(std::istream& is, Keyboard::Key& key)
+    {
+        auto const& table = sf_keyboard_table();
+        std::string token; is >> token;
+        key = Keyboard::Key(table[token]);
+    }
+};
+
+class joyid_translator : iostream_translator<int>
+{
+    using base = iostream_translator<int>;
+public:
+    using base::get_value;
+
+    auto put_value(int id)
+    {
+        return id < 0 ? ""s : base::put_value(id);
+    }
+};
 
 // convert
 
@@ -117,38 +159,6 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
 
     return is;
 }
-
-template<class E, class Traits = std::char_traits<char>>
-using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<char>, E>;
-
-template<>
-struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyboard::Key>
-{
-    static void insert(std::ostream& os, Keyboard::Key key)
-    {
-        auto const& table = sf_keyboard_table();
-        os << table[key];
-    }
-
-    static void extract(std::istream& is, Keyboard::Key& key)
-    {
-        auto const& table = sf_keyboard_table();
-        std::string token; is >> token;
-        key = Keyboard::Key(table[token]);
-    }
-};
-
-class joyid_translator : iostream_translator<int>
-{
-    using base = iostream_translator<int>;
-public:
-    using base::get_value;
-
-    auto put_value(int id)
-    {
-        return id < 0 ? ""s : base::put_value(id);
-    }
-};
 
 
 void pong::set_user_config(const cfgtree& tree)

@@ -11,9 +11,6 @@ namespace pong
 {
     namespace log = spdlog;
 
-    template<class T>
-    using point = sf::Vector2<T>;
-
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
 
@@ -22,11 +19,12 @@ namespace pong
     // velocity type
     using vel = sf::Vector2f;
     // bounds type
-    using rect = sf::FloatRect;
+    using rect = sf::Rect<float>;
     // direction type
     enum class dir { up, down, left, right };
 
-    using size2d = sf::Vector2<float>;
+    using size2d = sf::Vector2f;
+    using point = sf::Vector2f;
 
     enum class playerid { one, two };
 
