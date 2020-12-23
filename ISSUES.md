@@ -16,5 +16,5 @@ sfPong TODOs
 * [] refatorar Cfg*
 	- CfgPaddle: move.speed e move.acceleration só são usados com input teclado
 * [] Melhorar IA
-	- [] refatorar
+	- [wip] refatorar
 	- [] Dificuldade ajustavel

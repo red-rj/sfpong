@@ -473,16 +473,34 @@ float pong::game::aiMove(paddle const& pad)
 	const auto MAX = CfgPaddle.move.max_speed;
 
 	const auto myPos = pad.getPosition();
-	auto offset = Ball.getPosition() - myPos;
+	const auto offset = Ball.getPosition() - myPos;
+	auto distance = sf::Vector2(abs(offset.x), clamp(offset.y, -MAX, MAX));
 
-	const auto optimal_mov = clamp(offset.y, -MAX, MAX); // melhor movimento possivel
-	auto mov = optimal_mov;
+	auto mov = 0.f;
+	auto d100 = random_num(0, 99);
+	//auto myBounds = pad.getGlobalBounds();
+	//auto rowArea = rect(0, myBounds.top, Playarea.width, myBounds.height);
 
-	auto distance = abs(offset.x);
-	auto myBounds = pad.getGlobalBounds();
-	auto rowArea = rect(0, myBounds.top, Playarea.width, myBounds.height);
+	if (d100 < 15 || distance.y < 5) {
+		// não mover
+	}
+	else if (d100 < 25) {
+		// manter mesma velocidade
+		mov = pad.velocity.y;
+	}
+	else if (d100 < 45) {
+		// movimento ideal
+		mov = distance.y;
+	}
+	else {
+		// movimento com erro
+		auto err = random_num(20, 80);
+		mov = abs(distance.y) + err;
+		if (distance.y < 0)
+			mov = -mov;
+	}
 
-	mov /= 5;
+	//mov /= 5;
 
 	return mov;
 }
@@ -592,13 +610,13 @@ bool pong::game::updateScore()
 		{
 			// indo p/ direita, ponto player 1, saque player 2
 			score.first++;
-			resume_serve_dir = dir::right;
+			resume_serve_dir = dir::left;
 		}
 		else
 		{
 			// indo p/ esquerda, ponto player 2, saque player 1
 			score.second++;
-			resume_serve_dir = dir::left;
+			resume_serve_dir = dir::right;
 		}
 		set_score_txt(score);
 		log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
