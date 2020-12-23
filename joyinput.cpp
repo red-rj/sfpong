@@ -2,134 +2,100 @@
 #include "ci_string.h"
 #include <vector>
 #include <SFML/Window/Joystick.hpp>
+#include <regex>
 
 
 using sf::Joystick;
-using ci_string_view = std::basic_string_view<char, pong::util::ci_char_traits<char>>;
+using util::ci_string_view;
 
-auto pong::parse_joyinput(std::string_view arg) -> joy_input
+template<class Sv, class Iter>
+static Sv mk_strview(Iter begin, Iter end) {
+	return { std::addressof(*begin), size_t(std::distance(begin, end)) };
+}
+
+
+auto pong::parse_joyinput(std::string_view input) -> joy_input
 {
-	constexpr auto npos = std::string::npos;
-	constexpr auto INPUT_ID = "B" "P" "XYZRUV";
-	constexpr auto AXIS_ID = INPUT_ID+2;
-	constexpr auto AXIS_DIR = "+-";
+	namespace rxc = std::regex_constants;
+	using svmatch = std::match_results<std::string_view::const_iterator>;
+
+	// https://regex101.com/r/Y0JvkF/1
+	auto joy_rx = std::regex("Joy(B(\\d+)|[XYZRUV]([+-])|Pov([XY][+-])", rxc::icase);
+	enum { InputID=1, Arg };
 
 	joy_input js;
 
-	if (arg.length() < 5) {
-		js.type = js.invalid;
-		return js;
-	}
-
-	auto text = ci_string_view(arg.data(), arg.length());
-
-	auto pos = text.find("Joy");
-	pos = text.find_first_of(INPUT_ID, pos + 3);
-	if (pos == npos) {
-		js.type = js.invalid;
-		return js;
-	}
-
-	const auto input_id = text[pos];
-
-	if (input_id == 'B') { // joybtn
-		js.type = js.button;
+	svmatch match;
+	if (regex_match(input.begin(), input.end(), match, joy_rx)) {
+		auto input_id = mk_strview<ci_string_view>(match[InputID].first, match[InputID].second);
+		auto id_letter = input_id.substr(0, 1);
 
 		try
 		{
-			auto num = std::string(arg.substr(pos+1));
-			js.btn_number = std::stoi(num);
-		}
-		catch (const std::invalid_argument&)
-		{
-			js.type = js.invalid;
-		}
-
-		return js;
-	}
-	else if (input_id == 'P') { // joy povhat
-		js.type = js.axis;
-
-		try
-		{
-			const auto axis = text.substr(pos+1, 1);
-			const auto dir = text.substr(pos+2, 1);
-
-			if (axis=="X") {
-				js.axis_id = Joystick::Axis::PovX;
+			if (id_letter == "B") {
+				// button
+				js.btn_number = std::stoi(match[Arg].str());
+				js.type = js.button;
 			}
-			else if (axis=="Y") {
-				js.axis_id = Joystick::Axis::PovY;
+			else if (id_letter == "P") {
+				// povhat
+				auto value = mk_strview<ci_string_view>(match[Arg].first, match[Arg].second);
+				auto axis = value.substr(0, 1);
+				auto dir = value.substr(1);
+
+				if (axis == "X") {
+					js.axis_id = Joystick::Axis::PovX;
+				}
+				else if (axis == "Y") {
+					js.axis_id = Joystick::Axis::PovY;
+				}
+
+				if (dir == "-") {
+					js.axis_dir = pong::dir::up;
+				}
+				else if (dir == "+") {
+					js.axis_dir = pong::dir::down;
+				}
 			}
 			else {
-				js.type = js.invalid;
-			}
+				// axis
+				auto axis = id_letter;
+				char d = *match[Arg].first;
 
-			if (dir=="-") {
-				js.axis_dir = dir::up;
-			}
-			else if (dir=="+") {
-				js.axis_dir = dir::down;
-			}
-			else {
-				js.type = js.invalid;
+				if (d == '-') {
+					js.axis_dir = pong::dir::up;
+				}
+				else if (d == '+') {
+					js.axis_dir = pong::dir::down;
+				}
+
+				if (axis == "X") {
+					js.axis_id = Joystick::Axis::X;
+				}
+				else if (axis == "Y") {
+					js.axis_id = Joystick::Axis::Y;
+				}
+				else if (axis == "Z") {
+					js.axis_id = Joystick::Axis::Z;
+				}
+				else if (axis == "R") {
+					js.axis_id = Joystick::Axis::R;
+				}
+				else if (axis == "U") {
+					js.axis_id = Joystick::Axis::U;
+				}
+				else if (axis == "V") {
+					js.axis_id = Joystick::Axis::V;
+				}
+
+				js.type = js.axis;
 			}
 		}
 		catch (const std::exception&)
 		{
 			js.type = js.invalid;
 		}
-
-		return js;
 	}
-	else { // joyaxis
-		auto const axis = input_id;
-		js.type = js.axis;
 
-		try
-		{
-			auto dir = text.substr(pos + 1, 1);
-
-			if (dir == "-") {
-				js.axis_dir = dir::up;
-			}
-			else if (dir == "+") {
-				js.axis_dir = dir::down;
-			}
-			else {
-				js.type = js.invalid;
-			}
-		}
-		catch (const std::exception&)
-		{
-			js.type = js.invalid;
-		}
-
-		switch (axis)
-		{
-		case 'X': {
-			js.axis_id = Joystick::Axis::X;
-		} break;
-		case 'Y': {
-			js.axis_id = Joystick::Axis::Y;
-		} break;
-		case 'Z': {
-			js.axis_id = Joystick::Axis::Z;
-		} break;
-		case 'R': {
-			js.axis_id = Joystick::Axis::R;
-		} break;
-		case 'U': {
-			js.axis_id = Joystick::Axis::U;
-		} break;
-		case 'V': {
-			js.axis_id = Joystick::Axis::V;
-		} break;
-		default:
-			js.type = js.invalid;
-			break;
-		}
-
-		return js;
-	}
+	return js;
 }
