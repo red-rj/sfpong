@@ -494,7 +494,7 @@ float pong::game::aiMove(paddle const& pad)
 	}
 	else {
 		// movimento com erro
-		auto err = random_num(20, 80);
+		auto err = d100 / 10;
 		mov = abs(distance.y) + err;
 		if (distance.y < 0)
 			mov = -mov;
