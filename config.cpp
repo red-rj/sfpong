@@ -22,21 +22,9 @@ using sf::Joystick;
 using sf::Mouse;
 using namespace std::literals;
 using iof = std::ios_base;
-
 struct ci_compare;
 using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
 
-namespace // user config vars
-{
-    int player_joystick[2] = { -1, -1 };
-    pong::keyboard_ctrls player_keyboard_controls[2];
-    float player_deadzone[2];
-}
-
-
-/*
-* enum tables
-*/
 auto sf_keyboard_table()->enum_name_table const&;
 auto sf_mouse_table()->enum_name_table const&;
 
@@ -50,18 +38,7 @@ struct ci_compare
     {
         return lhs < rhs;
     }
-
-    constexpr bool operator()(std::pair<std::string_view, int> lhs, std::pair<std::string_view, int> rhs) const
-    {
-        //return (*this)(lhs.first, rhs.first) || (!(*this)(lhs.first, rhs.first) && (*this)(lhs.second, rhs.second));
-        using util::ci_string_view; using node = std::pair<ci_string_view, int>;
-        return node({ lhs.first.data(), lhs.first.size() }, lhs.second)
-            < node({ rhs.first.data(), rhs.first.size() }, rhs.second);
-    }
-
 };
-
-// helpers
 
 template<class E, class Traits = std::char_traits<char>>
 using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<char>, E>;
@@ -160,6 +137,12 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     return is;
 }
 
+namespace // user config vars
+{
+    int player_joystick[2] = { -1, -1 };
+    pong::keyboard_ctrls player_keyboard_controls[2];
+    float player_deadzone[2];
+}
 
 void pong::set_user_config(const cfgtree& tree)
 {
