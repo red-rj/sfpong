@@ -1,11 +1,11 @@
 Joystick input grammar (EBNF)
 
-joy_input	= "Joy" (button | axis | povhat);
-button	= "B" digit+;
-axis	= ("X" | "Y" | "Z" | "R" | "U" | "V") axis_dir;
-povhat	= "Pov" ["X" | "Y"] axis_dir;
-axis_dir	= "+" | "-";
-digit	= 0..9;
+joy_input = "Joy" (button | axis | povhat);
+button = "B" digit+;
+axis = ("X" | "Y" | "Z" | "R" | "U" | "V") axis_dir;
+povhat = "Pov" ("X" | "Y") axis_dir;
+axis_dir = "+" | "-";
+digit = 0..9;
 
 
 Exemples:

@@ -105,21 +105,25 @@ void pong::menu_t::update(game& ctx)
 	TextDisabled("sfPong");
 
 	if (auto m = Menu("Jogo")) {
-		bool singleplayer = ctx.currentMode == game::mode::singleplayer,
-			 multiplayer = ctx.currentMode == game::mode::multiplayer;
+		bool singleplayer = ctx.currentMode == game::singleplayer,
+			 multiplayer = ctx.currentMode == game::multiplayer;
 
 		if (MenuItem("Continuar", "ESC"))
 			ctx.paused = false;
 		if (auto m1 = Menu("Novo")) {
 
-			if (MenuItem("1 jogador", nullptr, false, !singleplayer)) {
+			if (MenuItem("1 jogador", nullptr, singleplayer)) {
 				ctx = game(game::singleplayer);
 				ctx.paused = false;
 			}
-			if (MenuItem("2 jogadores", nullptr, false, !multiplayer)) {
+			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
 				ctx = game(game::multiplayer);
 				ctx.paused = false;
 			}
+		}
+		if (MenuItem("Reiniciar")) {
+			ctx = game(ctx.currentMode);
+			ctx.paused = false;
 		}
 		Separator();
 		MenuItem("Sobre", nullptr, &show.about);

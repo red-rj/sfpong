@@ -5,7 +5,11 @@
 #include "SFML/System/Vector2.hpp"
 #include "spdlog/spdlog.h"
 
-#define RED_TU_MAIN struct __red_tu_main_t__ { __red_tu_main_t__(); } static __tu_main__; __red_tu_main_t__::__red_tu_main_t__
+#define DEF_PROPERTY(getter, setter, type, member) \
+    constexpr auto& getter() const noexcept { return member; } \
+    constexpr void setter(type&& val) { member = val; }
+
+#define PROPERTY(type, member) DEF_PROPERTY(get_##member, set_##member, type, member)
 
 namespace pong
 {
