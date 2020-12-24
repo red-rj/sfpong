@@ -454,7 +454,7 @@ void pong::game::updatePlayer(paddle& player)
 
 	if (player.ai)
 	{
-		using namespace engine;
+		using engine::paddle_max_speed;
 
 		static sf::Clock AIClock;
 		static const sf::Time AITime = sf::seconds(0.1f);
@@ -463,14 +463,21 @@ void pong::game::updatePlayer(paddle& player)
 			AIClock.restart();
 			
 			const auto offset = Ball.getPosition() - player.getPosition();
+			const auto y_diff = abs(offset.y);
+			const auto ai_speed = 1;
+
 			float mov = velocity;
 
 			if (offset.y > 0)
-				mov += 1;
+				mov += ai_speed;
 			else if (offset.y < 0)
-				mov -= 1;
+				mov -= ai_speed;
 
-			velocity = std::clamp(mov, -engine::paddle_max_speed, engine::paddle_max_speed);
+			velocity = std::clamp(mov, -paddle_max_speed, paddle_max_speed);
+
+			if (y_diff < 20) {
+				velocity /= 2;
+			}
 		}
 	}
 	else // player
@@ -504,8 +511,8 @@ void pong::game::updatePlayer(paddle& player)
 		}
 
 		if (movement != velocity) {
-			const auto max_speed = engine::paddle_max_speed;
-			velocity = std::clamp(movement, -max_speed, max_speed);
+			using engine::paddle_max_speed;
+			velocity = std::clamp(movement, -paddle_max_speed, paddle_max_speed);
 			auto gofast = gofast_kb || gofast_js;
 
 			if (velocity != 0 && gofast)
