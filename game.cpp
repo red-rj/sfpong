@@ -352,10 +352,6 @@ void pong::game::processEvent(sf::Event& event)
 		}
 	} break;
 
-	case sf::Event::JoystickConnected:
-	case sf::Event::JoystickDisconnected:
-		game_menu.refresh_joystick_list();
-		break;
 	}
 
 }
@@ -467,17 +463,14 @@ void pong::game::updatePlayer(paddle& player)
 			AIClock.restart();
 			
 			const auto offset = Ball.getPosition() - player.getPosition();
-			float mov = 0;
+			float mov = velocity;
 
 			if (offset.y > 0)
 				mov += 1;
 			else if (offset.y < 0)
 				mov -= 1;
 
-			velocity += mov;
-		}
-		else {
-
+			velocity = std::clamp(mov, -engine::paddle_max_speed, engine::paddle_max_speed);
 		}
 	}
 	else // player

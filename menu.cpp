@@ -75,6 +75,21 @@ namespace
 
 pong::menu_t pong::game_menu;
 
+static void refresh_joystick_list()
+{
+	using sf::Joystick;
+	_joystick_list.clear();
+	_joystick_list.reserve(Joystick::Count);
+
+	for (unsigned id = 0; id < Joystick::Count; id++)
+	{
+		if (Joystick::isConnected(id)) {
+			auto info = Joystick::getIdentification(id);
+			_joystick_list.emplace_back(info.name);
+		}
+	}
+}
+
 
 void pong::menu_t::update(game& ctx)
 {
@@ -163,20 +178,18 @@ void pong::menu_t::init()
 	ImGui::SFML::UpdateFontTexture();
 }
 
-void pong::menu_t::refresh_joystick_list() const
+void pong::menu_t::processEvent(sf::Event& event)
 {
-	using sf::Joystick;
-	_joystick_list.clear();
-	_joystick_list.reserve(Joystick::Count);
-
-	for (unsigned id = 0; id < Joystick::Count; id++)
+	switch (event.type)
 	{
-		if (Joystick::isConnected(id)) {
-			auto info = Joystick::getIdentification(id);
-			_joystick_list.emplace_back(info.name);
-		}
+	case sf::Event::JoystickConnected:
+	case sf::Event::JoystickDisconnected:
+		refresh_joystick_list();
+		break;
 	}
 }
+
+
 
 void pong::menu_t::guiOptions(game&)
 {
@@ -277,7 +290,7 @@ void pong::menu_t::guiStats(game& ctx)
 
 
 	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: [{:.3f}, {:.3f}]", 
-		P1.velocity.y, P2.velocity.y, Ball.velocity.x, Ball.velocity.y);
+		P1.velocity, P2.velocity, Ball.velocity.x, Ball.velocity.y);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }

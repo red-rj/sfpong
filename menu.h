@@ -2,7 +2,10 @@
 #include "game_config.h"
 #include <array>
 
-namespace sf { class Window; }
+namespace sf {
+	class Window;
+	class Event;
+}
 
 namespace pong
 {
@@ -13,10 +16,11 @@ namespace pong
 		void update(game& ctx);
 		void init();
 
+		void processEvent(sf::Event& event);
+
+
 		bool rebinding = false;
 		
-		void refresh_joystick_list() const;
-
 	private:
 		// windows
 		void guiOptions(game& ctx);
