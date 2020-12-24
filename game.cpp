@@ -104,23 +104,6 @@ private:
 	float m_hOffset;
 };
 
-struct movement
-{
-	float speed;
-	float max_speed;
-	float acceleration;
-};
-
-struct paddle_cfg {
-	movement move;
-	pong::size2d size;
-};
-
-struct ball_cfg {
-	movement move;
-	float radius;
-};
-
 struct drawable_message : sf::Drawable
 {
 	drawable_message(const sf::Font& font, unsigned chSize)
@@ -171,20 +154,17 @@ namespace
 	const pong::rect Playarea = { 0.f, 0.f, 1280.f, 1024.f };
 	pong_court Court;
 
-	paddle_cfg CfgPaddle{
-		/*speed*/		10,
-		/*max speed*/	30,
-		/*accel*/		0.1f,
+namespace engine
+{
+	float paddle_kb_speed = 1;
+	float paddle_max_speed = 30;
+	pong::size2d paddle_size = { 25, 150 };
 
-		/*size {x,y}*/	pong::size2d(25, 150)
-	};
-	ball_cfg CfgBall{
-		/*speed*/		5,
-		/*max speed*/	20,
-		/*accel*/		0.1f,
-
-		/*radius*/		20,
-	};
+	float ball_speed = 5;
+	float ball_max_speed = 20;
+	float ball_acceleration = 0.1f;
+	float ball_radius = 20;
+};
 
 	sf::Font font_sans, font_mono;
 	sf::Text txtScore;
@@ -235,55 +215,35 @@ void pong::constrain_pos(pos& p)
 
 void pong::overrideGuts(const cfgtree& guts)
 {
-	if (auto p = guts.get_child_optional("paddle")) try
-	{
-		paddle_cfg cfg;
-		cfg.move.speed = p->get<float>("speed");
-		cfg.move.acceleration = p->get<float>("acceleration");
-		cfg.move.max_speed = p->get<float>("max_speed");
-		cfg.size.x = p->get<float>("width");
-		cfg.size.y = p->get<float>("height");
-		CfgPaddle = cfg;
-	}
-	catch(std::exception& e)
-	{
-		log::debug("{} paddle error: {}", __func__, e.what());
-	}
-	log::trace("{} paddle cfg loaded", __func__);
+	using namespace engine;
 
-	if (auto node = guts.get_child_optional("ball")) try
-	{
-		ball_cfg cfg;
-		cfg.move.speed = node->get<float>("speed");
-		cfg.move.acceleration = node->get<float>("acceleration");
-		cfg.move.max_speed = node->get<float>("max_speed");
-		cfg.radius = node->get<float>("radius");
-		CfgBall = cfg;
-	}
-	catch (std::exception& e)
-	{
-		log::debug("{} ball error: {}", __func__, e.what());
-	}
-	log::trace("{} ball cfg loaded", __func__);
+	paddle_kb_speed = guts.get("paddle.kb_speed", paddle_kb_speed);
+	paddle_max_speed = guts.get("paddle.max_speed", paddle_max_speed);
+	paddle_size.x = guts.get("paddle.width", paddle_size.x);
+	paddle_size.y = guts.get("paddle.height", paddle_size.y);
 
-	log::debug("{} success!", __func__);
+	ball_speed = guts.get("ball.speed", ball_speed);
+	ball_acceleration = guts.get("ball.acceleration", ball_acceleration);
+	ball_max_speed = guts.get("ball.max_speed", ball_max_speed);
+	ball_radius = guts.get("ball.radius", ball_radius);
 }
 
 pong::cfgtree pong::createGuts()
 {
+	using namespace engine;
+	
 	auto guts = cfgtree();
 	guts.put("version", version);
 
-	guts.put("paddle.speed", CfgPaddle.move.speed);
-	guts.put("paddle.acceleration", CfgPaddle.move.acceleration);
-	guts.put("paddle.max_speed", CfgPaddle.move.max_speed);
-	guts.put("paddle.width", CfgPaddle.size.x);
-	guts.put("paddle.height", CfgPaddle.size.y);
+	guts.put("paddle.kb_speed", paddle_kb_speed);
+	guts.put("paddle.max_speed", paddle_max_speed);
+	guts.put("paddle.width", paddle_size.x);
+	guts.put("paddle.height", paddle_size.y);
 
-	guts.put("ball.speed", CfgBall.move.speed);
-	guts.put("ball.acceleration", CfgBall.move.acceleration);
-	guts.put("ball.max_speed", CfgBall.move.max_speed);
-	guts.put("ball.radius", CfgBall.radius);
+	guts.put("ball.speed", ball_speed);
+	guts.put("ball.acceleration", ball_acceleration);
+	guts.put("ball.max_speed", ball_max_speed);
+	guts.put("ball.radius", ball_radius);
 
 	return guts;
 }
@@ -313,6 +273,9 @@ pong::game::game(mode mode_) : currentMode(mode_) {
 
 void pong::game::processEvent(sf::Event& event)
 {
+	using sf::Event;
+	using sf::Keyboard;
+
 	devEvents(event);
 
 	switch (event.type)
@@ -329,7 +292,7 @@ void pong::game::processEvent(sf::Event& event)
 		switch (event.key.code)
 		{
 		case sf::Keyboard::Enter:
-			if (waiting_to_serve()) {
+			if (!paused && waiting_to_serve()) {
 				serve(resume_serve_dir);
 			}
 			break;
@@ -442,8 +405,8 @@ void pong::game::resetState()
 	const auto center = pos(Playarea.width / 2, Playarea.height / 2);
 
 	Player1.id = playerid::one;
-	Player1.setSize(CfgPaddle.size);
-	Player1.setOrigin(0, CfgPaddle.size.y / 2);
+	Player1.setSize(engine::paddle_size);
+	Player1.setOrigin(0, engine::paddle_size.y / 2);
 	resetPos(Player1);
 
 	Player2 = Player1;
@@ -457,29 +420,25 @@ void pong::game::resetState()
 	else if (currentMode == mode::multiplayer) {
 		Player1.ai = Player2.ai = false;
 	}
-	//else if (currentMode == mode::aitest) {
-	//	Player1.ai = Player2.ai = true;
-	//}
+	else if (currentMode == mode::aitest) {
+		Player1.ai = Player2.ai = true;
+	}
 
-	Ball.setRadius(CfgBall.radius);
-	Ball.setOrigin(CfgBall.radius, CfgBall.radius);
+	Ball.setRadius(engine::ball_radius);
+	Ball.setOrigin(engine::ball_radius, engine::ball_radius);
 	Ball.setFillColor(sf::Color::Red);
 	resetPos(Ball);
 }
 
 float pong::game::aiMove(paddle const& pad)
 {
-	using std::clamp;
-	const auto MAX = CfgPaddle.move.max_speed;
+	using namespace engine;
 
-	const auto myPos = pad.getPosition();
-	const auto offset = Ball.getPosition() - myPos;
-	auto distance = sf::Vector2(abs(offset.x), clamp(offset.y, -MAX, MAX));
+	const auto offset = Ball.getPosition() - pad.getPosition();
+	auto distance = sf::Vector2(abs(offset.x), std::clamp(offset.y, -paddle_max_speed, paddle_max_speed));
 
 	auto mov = 0.f;
 	auto d100 = random_num(0, 99);
-	//auto myBounds = pad.getGlobalBounds();
-	//auto rowArea = rect(0, myBounds.top, Playarea.width, myBounds.height);
 
 	if (d100 < 15 || distance.y < 5) {
 		// não mover
@@ -507,7 +466,6 @@ float pong::game::aiMove(paddle const& pad)
 
 void pong::game::updatePlayer(paddle& player)
 {
-	auto& cfg = CfgPaddle;
 	auto& velocity = player.velocity;
 	auto ball_bounds = Ball.getGlobalBounds();
 
@@ -525,13 +483,11 @@ void pong::game::updatePlayer(paddle& player)
 		const auto input = pong::get_input_cfg(player.id);
 		const auto& kb_controls = input.keyboard_controls;
 
-
 		// keyboard
-		const auto kb_offset = 1;
 		if (Keyboard::isKeyPressed(kb_controls.up))
-			movement -= kb_offset;
+			movement -= engine::paddle_kb_speed;
 		else if (Keyboard::isKeyPressed(kb_controls.down))
-			movement += kb_offset;
+			movement += engine::paddle_kb_speed;
 
 		bool gofast_kb = Keyboard::isKeyPressed(kb_controls.fast);
 
@@ -548,7 +504,8 @@ void pong::game::updatePlayer(paddle& player)
 		}
 
 		if (movement != velocity.y) {
-			velocity.y = std::clamp(movement, -cfg.move.max_speed, cfg.move.max_speed);
+			const auto max_speed = engine::paddle_max_speed;
+			velocity.y = std::clamp(movement, -max_speed, max_speed);
 			auto gofast = gofast_kb || gofast_js;
 
 			if (velocity != vel() && gofast)
@@ -567,9 +524,8 @@ void pong::game::updatePlayer(paddle& player)
 
 void pong::game::updateBall()
 {
-	auto const& cfg = CfgBall;
-
 	paddle* player = nullptr;
+
 	if (collision(Ball, Player1)) {
 		player = &Player1;
 	}
@@ -579,18 +535,18 @@ void pong::game::updateBall()
 
 	if (player)
 	{
-		const auto MAX = cfg.move.max_speed;
+		using namespace engine;
 		vel velocity = Ball.velocity;
 
-		velocity.x *= 1.0 + cfg.move.acceleration;
+		velocity.x *= 1.0 + ball_acceleration;
 		if (player->velocity.y != 0) {
 			velocity.y = player->velocity.y * 0.75 + random_num(-2, 2);
 			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
 		}
 
 		Ball.velocity = {
-			-std::clamp(velocity.x, -MAX, MAX),
-			 std::clamp(velocity.y, -MAX, MAX)
+			-std::clamp(velocity.x, -ball_max_speed, ball_max_speed),
+			 std::clamp(velocity.y, -ball_max_speed, ball_max_speed)
 		};
 
 		do
@@ -638,7 +594,7 @@ void pong::game::resetPos(paddle& p)
 	const auto center = pos(Playarea.width / 2, Playarea.height / 2);
 
 	if (p.id == playerid::one) {
-		p.setPosition(margin - CfgPaddle.size.x, center.y);
+		p.setPosition(margin - engine::paddle_size.x, center.y);
 	}
 	else if (p.id == playerid::two) {
 		p.setPosition(Playarea.width - margin, center.y);
@@ -654,7 +610,7 @@ bool pong::game::waiting_to_serve() const noexcept
 
 void pong::game::serve(dir direction)
 {
-	auto mov = CfgBall.move.speed;
+	auto mov = engine::ball_speed;
 	if (direction == dir::left) {
 		mov = -mov;
 	}

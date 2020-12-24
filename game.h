@@ -7,13 +7,6 @@
 
 namespace pong
 {
-	// up, down, fast
-	//using input_record = std::tuple<bool, bool, bool>;
-
-	// Y offset, fast
-	//using input_result = std::tuple<float, bool>;
-
-
 	struct paddle : sf::RectangleShape
 	{
 		void update();
@@ -42,7 +35,7 @@ namespace pong
 	struct game
 	{
 		friend menu_t;
-		enum mode { singleplayer, multiplayer };
+		enum mode { singleplayer, multiplayer, aitest };
 
 		game(mode mode_);
 
