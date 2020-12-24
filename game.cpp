@@ -247,6 +247,37 @@ pong::cfgtree pong::createGuts()
 	return guts;
 }
 
+pong::paddle::paddle(playerid pid) : base_t(engine::paddle_size), id(pid)
+{
+	setOrigin(0, engine::paddle_size.y / 2);
+}
+
+pong::ball::ball() : base_t(engine::ball_radius)
+{
+	setOrigin(engine::ball_radius, engine::ball_radius);
+	setFillColor(sf::Color::Red);
+}
+
+void pong::ball::update()
+{
+	move(velocity);
+
+	if (border_collision(*this))
+	{
+		velocity.y = -velocity.y;
+	}
+}
+
+void pong::paddle::update()
+{
+	move(0, velocity);
+
+	if (border_collision(*this))
+	{
+		move(0, -velocity);
+		velocity = 0;
+	}
+}
 
 void pong::game::setup(sf::RenderWindow& window)
 {
@@ -265,16 +296,13 @@ void pong::game::setup(sf::RenderWindow& window)
 }
 
 
-pong::game::game(mode mode_) : currentMode(mode_)
+pong::game::game(mode mode_) 
+	: currentMode(mode_), 
+	Player1(playerid::one), Player2(playerid::two)
 {
-	Player1.id = playerid::one;
-	Player1.setSize(engine::paddle_size);
-	Player1.setOrigin(0, engine::paddle_size.y / 2);
 	resetPos(Player1);
-
-	Player2 = Player1;
-	Player2.id = playerid::two;
 	resetPos(Player2);
+	resetPos(Ball);
 
 	if (currentMode == mode::singleplayer) {
 		Player1.ai = false;
@@ -286,11 +314,6 @@ pong::game::game(mode mode_) : currentMode(mode_)
 	else if (currentMode == mode::aitest) {
 		Player1.ai = Player2.ai = true;
 	}
-
-	Ball.setRadius(engine::ball_radius);
-	Ball.setOrigin(engine::ball_radius, engine::ball_radius);
-	Ball.setFillColor(sf::Color::Red);
-	resetPos(Ball);
 }
 
 
@@ -425,8 +448,7 @@ void pong::game::draw()
 
 void pong::game::resetState()
 {
-	auto ng = game(currentMode);
-	std::swap(*this, ng);
+	*this = game(currentMode);
 }
 
 void pong::game::updatePlayer(paddle& player)
@@ -452,7 +474,7 @@ void pong::game::updatePlayer(paddle& player)
 			else if (offset.y < 0)
 				mov -= 1;
 
-			velocity.y += mov;
+			velocity += mov;
 		}
 		else {
 
@@ -463,7 +485,7 @@ void pong::game::updatePlayer(paddle& player)
 		using sf::Keyboard;
 		using sf::Joystick;
 
-		float movement = velocity.y;
+		float movement = velocity;
 
 		const auto input = pong::get_input_cfg(player.id);
 		const auto& kb_controls = input.keyboard_controls;
@@ -488,18 +510,18 @@ void pong::game::updatePlayer(paddle& player)
 			gofast_js = Joystick::isButtonPressed(input.joystickId, 0);
 		}
 
-		if (movement != velocity.y) {
+		if (movement != velocity) {
 			const auto max_speed = engine::paddle_max_speed;
-			velocity.y = std::clamp(movement, -max_speed, max_speed);
+			velocity = std::clamp(movement, -max_speed, max_speed);
 			auto gofast = gofast_kb || gofast_js;
 
-			if (velocity != vel() && gofast)
+			if (velocity != 0 && gofast)
 			{
-				velocity.y *= 1.25f;
+				velocity *= 1.25f;
 			}
 		}
 		else {
-			velocity.y *= 0.6f; // desacelerar
+			velocity *= 0.6f; // desacelerar
 		}
 
 	}
@@ -524,8 +546,8 @@ void pong::game::updateBall()
 		vel velocity = Ball.velocity;
 
 		velocity.x *= 1.0f + ball_acceleration;
-		if (player->velocity.y != 0) {
-			velocity.y = player->velocity.y * 0.75f + random_num(-2, 2);
+		if (player->velocity != 0) {
+			velocity.y = player->velocity * 0.75f + random_num(-2, 2);
 			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
 		}
 
@@ -584,15 +606,13 @@ void pong::game::resetPos(paddle& p)
 	else if (p.id == playerid::two) {
 		p.setPosition(Playarea.width - margin, center.y);
 	}
-	p.velocity = vel();
+	p.velocity = 0;
 }
 
 bool pong::game::waiting_to_serve() const noexcept
 {
 	return !paused && Ball.velocity == vel() && Ball.getPosition() == pos(Playarea.width / 2, Playarea.height / 2);
 }
-
-
 
 void pong::game::serve(dir direction)
 {
@@ -603,26 +623,4 @@ void pong::game::serve(dir direction)
 
 	Ball.setPosition(Playarea.width / 2, Playarea.height / 2);
 	Ball.velocity = { mov, 0 };
-}
-
-
-void pong::ball::update()
-{
-	move(velocity);
-
-	if (border_collision(*this))
-	{
-		velocity.y = -velocity.y;
-	}
-}
-
-void pong::paddle::update()
-{
-	move(velocity);
-
-	if (border_collision(*this))
-	{
-		move(-velocity);
-		velocity.y = 0;
-	}
 }

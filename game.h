@@ -9,15 +9,21 @@ namespace pong
 {
 	struct paddle : sf::RectangleShape
 	{
+		using base_t = sf::RectangleShape;
+
+		paddle(playerid pid);
 		void update();
 
 		bool ai = false;
-		playerid id = playerid(-1);
-		vel velocity;
+		playerid id;
+		float velocity;
 	};
 
 	struct ball : sf::CircleShape
 	{
+		using base_t = sf::CircleShape;
+		
+		ball();
 		void update();
 
 		vel velocity;
