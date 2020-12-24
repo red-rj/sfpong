@@ -51,7 +51,6 @@ namespace pong
 
 		void resetState();
 		void devEvents(const sf::Event& event);
-		float aiMove(paddle const& pad);
 		void updatePlayer(paddle& player);
 		void updateBall();
 		bool updateScore();

@@ -14,7 +14,7 @@
 #include "menu.h"
 #include "game_config.h"
 
-const char pong::version[] = "0.8.0";
+const char pong::version[] = "0.9.0";
 
 using namespace std::literals;
 
@@ -59,7 +59,6 @@ net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize
 
 	setOrigin(piece_size.x / 2, 0);
 }
-
 
 struct pong_court : public sf::Drawable
 {
@@ -266,8 +265,32 @@ void pong::game::setup(sf::RenderWindow& window)
 }
 
 
-pong::game::game(mode mode_) : currentMode(mode_) {
-	resetState();
+pong::game::game(mode mode_) : currentMode(mode_)
+{
+	Player1.id = playerid::one;
+	Player1.setSize(engine::paddle_size);
+	Player1.setOrigin(0, engine::paddle_size.y / 2);
+	resetPos(Player1);
+
+	Player2 = Player1;
+	Player2.id = playerid::two;
+	resetPos(Player2);
+
+	if (currentMode == mode::singleplayer) {
+		Player1.ai = false;
+		Player2.ai = true;
+	}
+	else if (currentMode == mode::multiplayer) {
+		Player1.ai = Player2.ai = false;
+	}
+	else if (currentMode == mode::aitest) {
+		Player1.ai = Player2.ai = true;
+	}
+
+	Ball.setRadius(engine::ball_radius);
+	Ball.setOrigin(engine::ball_radius, engine::ball_radius);
+	Ball.setFillColor(sf::Color::Red);
+	resetPos(Ball);
 }
 
 
@@ -292,7 +315,7 @@ void pong::game::processEvent(sf::Event& event)
 		switch (event.key.code)
 		{
 		case sf::Keyboard::Enter:
-			if (!paused && waiting_to_serve()) {
+			if (waiting_to_serve()) {
 				serve(resume_serve_dir);
 			}
 			break;
@@ -327,11 +350,10 @@ void pong::game::devEvents(const sf::Event& event)
 		case sf::Keyboard::F2:
 			Player2.ai = !Player2.ai;
 			break;
-		case sf::Keyboard::F12:
-			resetState();
-			break;
 		}
-	} break;
+
+		break;
+	}
 	}
 }
 
@@ -340,8 +362,6 @@ void pong::game::update(sf::Time delta)
 	if (!paused)
 	{
 		updateBall();
-		updatePlayer(Player1);
-		updatePlayer(Player2);
 
 		if (runTime.asMilliseconds() % 30 == 0) {
 			if (updateScore())
@@ -351,6 +371,9 @@ void pong::game::update(sf::Time delta)
 				resetPos(Ball);
 			}
 		}
+
+		updatePlayer(Player1);
+		updatePlayer(Player2);
 		
 		runTime += delta;
 	}
@@ -381,8 +404,8 @@ static sf::View get_play_view(float target_width)
 void pong::game::draw()
 {
 	auto& window = static_cast<sf::RenderWindow&>(*game_window);
-	const auto prev_view = window.getView();
-	const auto play_view = get_play_view(window.getSize().x);
+	const auto& prev_view = window.getView();
+	const auto play_view = get_play_view((float)window.getSize().x);
 
 	window.clear();
 	window.setView(play_view);
@@ -402,66 +425,8 @@ void pong::game::draw()
 
 void pong::game::resetState()
 {
-	const auto center = pos(Playarea.width / 2, Playarea.height / 2);
-
-	Player1.id = playerid::one;
-	Player1.setSize(engine::paddle_size);
-	Player1.setOrigin(0, engine::paddle_size.y / 2);
-	resetPos(Player1);
-
-	Player2 = Player1;
-	Player2.id = playerid::two;
-	resetPos(Player2);
-
-	if (currentMode==mode::singleplayer) {
-		Player1.ai = false;
-		Player2.ai = true;
-	}
-	else if (currentMode == mode::multiplayer) {
-		Player1.ai = Player2.ai = false;
-	}
-	else if (currentMode == mode::aitest) {
-		Player1.ai = Player2.ai = true;
-	}
-
-	Ball.setRadius(engine::ball_radius);
-	Ball.setOrigin(engine::ball_radius, engine::ball_radius);
-	Ball.setFillColor(sf::Color::Red);
-	resetPos(Ball);
-}
-
-float pong::game::aiMove(paddle const& pad)
-{
-	using namespace engine;
-
-	const auto offset = Ball.getPosition() - pad.getPosition();
-	auto distance = sf::Vector2(abs(offset.x), std::clamp(offset.y, -paddle_max_speed, paddle_max_speed));
-
-	auto mov = 0.f;
-	auto d100 = random_num(0, 99);
-
-	if (d100 < 15 || distance.y < 5) {
-		// não mover
-	}
-	else if (d100 < 25) {
-		// manter mesma velocidade
-		mov = pad.velocity.y;
-	}
-	else if (d100 < 45) {
-		// movimento ideal
-		mov = distance.y;
-	}
-	else {
-		// movimento com erro
-		auto err = d100 / 10;
-		mov = abs(distance.y) + err;
-		if (distance.y < 0)
-			mov = -mov;
-	}
-
-	//mov /= 5;
-
-	return mov;
+	auto ng = game(currentMode);
+	std::swap(*this, ng);
 }
 
 void pong::game::updatePlayer(paddle& player)
@@ -471,7 +436,27 @@ void pong::game::updatePlayer(paddle& player)
 
 	if (player.ai)
 	{
-		velocity.y = aiMove(player);
+		using namespace engine;
+
+		static sf::Clock AIClock;
+		static const sf::Time AITime = sf::seconds(0.1f);
+
+		if (AIClock.getElapsedTime() > AITime) {
+			AIClock.restart();
+			
+			const auto offset = Ball.getPosition() - player.getPosition();
+			float mov = 0;
+
+			if (offset.y > 0)
+				mov += 1;
+			else if (offset.y < 0)
+				mov -= 1;
+
+			velocity.y += mov;
+		}
+		else {
+
+		}
 	}
 	else // player
 	{
@@ -514,7 +499,7 @@ void pong::game::updatePlayer(paddle& player)
 			}
 		}
 		else {
-			velocity.y *= 0.6; // desacelerar
+			velocity.y *= 0.6f; // desacelerar
 		}
 
 	}
@@ -538,9 +523,9 @@ void pong::game::updateBall()
 		using namespace engine;
 		vel velocity = Ball.velocity;
 
-		velocity.x *= 1.0 + ball_acceleration;
+		velocity.x *= 1.0f + ball_acceleration;
 		if (player->velocity.y != 0) {
-			velocity.y = player->velocity.y * 0.75 + random_num(-2, 2);
+			velocity.y = player->velocity.y * 0.75f + random_num(-2, 2);
 			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
 		}
 
@@ -599,11 +584,12 @@ void pong::game::resetPos(paddle& p)
 	else if (p.id == playerid::two) {
 		p.setPosition(Playarea.width - margin, center.y);
 	}
+	p.velocity = vel();
 }
 
 bool pong::game::waiting_to_serve() const noexcept
 {
-	return Ball.velocity == vel() && Ball.getPosition() == pos(Playarea.width / 2, Playarea.height / 2);
+	return !paused && Ball.velocity == vel() && Ball.getPosition() == pos(Playarea.width / 2, Playarea.height / 2);
 }
 
 
