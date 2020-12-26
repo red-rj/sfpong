@@ -6,7 +6,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch.hpp"
 
-#include "../input.h"
+#include "../joyinput.h"
 
 
 TEST_CASE("Joystick parse")

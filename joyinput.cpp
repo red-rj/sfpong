@@ -44,8 +44,8 @@ auto pong::parse_joyinput(std::string_view input) -> joy_input
 	using std::string_view;
 
 	// https://regex101.com/r/Y0JvkF/1
-	auto joy_rx = std::regex("Joy(B(\\d+)|[XYZRUV][+-]|Pov([XY][+-])", rxc::icase);
-	enum { InputID=1, Arg };
+	auto joy_rx = std::regex("Joy(B(\\d+)|[XYZRUV][+-]|Pov([XY][+-]))", rxc::icase);
+	enum { InputID=1, BtnNum, PovAxis };
 
 	joy_input js;
 	std::cmatch match;
@@ -60,12 +60,12 @@ auto pong::parse_joyinput(std::string_view input) -> joy_input
 		{
 			if (starts_with("B")) {
 				// button
-				js.btn_number = std::stoi(match[Arg].str());
+				js.btn_number = std::stoi(match[BtnNum].str());
 				js.type = js.button;
 			}
-			else if (starts_with("P")) {
+			else if (starts_with("Pov")) {
 				// povhat
-				auto povhat = ci_string_view(match[Arg].first, 2);
+				auto povhat = ci_string_view(match[PovAxis].first, 2);
 
 				js.axis_id = parse_axis(povhat.front(), true);
 				js.axis_dir = parse_dir(povhat[1]);
@@ -75,7 +75,7 @@ auto pong::parse_joyinput(std::string_view input) -> joy_input
 			else {
 				// axis
 				js.axis_id = parse_axis(input_id.front(), false);
-				js.axis_dir = parse_dir(*match[Arg].first);
+				js.axis_dir = parse_dir(input_id[1]);
 
 				js.type = js.axis;
 			}
