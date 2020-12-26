@@ -208,24 +208,24 @@ namespace ImScoped
 
     struct PopupContextItem : Widget
     {
-        PopupContextItem(const char* str_id = NULL, int mouse_button = 1) {
-            IsOpen = ImGui::BeginPopupContextItem(str_id, mouse_button);
+        PopupContextItem(const char* str_id = NULL, ImGuiPopupFlags popup_flags = ImGuiPopupFlags_MouseButtonRight) {
+            IsOpen = ImGui::BeginPopupContextItem(str_id, popup_flags);
         }
         ~PopupContextItem() { if (IsOpen) ImGui::EndPopup(); }
     };
 
     struct PopupContextWindow : Widget
     {
-        PopupContextWindow(const char* str_id = NULL, int mouse_button = 1) {
-            IsOpen = ImGui::BeginPopupContextWindow(str_id, mouse_button);
+        PopupContextWindow(const char* str_id = NULL, ImGuiPopupFlags popup_flags = ImGuiPopupFlags_MouseButtonRight) {
+            IsOpen = ImGui::BeginPopupContextWindow(str_id, popup_flags);
         }
         ~PopupContextWindow() { if (IsOpen) ImGui::EndPopup(); }
     };
 
     struct PopupContextVoid : Widget
     {
-        PopupContextVoid(const char* str_id = NULL, int mouse_button = 1) {
-            IsOpen = ImGui::BeginPopupContextVoid(str_id, mouse_button);
+        PopupContextVoid(const char* str_id = NULL, ImGuiPopupFlags popup_flags = ImGuiPopupFlags_MouseButtonRight) {
+            IsOpen = ImGui::BeginPopupContextVoid(str_id, popup_flags);
         }
         ~PopupContextVoid() { if (IsOpen) ImGui::EndPopup(); }
     };
