@@ -18,3 +18,4 @@ sfPong TODOs
 * [] Melhorar IA
 	- [wip] refatorar
 	- [] Dificuldade ajustavel
+* [] refatorar menu
