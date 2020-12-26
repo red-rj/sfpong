@@ -1,33 +1,36 @@
-// imgui helpers and extensions
+// scope guard helpers for imgui
+// based on https://github.com/sethk/imgui/blob/raii/misc/cpp/imgui_scoped.h
+// but using base classes instead of macros
 #pragma once
 #include <imgui.h>
 
 
-// baseado em https://github.com/sethk/imgui/blob/raii/misc/cpp/imgui_scoped.h
 namespace ImScoped
 {
-    /* Move and copy are not allowed */
-    struct BaseGui
+    // suppress copy and move ctors in derived class
+    struct NonCopiable
     {
-        BaseGui(BaseGui&&) = delete;
-        BaseGui& operator=(BaseGui&&) = delete;
+        NonCopiable(NonCopiable&&) = delete;
+        NonCopiable& operator=(NonCopiable&&) = delete;
 
     protected:
-        BaseGui() = default;
+        NonCopiable() = default;
     };
-    struct VisibleGui : BaseGui
+    // common bases
+    struct Parent : NonCopiable
     {
         bool IsContentVisible;
         explicit operator bool() const { return IsContentVisible; }
     };
-    struct OpenableGui : BaseGui
+    struct Widget : NonCopiable
     {
         bool IsOpen;
         explicit operator bool() const { return IsOpen; }
     };
+    using Property = NonCopiable;
 
 
-    struct Window : VisibleGui
+    struct Window : Parent
     {
         Window(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) {
             IsContentVisible = ImGui::Begin(name, p_open, flags);
@@ -35,7 +38,7 @@ namespace ImScoped
         ~Window() { ImGui::End(); }
     };
 
-    struct Child : VisibleGui
+    struct Child : Parent
     {
         Child(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags flags = 0) {
             IsContentVisible = ImGui::BeginChild(str_id, size, border, flags);
@@ -46,57 +49,57 @@ namespace ImScoped
         ~Child() { ImGui::EndChild(); }
     };
 
-    struct Font : BaseGui
+    struct Font : Property
     {
         Font(ImFont* font) { ImGui::PushFont(font); }
         ~Font() { ImGui::PopFont(); }
     };
 
-    struct StyleColor : BaseGui
+    struct StyleColor : Property
     {
         StyleColor(ImGuiCol idx, ImU32 col) { ImGui::PushStyleColor(idx, col); }
         StyleColor(ImGuiCol idx, const ImVec4& col) { ImGui::PushStyleColor(idx, col); }
         ~StyleColor() { ImGui::PopStyleColor(); }
     };
 
-    struct StyleVar : BaseGui
+    struct StyleVar : Property
     {
         StyleVar(ImGuiStyleVar idx, float val) { ImGui::PushStyleVar(idx, val); }
         StyleVar(ImGuiStyleVar idx, const ImVec2& val) { ImGui::PushStyleVar(idx, val); }
         ~StyleVar() { ImGui::PopStyleVar(); }
     };
 
-    struct ItemWidth : BaseGui
+    struct ItemWidth : Property
     {
         ItemWidth(float item_width) { ImGui::PushItemWidth(item_width); }
         ~ItemWidth() { ImGui::PopItemWidth(); }
     };
 
-    struct TextWrapPos : BaseGui
+    struct TextWrapPos : Property
     {
         TextWrapPos(float wrap_pos_x = 0.0f) { ImGui::PushTextWrapPos(wrap_pos_x); }
         ~TextWrapPos() { ImGui::PopTextWrapPos(); }
     };
 
-    struct AllowKeyboardFocus : BaseGui
+    struct AllowKeyboardFocus : Property
     {
         AllowKeyboardFocus(bool allow_keyboard_focus) { ImGui::PushAllowKeyboardFocus(allow_keyboard_focus); }
         ~AllowKeyboardFocus() { ImGui::PopAllowKeyboardFocus(); }
     };
 
-    struct ButtonRepeat : BaseGui
+    struct ButtonRepeat : Property
     {
         ButtonRepeat(bool repeat) { ImGui::PushButtonRepeat(repeat); }
         ~ButtonRepeat() { ImGui::PopButtonRepeat(); }
     };
 
-    struct Group : BaseGui
+    struct Group : Property
     {
         Group() { ImGui::BeginGroup(); }
         ~Group() { ImGui::EndGroup(); }
     };
 
-    struct ID : BaseGui
+    struct ID : Property
     {
         ID(const char* str_id) { ImGui::PushID(str_id); }
         ID(const char* str_id_begin, const char* str_id_end) { ImGui::PushID(str_id_begin, str_id_end); }
@@ -105,7 +108,7 @@ namespace ImScoped
         ~ID() { ImGui::PopID(); }
     };
 
-    struct Combo : OpenableGui
+    struct Combo : Widget
     {
         Combo(const char* label, const char* preview_value, ImGuiComboFlags flags = 0) {
             IsOpen = ImGui::BeginCombo(label, preview_value, flags);
@@ -113,7 +116,7 @@ namespace ImScoped
         ~Combo() { if (IsOpen) ImGui::EndCombo(); }
     };
 
-    struct TreeNode : OpenableGui
+    struct TreeNode : Widget
     {
         TreeNode(const char* label) {
             IsOpen = ImGui::TreeNode(label);
@@ -132,14 +135,14 @@ namespace ImScoped
         ~TreeNode() { if (IsOpen) ImGui::TreePop(); }
     };
 
-    struct TreeNodeV : OpenableGui
+    struct TreeNodeV : Widget
     {
         TreeNodeV(const char* str_id, const char* fmt, va_list args) IM_FMTLIST(3) { IsOpen = ImGui::TreeNodeV(str_id, fmt, args); }
         TreeNodeV(const void* ptr_id, const char* fmt, va_list args) IM_FMTLIST(3) { IsOpen = ImGui::TreeNodeV(ptr_id, fmt, args); }
         ~TreeNodeV() { if (IsOpen) ImGui::TreePop(); }
     };
 
-    struct TreeNodeEx : OpenableGui
+    struct TreeNodeEx : Widget
     {
         TreeNodeEx(const char* label, ImGuiTreeNodeFlags flags = 0) {
             IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
@@ -160,7 +163,7 @@ namespace ImScoped
         ~TreeNodeEx() { if (IsOpen) ImGui::TreePop(); }
     };
 
-    struct TreeNodeExV : OpenableGui
+    struct TreeNodeExV : Widget
     {
         TreeNodeExV(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args) IM_FMTLIST(4) {
             IM_ASSERT(!(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen));
@@ -173,37 +176,37 @@ namespace ImScoped
         ~TreeNodeExV() { if (IsOpen) ImGui::TreePop(); }
     };
 
-    struct MainMenuBar : OpenableGui
+    struct MainMenuBar : Widget
     {
         MainMenuBar() { IsOpen = ImGui::BeginMainMenuBar(); }
         ~MainMenuBar() { if (IsOpen) ImGui::EndMainMenuBar(); }
     };
 
-    struct MenuBar : OpenableGui
+    struct MenuBar : Widget
     {
         MenuBar() { IsOpen = ImGui::BeginMenuBar(); }
         ~MenuBar() { if (IsOpen) ImGui::EndMenuBar(); }
     };
 
-    struct Menu : OpenableGui
+    struct Menu : Widget
     {
         Menu(const char* label, bool enabled = true) { IsOpen = ImGui::BeginMenu(label, enabled); }
         ~Menu() { if (IsOpen) ImGui::EndMenu(); }
     };
 
-    struct Tooltip
+    struct Tooltip : Property
     {
         Tooltip() { ImGui::BeginTooltip(); }
         ~Tooltip() { ImGui::EndTooltip(); }
     };
 
-    struct Popup : OpenableGui
+    struct Popup : Widget
     {
         Popup(const char* str_id, ImGuiWindowFlags flags = 0) { IsOpen = ImGui::BeginPopup(str_id, flags); }
         ~Popup() { if (IsOpen) ImGui::EndPopup(); }
     };
 
-    struct PopupContextItem : OpenableGui
+    struct PopupContextItem : Widget
     {
         PopupContextItem(const char* str_id = NULL, int mouse_button = 1) {
             IsOpen = ImGui::BeginPopupContextItem(str_id, mouse_button);
@@ -211,15 +214,15 @@ namespace ImScoped
         ~PopupContextItem() { if (IsOpen) ImGui::EndPopup(); }
     };
 
-    struct PopupContextWindow : OpenableGui
+    struct PopupContextWindow : Widget
     {
-        PopupContextWindow(const char* str_id = NULL, int mouse_button = 1, bool also_over_items = true) {
-            IsOpen = ImGui::BeginPopupContextWindow(str_id, mouse_button, also_over_items);
+        PopupContextWindow(const char* str_id = NULL, int mouse_button = 1) {
+            IsOpen = ImGui::BeginPopupContextWindow(str_id, mouse_button);
         }
         ~PopupContextWindow() { if (IsOpen) ImGui::EndPopup(); }
     };
 
-    struct PopupContextVoid : OpenableGui
+    struct PopupContextVoid : Widget
     {
         PopupContextVoid(const char* str_id = NULL, int mouse_button = 1) {
             IsOpen = ImGui::BeginPopupContextVoid(str_id, mouse_button);
@@ -227,7 +230,7 @@ namespace ImScoped
         ~PopupContextVoid() { if (IsOpen) ImGui::EndPopup(); }
     };
 
-    struct PopupModal : OpenableGui
+    struct PopupModal : Widget
     {
         PopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0) {
             IsOpen = ImGui::BeginPopupModal(name, p_open, flags);
@@ -237,19 +240,19 @@ namespace ImScoped
         void Close() { ImGui::CloseCurrentPopup(); }
     };
 
-    struct DragDropSource : OpenableGui
+    struct DragDropSource : Widget
     {
         DragDropSource(ImGuiDragDropFlags flags = 0) { IsOpen = ImGui::BeginDragDropSource(flags); }
         ~DragDropSource() { if (IsOpen) ImGui::EndDragDropSource(); }
     };
 
-    struct DragDropTarget : OpenableGui
+    struct DragDropTarget : Widget
     {
         DragDropTarget() { IsOpen = ImGui::BeginDragDropTarget(); }
         ~DragDropTarget() { if (IsOpen) ImGui::EndDragDropTarget(); }
     };
 
-    struct ClipRect
+    struct ClipRect : Property
     {
         ClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect) { 
             ImGui::PushClipRect(clip_rect_min, clip_rect_max, intersect_with_current_clip_rect);
@@ -257,7 +260,7 @@ namespace ImScoped
         ~ClipRect() { ImGui::PopClipRect(); }
     };
 
-    struct ChildFrame : OpenableGui
+    struct ChildFrame : Widget
     {
         ChildFrame(ImGuiID id, const ImVec2& size, ImGuiWindowFlags flags = 0) { IsOpen = ImGui::BeginChildFrame(id, size, flags); }
         ~ChildFrame() { ImGui::EndChildFrame(); }
@@ -265,7 +268,7 @@ namespace ImScoped
 
     // eu
 
-    struct TabBarItem : OpenableGui
+    struct TabBarItem : Widget
     {
         TabBarItem(const char* label, bool* p_open = nullptr, ImGuiTabBarFlags flags = 0) {
             IsOpen = ImGui::BeginTabItem(label, p_open, flags);
@@ -273,7 +276,7 @@ namespace ImScoped
         ~TabBarItem() { if (IsOpen) ImGui::EndTabItem(); }
     };
 
-    struct TabBar : OpenableGui
+    struct TabBar : Widget
     {
         using Item = TabBarItem;
 
@@ -283,7 +286,7 @@ namespace ImScoped
         ~TabBar() { if (IsOpen) ImGui::EndTabBar(); }
     };
 
-    struct Indent : BaseGui
+    struct Indent : Property
     {
         explicit Indent(float width = 0.f) : Width(width) { ImGui::Indent(Width); }
         ~Indent() { ImGui::Unindent(Width); }
