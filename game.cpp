@@ -292,7 +292,7 @@ void pong::game::setup(sf::RenderWindow& window)
 	txtScore.setPosition(Playarea.width / 2 - 100, 30);
 	set_score_txt({});
 
-	game_menu.init();
+	menu::init();
 }
 
 
@@ -332,7 +332,7 @@ void pong::game::processEvent(sf::Event& event)
 
 	case sf::Event::KeyReleased:
 	{
-		if (game_menu.rebinding)
+		if (menu::rebinding_popup_open())
 			break;
 
 		switch (event.key.code)

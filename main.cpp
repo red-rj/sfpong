@@ -115,13 +115,15 @@ int main(int argc, const char* argv[])
 		while (window.pollEvent(event))
 		{
 			ImGui::SFML::ProcessEvent(event);
+			pong::menu::processEvent(event);
 			vg.processEvent(event);
 		}
 		auto dt = deltaClock.restart();
 		ImGui::SFML::Update(window, dt);
-		vg.draw();
-		vg.update(dt);
-		pong::game_menu.update(vg);
+
+		vg.draw(); vg.update(dt);
+		pong::menu::update(vg);
+		
 		ImGui::SFML::Render(window);
 		window.display();
 	}

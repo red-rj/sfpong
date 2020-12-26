@@ -60,6 +60,7 @@ static auto scan_joy_btn() noexcept
 	}
 }
 
+using namespace pong;
 
 namespace
 {
@@ -70,10 +71,27 @@ namespace
 		;
 
 	std::vector<std::string> _joystick_list;
-	std::array<pong::player_input_cfg, 2> active_input_settings;
+	std::array<pong::player_input_cfg, 2> active_input_settings, input_settings;
+
+	struct {
+		bool options;
+		bool game_stats;
+		bool about;
+		bool imgui_demo, imgui_about;
+		bool rebiding_popup;
+		//---
+	} show;
 }
 
-pong::menu_t pong::game_menu;
+// windows
+static void optionsWin(game& ctx);
+static void gameStatsWin(game& ctx);
+static void aboutSfPongWin();
+
+// ui
+static void controlsUi();
+static int joystickCombobox(const char* label, int current_joyid);
+
 
 static void refresh_joystick_list()
 {
@@ -91,7 +109,7 @@ static void refresh_joystick_list()
 }
 
 
-void pong::menu_t::update(game& ctx)
+void pong::menu::update(game& ctx)
 {
 	using namespace ImGui;
 	using namespace ImScoped;
@@ -160,7 +178,7 @@ void pong::menu_t::update(game& ctx)
 	}
 }
 
-void pong::menu_t::init()
+void pong::menu::init()
 {
 	input_settings[(int)playerid::one] = get_input_cfg(playerid::one);
 	input_settings[(int)playerid::two] = get_input_cfg(playerid::two);
@@ -178,7 +196,7 @@ void pong::menu_t::init()
 	ImGui::SFML::UpdateFontTexture();
 }
 
-void pong::menu_t::processEvent(sf::Event& event)
+void pong::menu::processEvent(sf::Event& event)
 {
 	switch (event.type)
 	{
@@ -189,9 +207,13 @@ void pong::menu_t::processEvent(sf::Event& event)
 	}
 }
 
+bool pong::menu::rebinding_popup_open() noexcept
+{
+	return show.rebiding_popup;
+}
 
 
-void pong::menu_t::optionsWin(game&)
+void optionsWin(game& ctx)
 {
 	namespace gui = ImScoped;
 	static auto wip_resolution = game_window->getSize();
@@ -263,7 +285,7 @@ void pong::menu_t::optionsWin(game&)
 	}
 }
 
-void pong::menu_t::gameStatsWin(game& ctx)
+void gameStatsWin(game& ctx)
 {
 	using namespace ImScoped;
 
@@ -295,7 +317,7 @@ void pong::menu_t::gameStatsWin(game& ctx)
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void pong::menu_t::aboutSfPongWin()
+void aboutSfPongWin()
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
@@ -329,7 +351,7 @@ void pong::menu_t::aboutSfPongWin()
 	Text(libver, "spdlog", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
 }
 
-void pong::menu_t::controlsUi()
+void controlsUi()
 {
 	namespace gui = ImScoped;
 	{
@@ -337,7 +359,7 @@ void pong::menu_t::controlsUi()
 		ImGui::Text("Teclado:");
 	}
 
-	auto inputKbKey = [id = 0, this](const char* label, sf::Keyboard::Key& curKey) mutable
+	auto inputKbKey = [id = 0](const char* label, sf::Keyboard::Key& curKey) mutable
 	#pragma region Block
 	{
 		using namespace ImGui;
@@ -350,11 +372,11 @@ void pong::menu_t::controlsUi()
 		SameLine(75);
 		if (Button(keystr.c_str())) {
 			OpenPopup(popup_id);
-			rebinding = true;
+			show.rebiding_popup = true;
 		}
 
 		const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
-		if (auto popup = gui::PopupModal(popup_id, &rebinding, flags))
+		if (auto popup = gui::PopupModal(popup_id, &show.rebiding_popup, flags))
 		{
 			using Key = sf::Keyboard::Key;
 
@@ -431,7 +453,7 @@ void pong::menu_t::controlsUi()
 	inputJoystickSettings(playerid::two);
 }
 
-int pong::menu_t::joystickCombobox(const char* label, int current_joyid)
+int joystickCombobox(const char* label, int current_joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;

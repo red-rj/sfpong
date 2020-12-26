@@ -36,11 +36,8 @@ namespace pong
 
 	void constrain_pos(pos& p);
 	
-	struct menu_t;
-
 	struct game
 	{
-		friend menu_t;
 		enum mode { singleplayer, multiplayer, aitest };
 
 		game(mode mode_);
@@ -53,7 +50,7 @@ namespace pong
 
 		static void setup(sf::RenderWindow& window);
 
-	private:
+	//private:
 
 		void resetState();
 		void devEvents(const sf::Event& event);
