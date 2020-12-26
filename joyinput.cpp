@@ -1,8 +1,7 @@
 #include "joyinput.h"
 #include "ci_string.h"
-#include <vector>
-#include <SFML/Window/Joystick.hpp>
 #include <regex>
+#include <SFML/Window/Joystick.hpp>
 
 
 using sf::Joystick;
@@ -13,80 +12,70 @@ static Sv mk_strview(Iter begin, Iter end) {
 	return { std::addressof(*begin), size_t(std::distance(begin, end)) };
 }
 
+static auto parse_axis(char ch, bool povhat)->int
+{
+	const ci_string_view axis_letters = "XYZRUV"; // mesma ordem do enum
+	auto pos = axis_letters.find(ch);
+
+	if (pos < Joystick::AxisCount) {
+		auto axis = povhat ? pos + Joystick::PovX : pos;
+		return axis;
+	}
+	else
+		throw std::invalid_argument("invalid axis");
+}
+static auto parse_dir(char ch)->pong::dir
+{
+	using pong::dir;
+
+	if (ch == '-') {
+		return dir::up;
+	}
+	else if (ch == '+') {
+		return dir::down;
+	}
+	else
+		throw std::invalid_argument("invalid dir");
+}
 
 auto pong::parse_joyinput(std::string_view input) -> joy_input
 {
 	namespace rxc = std::regex_constants;
-	using svmatch = std::match_results<std::string_view::const_iterator>;
+	using std::string_view;
 
 	// https://regex101.com/r/Y0JvkF/1
-	auto joy_rx = std::regex("Joy(B(\\d+)|[XYZRUV]([+-])|Pov([XY][+-])", rxc::icase);
+	auto joy_rx = std::regex("Joy(B(\\d+)|[XYZRUV][+-]|Pov([XY][+-])", rxc::icase);
 	enum { InputID=1, Arg };
 
 	joy_input js;
+	std::cmatch match;
 
-	svmatch match;
-	if (regex_match(input.begin(), input.end(), match, joy_rx)) {
-		auto input_id = mk_strview<ci_string_view>(match[InputID].first, match[InputID].second);
-		auto id_letter = input_id.substr(0, 1);
+	if (regex_match(input.data(), input.data() + input.length(), match, joy_rx)) {
+		auto input_id = ci_string_view(match[InputID].first, match[InputID].length());
+		auto starts_with = [=](string_view sv) {
+			return input_id.compare(0, sv.length(), sv.data()) == 0;
+		};
 
 		try
 		{
-			if (id_letter == "B") {
+			if (starts_with("B")) {
 				// button
 				js.btn_number = std::stoi(match[Arg].str());
 				js.type = js.button;
 			}
-			else if (id_letter == "P") {
+			else if (starts_with("P")) {
 				// povhat
-				auto value = mk_strview<ci_string_view>(match[Arg].first, match[Arg].second);
-				auto axis = value.substr(0, 1);
-				auto dir = value.substr(1);
+				auto povhat = ci_string_view(match[Arg].first, 2);
 
-				if (axis == "X") {
-					js.axis_id = Joystick::Axis::PovX;
-				}
-				else if (axis == "Y") {
-					js.axis_id = Joystick::Axis::PovY;
-				}
+				js.axis_id = parse_axis(povhat.front(), true);
+				js.axis_dir = parse_dir(povhat[1]);
 
-				if (dir == "-") {
-					js.axis_dir = pong::dir::up;
-				}
-				else if (dir == "+") {
-					js.axis_dir = pong::dir::down;
-				}
+				js.type = js.axis;
 			}
 			else {
 				// axis
-				auto axis = id_letter;
-				char d = *match[Arg].first;
-
-				if (d == '-') {
-					js.axis_dir = pong::dir::up;
-				}
-				else if (d == '+') {
-					js.axis_dir = pong::dir::down;
-				}
-
-				if (axis == "X") {
-					js.axis_id = Joystick::Axis::X;
-				}
-				else if (axis == "Y") {
-					js.axis_id = Joystick::Axis::Y;
-				}
-				else if (axis == "Z") {
-					js.axis_id = Joystick::Axis::Z;
-				}
-				else if (axis == "R") {
-					js.axis_id = Joystick::Axis::R;
-				}
-				else if (axis == "U") {
-					js.axis_id = Joystick::Axis::U;
-				}
-				else if (axis == "V") {
-					js.axis_id = Joystick::Axis::V;
-				}
+				js.axis_id = parse_axis(input_id.front(), false);
+				js.axis_dir = parse_dir(*match[Arg].first);
 
 				js.type = js.axis;
 			}

@@ -47,7 +47,6 @@ namespace util
 
     inline constexpr int ci_compare(std::string_view lhs, std::string_view rhs)
     {
-        ci_string_view l(lhs.data(), lhs.size()), r(rhs.data(), rhs.size());
-        return l.compare(r);
+        return ci_string_view(lhs.data(), lhs.size()).compare(ci_string_view(rhs.data(), rhs.size()));
     }
 }

@@ -169,7 +169,6 @@ void pong::set_user_config(const cfgtree& tree)
     // game
 }
 
-
 pong::cfgtree& pong::get_user_config(cfgtree& tree)
 {
     using namespace ckey;
