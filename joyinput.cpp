@@ -43,7 +43,7 @@ auto pong::parse_joyinput(std::string_view input) -> joy_input
 	namespace rxc = std::regex_constants;
 	using std::string_view;
 
-	// https://regex101.com/r/Y0JvkF/1
+	// https://regex101.com/r/Y0JvkF/2
 	auto joy_rx = std::regex("Joy(B(\\d+)|[XYZRUV][+-]|Pov([XY][+-]))", rxc::icase);
 	enum { InputID=1, BtnNum, PovAxis };
 
