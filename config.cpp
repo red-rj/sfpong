@@ -154,7 +154,7 @@ void pong::set_user_config(const cfgtree& tree)
     P1.keyboard_controls.up = tree.get(P1_UP, Keyboard::W);
     P1.keyboard_controls.down = tree.get(P1_DOWN, Keyboard::S);
     P1.keyboard_controls.fast = tree.get(P1_FAST, Keyboard::LShift);
-    P1.joystickId = tree.get(P1_JOYSTICK, -1, joyid_translator());
+    P1.joystick_id = tree.get(P1_JOYSTICK, -1, joyid_translator());
     P1.joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
     set_input_cfg(P1, playerid::one);
     
@@ -162,7 +162,7 @@ void pong::set_user_config(const cfgtree& tree)
     P2.keyboard_controls.up = tree.get(P2_UP, Keyboard::Up);
     P2.keyboard_controls.down = tree.get(P2_DOWN, Keyboard::Down);
     P2.keyboard_controls.fast = tree.get(P2_FAST, Keyboard::RControl);
-    P2.joystickId = tree.get(P2_JOYSTICK, -1, joyid_translator());
+    P2.joystick_id = tree.get(P2_JOYSTICK, -1, joyid_translator());
     P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
     set_input_cfg(P2, playerid::two);
 
@@ -180,13 +180,13 @@ pong::cfgtree& pong::get_user_config(cfgtree& tree)
     tree.put(P1_UP, P1.keyboard_controls.up);
     tree.put(P1_DOWN, P1.keyboard_controls.down);
     tree.put(P1_FAST, P1.keyboard_controls.fast);
-    tree.put(P1_JOYSTICK, P1.joystickId, joyid_translator());
+    tree.put(P1_JOYSTICK, P1.joystick_id, joyid_translator());
     tree.put(P1_JSDEADZONE, P1.joystick_deadzone);
     
     tree.put(P2_UP, P2.keyboard_controls.up);
     tree.put(P2_DOWN, P2.keyboard_controls.down);
     tree.put(P2_FAST, P2.keyboard_controls.fast);
-    tree.put(P2_JOYSTICK, P2.joystickId, joyid_translator());
+    tree.put(P2_JOYSTICK, P2.joystick_id, joyid_translator());
     tree.put(P2_JSDEADZONE, P2.joystick_deadzone);
 
     return tree;
@@ -217,7 +217,7 @@ auto pong::get_input_cfg(playerid player) noexcept -> player_input_cfg
 {
     const auto p = int(player);
     player_input_cfg cfg;
-    cfg.joystickId = player_joystick[p];
+    cfg.joystick_id = player_joystick[p];
     cfg.joystick_deadzone = player_deadzone[p];
     cfg.keyboard_controls = player_keyboard_controls[p];
     return cfg;
@@ -227,7 +227,7 @@ void pong::set_input_cfg(player_input_cfg input, playerid player) noexcept
 {
     const auto p = int(player);
     player_keyboard_controls[p] = input.keyboard_controls;
-    player_joystick[p] = input.joystickId;
+    player_joystick[p] = input.joystick_id;
     player_deadzone[p] = input.joystick_deadzone;
 }
 
@@ -241,8 +241,8 @@ bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
 bool pong::player_input_cfg::operator==(const player_input_cfg& rhs) const noexcept
 {
     using std::tie;
-    return tie(keyboard_controls, joystickId, joystick_deadzone) ==
-        tie(rhs.keyboard_controls, rhs.joystickId, rhs.joystick_deadzone);
+    return tie(keyboard_controls, joystick_id, joystick_deadzone) ==
+        tie(rhs.keyboard_controls, rhs.joystick_id, rhs.joystick_deadzone);
 }
 
 

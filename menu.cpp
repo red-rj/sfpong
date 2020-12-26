@@ -102,13 +102,13 @@ void pong::menu_t::update(game& ctx)
 
 	// draw
 	if (show.options)
-		guiOptions(ctx);
+		optionsWin(ctx);
 
 	if (show.game_stats)
-		guiStats(ctx);
+		gameStatsWin(ctx);
 
 	if (show.about)
-		aboutSfPong();
+		aboutSfPongWin();
 
 	if (show.imgui_demo)
 		ShowDemoWindow(&show.imgui_demo);
@@ -191,7 +191,7 @@ void pong::menu_t::processEvent(sf::Event& event)
 
 
 
-void pong::menu_t::guiOptions(game&)
+void pong::menu_t::optionsWin(game&)
 {
 	namespace gui = ImScoped;
 	static auto wip_resolution = game_window->getSize();
@@ -263,7 +263,7 @@ void pong::menu_t::guiOptions(game&)
 	}
 }
 
-void pong::menu_t::guiStats(game& ctx)
+void pong::menu_t::gameStatsWin(game& ctx)
 {
 	using namespace ImScoped;
 
@@ -295,7 +295,7 @@ void pong::menu_t::guiStats(game& ctx)
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void pong::menu_t::aboutSfPong()
+void pong::menu_t::aboutSfPongWin()
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
@@ -401,8 +401,10 @@ void pong::menu_t::controlsUi()
 	}
 
 	auto inputJoystickSettings = [&](playerid pid) mutable {
-		auto& joyid = input_settings[int(pid)].joystickId;
-		auto& deadzone = input_settings[int(pid)].joystick_deadzone;
+		auto& settings = input_settings[int(pid)];
+
+		auto& joyid = settings.joystick_id;
+		auto& deadzone = settings.joystick_deadzone;
 		auto title = to_string(pid);
 
 		gui::GroupID _grp_ = title;
@@ -412,11 +414,11 @@ void pong::menu_t::controlsUi()
 
 		auto dup = std::find_if(input_settings.begin(), input_settings.end(),
 		[=](const player_input_cfg& input) {
-			return selected != -1 && input.joystickId == selected;
+			return selected != -1 && input.joystick_id == selected;
 		});
 
 		if (dup != input_settings.end()) {
-			std::swap(joyid, dup->joystickId);
+			std::swap(joyid, dup->joystick_id);
 		}
 
 		joyid = selected;

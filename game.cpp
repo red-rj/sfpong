@@ -502,12 +502,12 @@ void pong::game::updatePlayer(paddle& player)
 		bool gofast_js = false;
 		if (input.use_joystick())
 		{
-			auto axis = Joystick::getAxisPosition(input.joystickId, Joystick::Y);
+			auto axis = Joystick::getAxisPosition(input.joystick_id, Joystick::Y);
 			// deadzone
 			if (abs(axis) > input.joystick_deadzone)
 				movement = axis / 3;
 
-			gofast_js = Joystick::isButtonPressed(input.joystickId, 0);
+			gofast_js = Joystick::isButtonPressed(input.joystick_id, 0);
 		}
 
 		if (movement != velocity) {

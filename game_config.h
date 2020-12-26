@@ -54,16 +54,15 @@ namespace ckey
     {
         keyboard_ctrls keyboard_controls;
 
-        int joystickId;
+        int joystick_id;
         float joystick_deadzone;
 
-        bool use_joystick() const noexcept { return joystickId > -1; }
+        bool use_joystick() const noexcept { return joystick_id > -1; }
 
         bool operator== (const player_input_cfg& rhs) const noexcept;
         bool operator!= (const player_input_cfg& rhs) const noexcept {
             return !(*this == rhs);
         }
-
     };
 
 // getters e setters para as configurações ativas de usuário

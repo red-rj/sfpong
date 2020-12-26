@@ -23,9 +23,9 @@ namespace pong
 		
 	private:
 		// windows
-		void guiOptions(game& ctx);
-		void guiStats(game& ctx);
-		void aboutSfPong();
+		void optionsWin(game& ctx);
+		void gameStatsWin(game& ctx);
+		void aboutSfPongWin();
 
 		// ui
 		void controlsUi();
