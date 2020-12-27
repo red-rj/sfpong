@@ -335,13 +335,13 @@ void pong::game::devEvents(const sf::Event& event)
 	}
 }
 
-void pong::game::update(sf::Time delta)
+void pong::game::update()
 {
 	if (!paused)
 	{
 		updateBall();
 
-		if (runTime.asMilliseconds() % 30 == 0) {
+		if (runTime.asMilliseconds() % 20 == 0) {
 			if (updateScore())
 			{
 				resetPos(Player1);
@@ -352,8 +352,6 @@ void pong::game::update(sf::Time delta)
 
 		updatePlayer(Player1);
 		updatePlayer(Player2);
-		
-		runTime += delta;
 	}
 }
 

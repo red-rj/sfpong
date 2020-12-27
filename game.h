@@ -44,13 +44,15 @@ namespace pong
 		
 		static void setup(sf::RenderWindow& window);
 
-		void update(sf::Time delta);
+		void update();
 		void processEvent(sf::Event& event);
 		void draw();
 
 		void serve(dir direction);
 
-		auto get_players() const noexcept -> pair<paddle const&> { return { Player1, Player2 }; }
+		auto get_players() const noexcept -> pair<paddle const&> {
+			return { Player1, Player2 };
+		}
 		auto& get_ball() const noexcept { return Ball; }
 
 		auto get_mode() const noexcept { return currentMode; }
@@ -58,6 +60,13 @@ namespace pong
 		auto is_paused() const noexcept { return paused; }
 		bool toggle_pause() noexcept { return paused = !paused; }
 		void unpause() noexcept { paused = false; }
+
+		sf::Time ellapsed_time() const {
+			return m_clock.getElapsedTime();
+		}
+		sf::Time restart_clock() {
+			return runTime += m_clock.restart();
+		}
 
 	private:
 
@@ -74,6 +83,7 @@ namespace pong
 
 		bool paused = true;
 		mode currentMode;
+		sf::Clock m_clock;
 		sf::Time runTime;
 
 		paddle Player1, Player2;

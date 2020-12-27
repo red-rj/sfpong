@@ -107,7 +107,6 @@ int main(int argc, const char* argv[])
 
 	// game instance
 	auto vg = pong::game(pong::game::mode::singleplayer);
-	sf::Clock deltaClock;
 
 	while (window.isOpen())
 	{
@@ -118,10 +117,10 @@ int main(int argc, const char* argv[])
 			pong::menu::processEvent(event);
 			vg.processEvent(event);
 		}
-		auto dt = deltaClock.restart();
+		auto dt = vg.ellapsed_time();
 		ImGui::SFML::Update(window, dt);
-
-		vg.draw(); vg.update(dt);
+		vg.update();
+		vg.draw();
 		pong::menu::update(vg);
 		
 		ImGui::SFML::Render(window);
