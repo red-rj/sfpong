@@ -14,7 +14,7 @@
 #include "menu.h"
 #include "game_config.h"
 
-const char pong::version[] = "0.9.0";
+const char pong::version[] = "0.8.1";
 
 using namespace std::literals;
 
@@ -101,47 +101,6 @@ private:
 
 	pong::rect m_playarea;
 	float m_hOffset;
-};
-
-struct drawable_message : sf::Drawable
-{
-	drawable_message(const sf::Font& font, unsigned chSize)
-		: text("", font, chSize)
-	{
-		bg.setFillColor(sf::Color(0, 0, 0, 128));
-		bg.setOutlineColor(sf::Color::White);
-		bg.setOutlineThickness(5);
-	}
-
-	void write(const std::string& message, pong::size2d coords)
-	{
-		text.setString(message);
-
-		const auto margin = pong::size2d{ 10.f, 10.f };
-
-		sf::Vector2<float> bgsize;
-		bgsize.x = (text.getCharacterSize() + text.getLetterSpacing()) * message.length() / 2;
-		bgsize.y = (text.getCharacterSize() + text.getLineSpacing()) * 3;
-
-		bg.setSize(bgsize);
-		bg.setPosition(coords);
-		text.setPosition(coords + pong::size2d{ 10.f, 10.f });
-	}
-	void clear() {
-		text.setString("");
-	}
-
-private:
-	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
-	{
-		if (!text.getString().isEmpty()) {
-			target.draw(bg);
-			target.draw(text, states);
-		}
-	}
-
-	sf::Text text;
-	sf::RectangleShape bg;
 };
 
 

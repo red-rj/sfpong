@@ -114,7 +114,7 @@ void pong::menu::update(game& ctx)
 	using namespace ImGui;
 	using namespace ImScoped;
 
-	if (!ctx.paused) return;
+	if (!ctx.is_paused()) return;
 
 	// update
 
@@ -138,25 +138,26 @@ void pong::menu::update(game& ctx)
 	TextDisabled("sfPong");
 
 	if (auto m = Menu("Jogo")) {
-		bool singleplayer = ctx.currentMode == game::singleplayer,
-			 multiplayer = ctx.currentMode == game::multiplayer;
+		auto currentMode = ctx.get_mode();
+		bool singleplayer = currentMode == game::singleplayer,
+			 multiplayer = currentMode == game::multiplayer;
 
 		if (MenuItem("Continuar", "ESC"))
-			ctx.paused = false;
+			ctx.unpause();
 		if (auto m1 = Menu("Novo")) {
 
 			if (MenuItem("1 jogador", nullptr, singleplayer)) {
 				ctx = game(game::singleplayer);
-				ctx.paused = false;
+				ctx.unpause();
 			}
 			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
 				ctx = game(game::multiplayer);
-				ctx.paused = false;
+				ctx.unpause();
 			}
 		}
 		if (MenuItem("Reiniciar")) {
-			ctx = game(ctx.currentMode);
-			ctx.paused = false;
+			ctx = game(currentMode);
+			ctx.unpause();
 		}
 		Separator();
 		MenuItem("Sobre", nullptr, &show.about);
@@ -297,9 +298,11 @@ void gameStatsWin(game& ctx)
 	auto constexpr wflags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
 	Window overlay("Stats", &show.game_stats, wflags);
 
-	auto const& P1 = ctx.Player1;
-	auto const& P2 = ctx.Player2;
-	auto const& Ball = ctx.Ball;
+	auto players = ctx.get_players();
+
+	auto& P1 = players.first;
+	auto& P2 = players.second;
+	auto& Ball = ctx.get_ball();
 
 	auto p1_pos = P1.getPosition();
 	auto p2_pos = P2.getPosition();

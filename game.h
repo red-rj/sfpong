@@ -41,16 +41,25 @@ namespace pong
 		enum mode { singleplayer, multiplayer, aitest };
 
 		game(mode mode_);
+		
+		static void setup(sf::RenderWindow& window);
 
 		void update(sf::Time delta);
+		void processEvent(sf::Event& event);
 		void draw();
 
 		void serve(dir direction);
-		void processEvent(sf::Event& event);
 
-		static void setup(sf::RenderWindow& window);
+		auto get_players() const noexcept -> pair<paddle const&> { return { Player1, Player2 }; }
+		auto& get_ball() const noexcept { return Ball; }
 
-	//private:
+		auto get_mode() const noexcept { return currentMode; }
+
+		auto is_paused() const noexcept { return paused; }
+		bool toggle_pause() noexcept { return paused = !paused; }
+		void unpause() noexcept { paused = false; }
+
+	private:
 
 		void resetState();
 		void devEvents(const sf::Event& event);
