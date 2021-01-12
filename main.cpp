@@ -117,7 +117,7 @@ int main(int argc, const char* argv[])
 			pong::menu::processEvent(event);
 			vg.processEvent(event);
 		}
-		auto dt = vg.ellapsed_time();
+		auto dt = vg.restart_clock();
 		ImGui::SFML::Update(window, dt);
 		vg.update();
 		vg.draw();

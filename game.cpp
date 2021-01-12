@@ -2,12 +2,10 @@
 #include <algorithm>
 #include <random>
 #include <tuple>
-
 #include <fmt/format.h>
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
-
 #include "common.h"
 #include "game.h"
 #include "rng.h"
@@ -18,78 +16,81 @@ const char pong::version[] = "0.8.1";
 
 using namespace std::literals;
 
-struct net_shape : public sf::Drawable, public sf::Transformable
+
+struct dashed_line : sf::Drawable, sf::Transformable
 {
-	explicit net_shape(float pieceSize_ = 20.f, int pieceCount_ = 25);
+	dashed_line(sf::Vector2f pieceSize_, float gap_, float maxSize)
+		: m_piece_size(pieceSize_), m_gap(gap_)
+	{
+		using sf::Vector2f;
+
+		Vector2f current;
+		auto const& offset = m_piece_size;
+		bool gap{};
+		
+		// creat verts alongside the X axis
+		for (int count = 1; (offset.x+m_gap) * count < maxSize; gap = !gap)
+		{
+			if (gap) {
+				current.x += offset.x + m_gap;
+			}
+			else {
+				// rect from 2 triangles
+				sf::Vertex v = current;
+				// t1
+				verts.append(v);
+				v.position.x += offset.x;
+				verts.append(v);
+				v.position.y += offset.y;
+				verts.append(v);
+				// t2
+				verts.append(v);
+				v.position.x -= offset.x;
+				verts.append(v);
+				v.position.y -= offset.y;
+				verts.append(v);
+
+				count++;
+			}
+		}
+	}
+
 
 private:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
 	{
 		states.transform *= getTransform();
-		target.draw(m_net, states);
+		target.draw(verts, states);
 	}
 
-
-	float m_piece_size;
-	int m_piece_count;
-	sf::VertexArray m_net{ sf::Quads };
+	sf::Vector2f m_piece_size;
+	float m_gap;
+	sf::VertexArray verts{ sf::Triangles };
 };
 
-net_shape::net_shape(float pieceSize_, int pieceCount_) : m_piece_size(pieceSize_), m_piece_count(pieceCount_)
-{
-	m_net.clear();
-
-	auto piece_size = sf::Vector2f(m_piece_size, m_piece_size);
-	auto current_pt = sf::Vector2f();
-
-	for (int gap = false, p = 0; p < m_piece_count; gap = !gap)
-	{
-		if (gap)
-		{
-			current_pt.y += piece_size.y * 2;
-			continue;
-		}
-
-		m_net.append({ current_pt });
-		m_net.append(sf::Vector2f{ current_pt.x + piece_size.x, current_pt.y });
-		m_net.append({ piece_size + current_pt });
-		m_net.append(sf::Vector2f{ current_pt.x, current_pt.y + piece_size.y });
-		p++;
-	}
-
-	setOrigin(piece_size.x / 2, 0);
-}
 
 struct pong_court : public sf::Drawable
 {
-	pong_court() = default;
 
-	pong_court(pong::rect playarea, pong::size2d border_size) : m_playarea(playarea), top(border_size), bottom(border_size)
+	pong_court(pong::rect playarea, pong::size2d border_size) 
+		: m_playarea(playarea), top(border_size), bottom(border_size)
+		, net({20, 20}, 20, playarea.height)
 	{
-		const auto margin = pong::size2d(0, 5);
 		auto origin = pong::size2d(border_size.x / 2, 0);
 
 		top.setOrigin(origin);
-		top.setPosition(playarea.width / 2, margin.y);
+		top.setPosition(playarea.width / 2, 5);
 
-		//bottom = top;
 		origin.y = border_size.y;
-
 		bottom.setOrigin(origin);
-		bottom.setPosition(playarea.width / 2, playarea.height - margin.y);
+		bottom.setPosition(playarea.width / 2, playarea.height - 5);
 
-		net.setPosition(playarea.width / 2, margin.y);
-	}
-
-	auto getCenter() const noexcept {
-		auto center = m_playarea;
-		center.top += m_hOffset;
-		center.height -= m_hOffset * 2;
-		return center;
+		net.setRotation(90);
+		net.setPosition(playarea.width / 2, 20);
 	}
 
 	sf::RectangleShape top, bottom;
-	net_shape net;
+	dashed_line net;
 
 private:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
@@ -100,7 +101,6 @@ private:
 	}
 
 	pong::rect m_playarea;
-	float m_hOffset;
 };
 
 
@@ -110,7 +110,7 @@ namespace
 	auto rnd_eng = std::default_random_engine(rnd_dev());
 
 	const pong::rect Playarea = { 0.f, 0.f, 1280.f, 1024.f };
-	pong_court Court;
+	pong_court Court{ Playarea, { Playarea.width * 0.95f, 25 } };
 
 namespace engine
 {
@@ -120,7 +120,7 @@ namespace engine
 
 	float ball_speed = 5;
 	float ball_max_speed = 20;
-	float ball_acceleration = 0.1f;
+	float ball_acceleration = 1.1f;
 	float ball_radius = 20;
 };
 
@@ -241,7 +241,7 @@ void pong::paddle::update()
 void pong::game::setup(sf::RenderWindow& window)
 {
 	game_window = &window;
-	Court = pong_court(Playarea, { Playarea.width * 0.95f, 25 });
+	//Court = pong_court(Playarea, { Playarea.width * 0.95f, 25 });
 
 	font_sans.loadFromFile(pong::files::sans_tff);
 	font_mono.loadFromFile(pong::files::mono_tff);
@@ -432,7 +432,7 @@ void pong::game::updatePlayer(paddle& player)
 
 			velocity = std::clamp(mov, -paddle_max_speed, paddle_max_speed);
 
-			if (y_diff < 20) {
+			if (y_diff < 50) {
 				velocity /= 2;
 			}
 		}
@@ -502,7 +502,7 @@ void pong::game::updateBall()
 		using namespace engine;
 		vel velocity = Ball.velocity;
 
-		velocity.x *= 1.0f + ball_acceleration;
+		velocity.x *= ball_acceleration;
 		if (player->velocity != 0) {
 			velocity.y = player->velocity * 0.75f + random_num(-2, 2);
 			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);

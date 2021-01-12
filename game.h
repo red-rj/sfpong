@@ -1,7 +1,6 @@
 #pragma once
 #include <utility>
 #include <tuple>
-
 #include "common.h"
 #include "SFML/Graphics.hpp"
 
