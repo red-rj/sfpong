@@ -34,18 +34,18 @@ namespace pong
 	bool border_collision(const sf::Shape& p);
 
 	void constrain_pos(pos& p);
+
+	enum struct gamemode { singleplayer, multiplayer, aitest };
 	
 	struct game
 	{
-		enum mode { singleplayer, multiplayer, aitest };
+		static void setup();
 
-		game(mode mode_);
-		
-		static void setup(sf::RenderWindow& window);
+		game(gamemode mode_);
 
 		void update();
 		void processEvent(sf::Event& event);
-		void draw();
+		void draw(sf::RenderWindow& window);
 
 		void serve(dir direction);
 
@@ -54,7 +54,8 @@ namespace pong
 		}
 		auto& get_ball() const noexcept { return Ball; }
 
-		auto get_mode() const noexcept { return currentMode; }
+		auto mode() const noexcept { return currentMode; }
+		void mode(gamemode m) noexcept;
 
 		auto is_paused() const noexcept { return paused; }
 		bool toggle_pause() noexcept { return paused = !paused; }
@@ -67,9 +68,10 @@ namespace pong
 			return runTime += m_clock.restart();
 		}
 
+		void resetState();
+
 	private:
 
-		void resetState();
 		void devEvents(const sf::Event& event);
 		void updatePlayer(paddle& player);
 		void updateBall();
@@ -81,7 +83,7 @@ namespace pong
 		bool waiting_to_serve() const noexcept;
 
 		bool paused = true;
-		mode currentMode;
+		gamemode currentMode;
 		sf::Clock m_clock;
 		sf::Time runTime;
 
@@ -90,7 +92,4 @@ namespace pong
 		pair<short> score;
 		dir resume_serve_dir = dir::left;
 	};
-
-	// shared
-	extern sf::Window* game_window;
 }

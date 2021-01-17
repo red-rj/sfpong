@@ -4,6 +4,7 @@
 
 namespace sf {
 	class Event;
+	class Window;
 }
 
 namespace pong
@@ -14,7 +15,7 @@ namespace menu {
 
 	void init();
 
-	void update(game& ctx);
+	void update(game& ctx, sf::Window& window);
 	void processEvent(sf::Event& event);
 
 	bool rebinding_popup_open() noexcept;

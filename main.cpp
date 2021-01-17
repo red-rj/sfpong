@@ -32,23 +32,23 @@ int main(int argc, const char* argv[])
 
 	auto cli_result = cli.parse({ argc, argv });
 	if (!cli_result) {
-		print("CLI error: {}\n", cli_result.errorMessage());
+		print(stderr, "CLI error: {}\n", cli_result.errorMessage());
 		return 5;
 	}
-	else if (show_help) {
+	
+	if (show_help) {
 		std::cout << cli << '\n';
 		return 0;
 	}
 
-
 	auto logger = spdlog::stdout_color_st("sfPong");
 	spdlog::set_default_logger(logger);
+
 #ifndef NDEBUG
 	spdlog::set_level(spdlog::level::debug);
 #endif // !NDEBUG
 
 	logger->debug("CWD: {}", fs::current_path().string());
-
 
 	pong::cfgtree gamecfg;
 	try
@@ -103,25 +103,37 @@ int main(int argc, const char* argv[])
 	}
 
 	ImGui::SFML::Init(window);
-	pong::game::setup(window);
+	pong::game::setup();
 
 	// game instance
-	auto vg = pong::game(pong::game::mode::singleplayer);
+	auto vg = pong::game(pong::gamemode::singleplayer);
 
 	while (window.isOpen())
 	{
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
+			// global events
+			switch (event.type)
+			{
+			case sf::Event::Closed:
+				window.close();
+				break;
+			}
+
 			ImGui::SFML::ProcessEvent(event);
 			pong::menu::processEvent(event);
 			vg.processEvent(event);
 		}
+
 		auto dt = vg.restart_clock();
 		ImGui::SFML::Update(window, dt);
+
 		vg.update();
-		vg.draw();
-		pong::menu::update(vg);
+		vg.draw(window);
+
+		if (vg.is_paused())
+			pong::menu::update(vg, window);
 		
 		ImGui::SFML::Render(window);
 		window.display();

@@ -4,7 +4,6 @@
 #include <tuple>
 #include <fmt/format.h>
 #include <imgui.h>
-#include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
 #include "common.h"
 #include "game.h"
@@ -67,7 +66,6 @@ private:
 	float m_gap;
 	sf::VertexArray verts{ sf::Triangles };
 };
-
 
 struct pong_court : public sf::Drawable
 {
@@ -132,8 +130,6 @@ namespace engine
 		txtScore.setString(fmt::format("{}    {}", val.first, val.second));
 	}
 }
-
-sf::Window* pong::game_window = nullptr;
 
 
 int pong::random_num(int min, int max)
@@ -206,6 +202,7 @@ pong::cfgtree pong::createGuts()
 	return guts;
 }
 
+
 pong::paddle::paddle(playerid pid) : base_t(engine::paddle_size), id(pid)
 {
 	setOrigin(0, engine::paddle_size.y / 2);
@@ -238,11 +235,8 @@ void pong::paddle::update()
 	}
 }
 
-void pong::game::setup(sf::RenderWindow& window)
+void pong::game::setup()
 {
-	game_window = &window;
-	//Court = pong_court(Playarea, { Playarea.width * 0.95f, 25 });
-
 	font_sans.loadFromFile(pong::files::sans_tff);
 	font_mono.loadFromFile(pong::files::mono_tff);
 
@@ -255,22 +249,29 @@ void pong::game::setup(sf::RenderWindow& window)
 }
 
 
-pong::game::game(mode mode_) 
-	: currentMode(mode_), 
-	Player1(playerid::one), Player2(playerid::two)
+pong::game::game(gamemode mode_)
+	: Player1(playerid::one), Player2(playerid::two)
+	
 {
 	resetPos(Player1);
 	resetPos(Player2);
 	resetPos(Ball);
 
-	if (currentMode == mode::singleplayer) {
+	mode(mode_);
+}
+
+void pong::game::mode(gamemode m) noexcept
+{
+	currentMode = m;
+
+	if (currentMode == gamemode::singleplayer) {
 		Player1.ai = false;
 		Player2.ai = true;
 	}
-	else if (currentMode == mode::multiplayer) {
+	else if (currentMode == gamemode::multiplayer) {
 		Player1.ai = Player2.ai = false;
 	}
-	else if (currentMode == mode::aitest) {
+	else if (currentMode == gamemode::aitest) {
 		Player1.ai = Player2.ai = true;
 	}
 }
@@ -285,23 +286,19 @@ void pong::game::processEvent(sf::Event& event)
 
 	switch (event.type)
 	{
-	case sf::Event::Closed:
-		game_window->close();
-		break;
-
-	case sf::Event::KeyReleased:
+	case Event::KeyReleased:
 	{
 		if (menu::rebinding_popup_open())
 			break;
 
 		switch (event.key.code)
 		{
-		case sf::Keyboard::Enter:
+		case Keyboard::Enter:
 			if (waiting_to_serve()) {
 				serve(resume_serve_dir);
 			}
 			break;
-		case sf::Keyboard::Escape:
+		case Keyboard::Escape:
 			paused = !paused;
 			// imgui deve capturar input só com o jogo pausado
 			auto& io = ImGui::GetIO();
@@ -377,9 +374,8 @@ static sf::View get_play_view(float target_width)
 	return view;
 }
 
-void pong::game::draw()
+void pong::game::draw(sf::RenderWindow& window)
 {
-	auto& window = static_cast<sf::RenderWindow&>(*game_window);
 	const auto& prev_view = window.getView();
 	const auto play_view = get_play_view((float)window.getSize().x);
 
@@ -389,11 +385,9 @@ void pong::game::draw()
 	window.draw(Court);
 	window.draw(txtScore);
 
-	if (!paused) {
-		window.draw(Ball);
-		window.draw(Player1);
-		window.draw(Player2);
-	}
+	window.draw(Ball);
+	window.draw(Player1);
+	window.draw(Player2);
 
 	window.setView(prev_view);
 }

@@ -13,6 +13,7 @@
 #include <SFML/Window/Window.hpp>
 #include <boost/version.hpp>
 
+using namespace std::literals;
 
 static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 {
@@ -64,63 +65,71 @@ using namespace pong;
 
 namespace
 {
-	ImFont *font_rebinding_popup,
-		*font_sect_title,
-		*font_default,
-		*font_monospace
-		;
-
-	std::vector<std::string> _joystick_list;
 	std::array<pong::player_input_cfg, 2> active_input_settings, input_settings;
 
+	std::array<std::string, sf::Joystick::Count> _joystick_names;
+	int _joystick_count;
+
+	// show flags
 	struct {
-		bool options;
-		bool game_stats;
-		bool about;
-		bool imgui_demo, imgui_about;
-		bool rebiding_popup;
-		//---
+		bool
+			options, 
+			game_stats,
+			about,
+			imgui_demo, imgui_about,
+			rebiding_popup
+			;
 	} show;
+
+	//font ptrs
+	struct {
+		using FontPtr = ImFont*;
+		FontPtr
+			rebinding_popup,
+			section_title,
+			monospace,
+			default_
+			;
+	} font;
 }
 
 // windows
-static void optionsWin(game& ctx);
+static void optionsWin(game& ctx, sf::Window& window);
 static void gameStatsWin(game& ctx);
 static void aboutSfPongWin();
 
 // ui
 static void controlsUi();
-static int joystickCombobox(const char* label, int current_joyid);
+static int joystickCombobox(int current_joyid);
 
-
-static void refresh_joystick_list()
+static void refresh_joysticks()
 {
 	using sf::Joystick;
-	_joystick_list.clear();
-	_joystick_list.reserve(Joystick::Count);
 
-	for (unsigned id = 0; id < Joystick::Count; id++)
+	int i = 0;
+	for (; i < Joystick::Count; i++)
 	{
-		if (Joystick::isConnected(id)) {
-			auto info = Joystick::getIdentification(id);
-			_joystick_list.emplace_back(info.name);
+		if (Joystick::isConnected(i)) {
+			auto info = Joystick::getIdentification(i);
+			_joystick_names[i] = info.name;
 		}
 	}
+	_joystick_count = i;
+}
+static void clear_joysticks()
+{
+	for_each_n(_joystick_names.begin(), _joystick_count, [](std::string& n) { n.clear(); });
+	_joystick_count = 0;
 }
 
 
-void pong::menu::update(game& ctx)
+void pong::menu::update(game& ctx, sf::Window& window)
 {
 	using namespace ImGui;
 	using namespace ImScoped;
 
-	if (!ctx.is_paused()) return;
-
-	// update
-
-	// draw
 	if (show.options)
-		optionsWin(ctx);
+		optionsWin(ctx, window);
 
 	if (show.game_stats)
 		gameStatsWin(ctx);
@@ -138,25 +147,25 @@ void pong::menu::update(game& ctx)
 	TextDisabled("sfPong");
 
 	if (auto m = Menu("Jogo")) {
-		auto currentMode = ctx.get_mode();
-		bool singleplayer = currentMode == game::singleplayer,
-			 multiplayer = currentMode == game::multiplayer;
+		auto currentMode = ctx.mode();	
+		bool singleplayer = currentMode == gamemode::singleplayer,
+			 multiplayer = currentMode == gamemode::multiplayer;
 
 		if (MenuItem("Continuar", "ESC"))
 			ctx.unpause();
 		if (auto m1 = Menu("Novo")) {
 
 			if (MenuItem("1 jogador", nullptr, singleplayer)) {
-				ctx = game(game::singleplayer);
+				ctx = game(gamemode::singleplayer);
 				ctx.unpause();
 			}
 			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
-				ctx = game(game::multiplayer);
+				ctx = game(gamemode::multiplayer);
 				ctx.unpause();
 			}
 		}
 		if (MenuItem("Reiniciar")) {
-			ctx = game(currentMode);
+			ctx.resetState();
 			ctx.unpause();
 		}
 		Separator();
@@ -174,7 +183,7 @@ void pong::menu::update(game& ctx)
 
 		if (Button("Sair")) {
 			log::info("Tchau! :)");
-			game_window->close();
+			window.close();
 		}
 	}
 }
@@ -184,16 +193,16 @@ void pong::menu::init()
 	input_settings[(int)playerid::one] = get_input_cfg(playerid::one);
 	input_settings[(int)playerid::two] = get_input_cfg(playerid::two);
 	active_input_settings = input_settings;
-	refresh_joystick_list();
+	refresh_joysticks();
 
 	auto* atlas = ImGui::GetIO().Fonts;
 	const auto ui_font_size = 18.f;
 
 	atlas->Clear();
-	font_default = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
-	font_rebinding_popup = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
-	font_sect_title = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
-	font_monospace = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
+	font.default_ = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
+	font.rebinding_popup = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
+	font.section_title = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
+	font.monospace = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 	ImGui::SFML::UpdateFontTexture();
 }
 
@@ -203,7 +212,8 @@ void pong::menu::processEvent(sf::Event& event)
 	{
 	case sf::Event::JoystickConnected:
 	case sf::Event::JoystickDisconnected:
-		refresh_joystick_list();
+		clear_joysticks();
+		refresh_joysticks();
 		break;
 	}
 }
@@ -214,10 +224,10 @@ bool pong::menu::rebinding_popup_open() noexcept
 }
 
 
-void optionsWin(game& ctx)
+void optionsWin(game&, sf::Window& window)
 {
 	namespace gui = ImScoped;
-	static auto wip_resolution = game_window->getSize();
+	static auto wip_resolution = window.getSize();
 	static auto active_resolution = wip_resolution;
 
 	bool isDirty = input_settings != active_input_settings
@@ -282,7 +292,7 @@ void optionsWin(game& ctx)
 
 		active_input_settings = input_settings;
 		active_resolution = wip_resolution;
-		game_window->setSize(wip_resolution);
+		window.setSize(wip_resolution);
 	}
 }
 
@@ -339,7 +349,7 @@ void aboutSfPongWin()
 	if (IsItemHovered())
 		SetTooltip("ImGui about window");
 
-	constexpr auto libver = "%s: %5d.%d.%d";
+	const auto libver = "%s: %5d.%d.%d";
 	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
 	Text(libver, "Boost",
 		BOOST_VERSION / 100000,
@@ -358,7 +368,7 @@ void controlsUi()
 {
 	namespace gui = ImScoped;
 	{
-		gui::Font _f_ = font_sect_title;
+		gui::Font _f_ = font.section_title;
 		ImGui::Text("Teclado:");
 	}
 
@@ -383,7 +393,7 @@ void controlsUi()
 		{
 			using Key = sf::Keyboard::Key;
 
-			gui::Font _font_{ font_rebinding_popup };
+			gui::Font _font_{ font.rebinding_popup };
 			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 			auto key = scan_kb();
@@ -421,7 +431,7 @@ void controlsUi()
 	ImGui::Spacing();
 
 	{
-		gui::Font _f_ = font_sect_title;
+		gui::Font _f_ = font.section_title;
 		ImGui::Text("Joystick:");
 	}
 
@@ -435,9 +445,9 @@ void controlsUi()
 		gui::GroupID _grp_ = title;
 		ImGui::Text(title);
 
-		auto selected = joystickCombobox("", joyid);
+		auto selected = joystickCombobox(joyid);
 
-		auto dup = std::find_if(input_settings.begin(), input_settings.end(),
+		auto dup = find_if(input_settings.begin(), input_settings.end(),
 		[=](const player_input_cfg& input) {
 			return selected != -1 && input.joystick_id == selected;
 		});
@@ -456,7 +466,7 @@ void controlsUi()
 	inputJoystickSettings(playerid::two);
 }
 
-int joystickCombobox(const char* label, int current_joyid)
+int joystickCombobox(int current_joyid)
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
@@ -465,27 +475,25 @@ int joystickCombobox(const char* label, int current_joyid)
 	const auto npos = -1;
 	const auto nitem = "Nenhum";
 
-	auto& joynames = _joystick_list;
-	auto previewItem = current_joyid == npos ? nitem : joynames[current_joyid];
+	auto previewItem = current_joyid == npos ? nitem : _joystick_names[current_joyid].c_str();
 
-	if (auto cb = gui::Combo(label, previewItem.c_str()))
+	if (auto cb = gui::Combo("", previewItem))
 	{
 		bool is_selected = current_joyid == npos;
 		if (Selectable(nitem, is_selected)) {
 			current_joyid = npos;
 		}
 
-		auto s = 0;
-		for (auto& name : joynames)
+		for (int s{}; s < _joystick_count; s++)
 		{
 			is_selected = s == current_joyid;
+			auto& name = _joystick_names[s];
+
 			if (Selectable(name.c_str(), is_selected))
 				current_joyid = s;
 
 			if (is_selected)
 				SetItemDefaultFocus();
-
-			s++;
 		}
 	}
 
