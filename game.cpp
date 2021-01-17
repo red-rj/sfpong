@@ -67,7 +67,7 @@ private:
 	sf::VertexArray verts{ sf::Triangles };
 };
 
-struct pong_court : public sf::Drawable
+struct pong_court : sf::Drawable, sf::Transformable
 {
 
 	pong_court(pong::rect playarea, pong::size2d border_size) 
@@ -93,6 +93,7 @@ struct pong_court : public sf::Drawable
 private:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
 	{
+		states.transform *= getTransform();
 		target.draw(top, states);
 		target.draw(bottom, states);
 		target.draw(net, states);
@@ -562,7 +563,9 @@ void pong::game::resetPos(paddle& p)
 
 bool pong::game::waiting_to_serve() const noexcept
 {
-	return !paused && Ball.velocity == vel() && Ball.getPosition() == pos(Playarea.width / 2, Playarea.height / 2);
+	return !paused 
+		&& Ball.velocity == vel() 
+		&& Ball.getPosition() == pos(Playarea.width / 2, Playarea.height / 2);
 }
 
 void pong::game::serve(dir direction)

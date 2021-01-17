@@ -13,9 +13,9 @@ sfPong TODOs
 * [z] Variavel de versão do programa (SFPONG_VERSION)
 * [x] BUG: Mousewheel não funciona no menu
 * [x] tornar posicionamento independende da resolução da janela (sf::View)
-* [] refatorar Cfg*
+* [x] refatorar Cfg*
 	- CfgPaddle: move.speed e move.acceleration só são usados com input teclado
 * [] Melhorar IA
 	- [wip] refatorar
 	- [] Dificuldade ajustavel
-* [] refatorar menu
+* [x] refatorar menu
