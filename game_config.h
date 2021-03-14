@@ -8,9 +8,6 @@ namespace pong
 {
     using cfgtree = boost::property_tree::ptree;
 
-    void set_user_config(const cfgtree& tree);
-    cfgtree& get_user_config(cfgtree& tree);
-
     void overrideGuts(const cfgtree& tree);
     cfgtree createGuts();
 
@@ -44,39 +41,45 @@ namespace ckey
         sf::Keyboard::Key up, down, fast;
 
         bool operator== (const keyboard_ctrls& rhs) const noexcept;
-
         bool operator!= (const keyboard_ctrls& rhs) const noexcept {
             return !(*this == rhs);
         }
     };
-
-    struct player_input_cfg
+    
+    // modelo de game.cfg
+    class game_settings
     {
-        keyboard_ctrls keyboard_controls;
+        keyboard_ctrls player_keys[2];
+        int player_joystick[2];
+        float player_deadzone[2];
 
-        int joystick_id;
-        float joystick_deadzone;
+        sf::Vector2u win_resolution;
+        bool win_fullscreen;
 
-        bool use_joystick() const noexcept { return joystick_id > -1; }
+    public:
 
-        bool operator== (const player_input_cfg& rhs) const noexcept;
-        bool operator!= (const player_input_cfg& rhs) const noexcept {
-            return !(*this == rhs);
+        auto& keyboard_keys(playerid pid) noexcept { return player_keys[int(pid)]; }
+        auto& get_keyboard_keys(playerid pid) const noexcept { return player_keys[int(pid)]; }
+        void set_keyboard_keys(playerid pid, keyboard_ctrls ctrls) noexcept { player_keys[int(pid)] = ctrls; }
+
+        auto& joystick(playerid pid) noexcept { return player_joystick[int(pid)]; }
+        auto get_joystick(playerid pid) const noexcept { return player_joystick[int(pid)]; }
+        void set_joystick(playerid pid, int joyid) noexcept { player_joystick[int(pid)] = joyid; }
+
+        void unset_joystick(playerid pid) noexcept {
+            player_joystick[int(pid)] = -1;
         }
+        bool using_joystick(playerid pid) const noexcept {
+            return player_joystick[int(pid)] > -1;
+        }
+
+        auto& resolution() noexcept { return win_resolution; }
+        auto& fullscreen() noexcept { return win_fullscreen; }
+
+
+        void load(const cfgtree& cfg);
+        void save(cfgtree& cfg) const;
     };
 
-// getters e setters para as configurações ativas de usuário
 
-    auto get_keyboard_controls(playerid pl) noexcept -> keyboard_ctrls;
-    void set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept;
-
-    int get_joystick(playerid pl) noexcept;
-    void set_joystick(playerid pl, int joyid) noexcept;
-
-    inline void unset_joystick(playerid pl) noexcept {
-        set_joystick(pl, -1);
-    }
-
-    auto get_input_cfg(playerid player) noexcept ->player_input_cfg;
-    void set_input_cfg(player_input_cfg input, playerid player) noexcept;
 }

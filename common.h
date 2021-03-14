@@ -5,9 +5,10 @@
 #include "SFML/System/Vector2.hpp"
 #include "spdlog/spdlog.h"
 
+namespace log = spdlog;
+
 namespace pong
 {
-    namespace log = spdlog;
 
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;

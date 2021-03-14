@@ -19,3 +19,12 @@ sfPong TODOs
 	- [wip] refatorar
 	- [] Dificuldade ajustavel
 * [x] refatorar menu
+
+Branch TODOs
+---
+* [] unificar configuração
+	atualmente exite copias de player_input_cfg espalhadas pelo projetos
+	criar classa modelando configs, passar ptrs pra quem precisa
+* [] separar entidades (paddle, ball) da classe game
+* [] encapsular Playarea e pong_court em uma classe
+* [] refatorar startup

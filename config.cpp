@@ -137,97 +137,52 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
     return is;
 }
 
-namespace // user config vars
-{
-    int player_joystick[2] = { -1, -1 };
-    pong::keyboard_ctrls player_keyboard_controls[2];
-    float player_deadzone[2];
-}
 
-void pong::set_user_config(const cfgtree& tree)
+void pong::game_settings::load(const cfgtree& tree)
 {
     using namespace ckey;
-
-    player_input_cfg P1, P2;
+    const auto P1 = (int)playerid::one, P2 = (int)playerid::two;
 
     // player one
-    P1.keyboard_controls.up = tree.get(P1_UP, Keyboard::W);
-    P1.keyboard_controls.down = tree.get(P1_DOWN, Keyboard::S);
-    P1.keyboard_controls.fast = tree.get(P1_FAST, Keyboard::LShift);
-    P1.joystick_id = tree.get(P1_JOYSTICK, -1, joyid_translator());
-    P1.joystick_deadzone = tree.get(P1_JSDEADZONE, 10.f);
-    set_input_cfg(P1, playerid::one);
-    
+    player_keys[P1].up = tree.get(P1_UP, Keyboard::W);
+    player_keys[P1].down = tree.get(P1_DOWN, Keyboard::S);
+    player_keys[P1].fast = tree.get(P1_FAST, Keyboard::LShift);
+    player_joystick[P1] = tree.get(P1_JOYSTICK, -1, joyid_translator());
+    player_deadzone[P1] = tree.get(P1_JSDEADZONE, 10.f);
+
     // player two
-    P2.keyboard_controls.up = tree.get(P2_UP, Keyboard::Up);
-    P2.keyboard_controls.down = tree.get(P2_DOWN, Keyboard::Down);
-    P2.keyboard_controls.fast = tree.get(P2_FAST, Keyboard::RControl);
-    P2.joystick_id = tree.get(P2_JOYSTICK, -1, joyid_translator());
-    P2.joystick_deadzone = tree.get(P2_JSDEADZONE, 10.f);
-    set_input_cfg(P2, playerid::two);
+    player_keys[P2].up = tree.get(P2_UP, Keyboard::Up);
+    player_keys[P2].down = tree.get(P2_DOWN, Keyboard::Down);
+    player_keys[P2].fast = tree.get(P2_FAST, Keyboard::RControl);
+    player_joystick[P2] = tree.get(P2_JOYSTICK, -1, joyid_translator());
+    player_deadzone[P2] = tree.get(P2_JSDEADZONE, 10.f);
 
     // game
+    win_resolution.x = tree.get(RESOLUTION_X, 1024u);
+    win_resolution.y = tree.get(RESOLUTION_Y, 768u);
+    win_fullscreen = tree.get(FULLSCREEN, false);
 }
 
-pong::cfgtree& pong::get_user_config(cfgtree& tree)
+void pong::game_settings::save(cfgtree& tree) const
 {
     using namespace ckey;
+    const auto P1 = (int)playerid::one, P2 = (int)playerid::two;
 
-    player_input_cfg P1 = get_input_cfg(playerid::one),
-                     P2 = get_input_cfg(playerid::two);
+    tree.put(P1_UP, player_keys[P1].up);
+    tree.put(P1_DOWN, player_keys[P1].down);
+    tree.put(P1_FAST, player_keys[P1].fast);
+    tree.put(P1_JOYSTICK, player_joystick[P1], joyid_translator());
+    tree.put(P1_JSDEADZONE, player_deadzone[P1]);
 
-    tree.put(P1_UP, P1.keyboard_controls.up);
-    tree.put(P1_DOWN, P1.keyboard_controls.down);
-    tree.put(P1_FAST, P1.keyboard_controls.fast);
-    tree.put(P1_JOYSTICK, P1.joystick_id, joyid_translator());
-    tree.put(P1_JSDEADZONE, P1.joystick_deadzone);
-    
-    tree.put(P2_UP, P2.keyboard_controls.up);
-    tree.put(P2_DOWN, P2.keyboard_controls.down);
-    tree.put(P2_FAST, P2.keyboard_controls.fast);
-    tree.put(P2_JOYSTICK, P2.joystick_id, joyid_translator());
-    tree.put(P2_JSDEADZONE, P2.joystick_deadzone);
+    tree.put(P2_UP, player_keys[P2].up);
+    tree.put(P2_DOWN, player_keys[P2].down);
+    tree.put(P2_FAST, player_keys[P2].fast);
+    tree.put(P2_JOYSTICK, player_joystick[P2], joyid_translator());
+    tree.put(P2_JSDEADZONE, player_deadzone[P2]);
 
-    return tree;
-}
-
-
-pong::keyboard_ctrls pong::get_keyboard_controls(playerid pl) noexcept
-{
-    return player_keyboard_controls[int(pl)];
-}
-
-void pong::set_keyboard_controls(playerid pl, keyboard_ctrls ctrls) noexcept
-{
-    player_keyboard_controls[int(pl)] = ctrls;
-}
-
-int pong::get_joystick(playerid pl) noexcept
-{
-    return player_joystick[int(pl)];
-}
-
-void pong::set_joystick(playerid pl, int joyid) noexcept
-{
-    player_joystick[int(pl)] = joyid;
-}
-
-auto pong::get_input_cfg(playerid player) noexcept -> player_input_cfg
-{
-    const auto p = int(player);
-    player_input_cfg cfg;
-    cfg.joystick_id = player_joystick[p];
-    cfg.joystick_deadzone = player_deadzone[p];
-    cfg.keyboard_controls = player_keyboard_controls[p];
-    return cfg;
-}
-
-void pong::set_input_cfg(player_input_cfg input, playerid player) noexcept
-{
-    const auto p = int(player);
-    player_keyboard_controls[p] = input.keyboard_controls;
-    player_joystick[p] = input.joystick_id;
-    player_deadzone[p] = input.joystick_deadzone;
+    tree.put(RESOLUTION_X, win_resolution.x);
+    tree.put(RESOLUTION_Y, win_resolution.y);
+    tree.put(FULLSCREEN, win_fullscreen);
 }
 
 
@@ -236,14 +191,6 @@ bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
     using std::tie;
     return tie(up, down, fast) == tie(rhs.up, rhs.down, rhs.fast);
 }
-
-bool pong::player_input_cfg::operator==(const player_input_cfg& rhs) const noexcept
-{
-    using std::tie;
-    return tie(keyboard_controls, joystick_id, joystick_deadzone) ==
-        tie(rhs.keyboard_controls, rhs.joystick_id, rhs.joystick_deadzone);
-}
-
 
 // enum name tables
 
