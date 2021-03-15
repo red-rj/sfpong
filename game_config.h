@@ -12,8 +12,8 @@ namespace pong
 {
     using cfgtree = boost::property_tree::ptree;
 
-    void overrideGuts(const cfgtree& tree);
-    cfgtree createGuts();
+    /*void overrideGuts(const cfgtree& tree);
+    cfgtree createGuts();*/
 
 // config keys
 namespace ckey
@@ -82,12 +82,17 @@ namespace ckey
         auto& resolution() noexcept { return win_resolution; }
         auto& fullscreen() noexcept { return win_fullscreen; }
 
-
+        // IO
         void load_tree(const cfgtree& cfg);
         void load_file(std::filesystem::path const& iniPath);
 
         void save_tree(cfgtree& cfg) const;
         void save_file(std::filesystem::path const& iniPath) const;
+
+
+        bool operator== (const game_settings& rhs) const noexcept;
+        bool operator!= (const game_settings& rhs) const noexcept { return !(*this == rhs); }
+
     };
 
 

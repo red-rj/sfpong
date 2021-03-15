@@ -209,6 +209,18 @@ void pong::game_settings::save_file(std::filesystem::path const& iniPath) const
     write_ini(ini, cfg);
 }
 
+bool pong::game_settings::operator==(const game_settings& rhs) const noexcept
+{
+    using std::tie; using std::equal;
+    return 
+        tie(win_fullscreen, win_resolution) == tie(rhs.win_fullscreen, rhs.win_resolution) &&
+        // input
+        equal(player_keys, player_keys+2, rhs.player_keys) &&
+        equal(player_joystick, player_joystick+2, rhs.player_joystick) &&
+        equal(player_deadzone, player_deadzone+2, rhs.player_deadzone)
+    ;
+}
+
 
 bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
 {

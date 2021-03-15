@@ -18,8 +18,6 @@ namespace pong
 	
 	struct game
 	{
-		static void setup();
-
 		game(gamemode mode_, game_settings* sett);
 
 		void update();
@@ -45,6 +43,11 @@ namespace pong
 		}
 		sf::Time restart_clock() {
 			return runTime += clock.restart();
+		}
+
+		void newGame(gamemode m) {
+			restart();
+			change_mode(m);
 		}
 
 		void restart();

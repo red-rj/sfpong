@@ -24,7 +24,7 @@ namespace
 	// TODO: classe para score, expor court
 	//pong_court Court{ Playarea, { Playarea.width * 0.95f, 25 } };
 
-	sf::Font font_mono;
+	//sf::Font font_mono;
 }
 
 
@@ -97,17 +97,6 @@ void pong::constrain_pos(pos& p)
 //	return guts;
 //}
 
-
-
-void pong::game::setup()
-{
-	font_mono.loadFromFile(pong::files::mono_tff);
-
-	//txtScore.setFont(font_mono);
-	//txtScore.setCharacterSize(55);
-	//txtScore.setPosition(Playarea.width / 2 - 100, 30);
-	//set_score_txt({});
-}
 
 
 pong::game::game(gamemode mode_, game_settings* sett)
@@ -256,7 +245,7 @@ void pong::game::restart()
 	reset(Ball);
 
 	score = {};
-	Court.set_score(score.first, score.second);
+	Court.set_score(0, 0);
 }
 
 void pong::game::updatePlayer(paddle& player)

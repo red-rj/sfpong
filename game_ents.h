@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "common.h"
 #include "SFML/Graphics.hpp"
 
@@ -59,6 +60,8 @@ namespace pong
 		size2d size;
 
 		// score
-		sf::Text score_txt;
+		sf::Text scoreTxt;
+		sf::Font scoreFont;
+		//std::shared_ptr<sf::Font> scoreFont;
 	};
 }

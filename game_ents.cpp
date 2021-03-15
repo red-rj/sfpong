@@ -13,26 +13,26 @@ pong::ball::ball() : base_t(gvar::ball_radius)
 	setFillColor(sf::Color::Red);
 }
 
-void pong::ball::update()
-{
-	move(velocity);
-
-	if (border_collision(*this))
-	{
-		velocity.y = -velocity.y;
-	}
-}
-
-void pong::paddle::update()
-{
-	move(0, velocity);
-
-	if (border_collision(*this))
-	{
-		move(0, -velocity);
-		velocity = 0;
-	}
-}
+//void pong::ball::update()
+//{
+//	move(velocity);
+//
+//	if (border_collision(*this))
+//	{
+//		velocity.y = -velocity.y;
+//	}
+//}
+//
+//void pong::paddle::update()
+//{
+//	move(0, velocity);
+//
+//	if (border_collision(*this))
+//	{
+//		move(0, -velocity);
+//		velocity = 0;
+//	}
+//}
 
 pong::pong_area::pong_area(size2d area, size2d border_size)
 	: top_rect(border_size), bottom_rect(border_size)
@@ -50,18 +50,24 @@ pong::pong_area::pong_area(size2d area, size2d border_size)
 	net.setRotation(90);
 	net.setPosition(size.x / 2, 20);
 
-	score_txt.setPosition(size.x / 2 - 100, border_size.y + 5);
+	scoreTxt.setPosition(size.x / 2 - 100, border_size.y + 5);
+	scoreTxt.setCharacterSize(55);
+
+	scoreFont.loadFromFile(files::mono_tff);
+
+	scoreTxt.setFont(scoreFont);
+
 }
 
 void pong::pong_area::setup_score(sf::Font const& font, unsigned charSize)
 {
-	score_txt.setFont(font);
-	score_txt.setCharacterSize(charSize);
+	scoreTxt.setFont(font);
+	scoreTxt.setCharacterSize(charSize);
 }
 
 void pong::pong_area::set_score(short p1, short p2)
 {
-	score_txt.setString(fmt::format("{}    {}", p1, p2));
+	scoreTxt.setString(fmt::format("{}    {}", p1, p2));
 }
 
 void pong::pong_area::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -70,7 +76,7 @@ void pong::pong_area::draw(sf::RenderTarget& target, sf::RenderStates states) co
 	target.draw(top_rect, states);
 	target.draw(bottom_rect, states);
 	target.draw(net, states);
-	target.draw(score_txt, states);
+	target.draw(scoreTxt, states);
 }
 
 pong::dashed_line::dashed_line(size2d pieceSize, float gapLen, float maxLen)
