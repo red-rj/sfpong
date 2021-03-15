@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <optional>
-#include <tuple>
 #include <vector>
 
 #include <imgui-SFML.h>
@@ -65,24 +64,44 @@ using namespace pong;
 
 namespace
 {
-	std::array<pong::player_input_cfg, 2> active_input_settings, input_settings;
+	pong::game_settings work_settings;
+	pong::game_settings *settings;
 
 	std::array<std::string, sf::Joystick::Count> _joystick_names;
 	int _joystick_count;
 
-	// show flags
-	struct {
-		bool
-			options, 
-			game_stats,
-			about,
-			imgui_demo, imgui_about,
-			rebiding_popup
-			;
-	} show;
+	// window ids
+namespace win {
+	enum Id
+	{
+		options,
+		game_stats,
+		about,
+		imgui_demo,
+		imgui_about,
+		rebiding_popup,
 
-	//font ptrs
-	struct {
+		Count
+	};
+}
+
+	enum fontId 
+	{
+		font_default_,
+		font_default_large,
+		font_monospace,
+		font_section_title,
+
+		font_Count
+	};
+
+	// show flags
+	bool isVisible[win::Count] = {};
+
+	//fonts
+	ImFont* fonts[font_Count] = {};
+
+	/*struct {
 		using FontPtr = ImFont*;
 		FontPtr
 			rebinding_popup,
@@ -90,8 +109,9 @@ namespace
 			monospace,
 			default_
 			;
-	} font;
+	} font;*/
 }
+
 
 // windows
 static void optionsWin(game& ctx, sf::Window& window);
@@ -127,23 +147,25 @@ void pong::menu::update(game& ctx, sf::Window& window)
 {
 	using namespace ImGui;
 	using namespace ImScoped;
+	using namespace win;
 
-	if (show.options)
+	if (isVisible[options])
 		optionsWin(ctx, window);
 
-	if (show.game_stats)
+	if (isVisible[game_stats])
 		gameStatsWin(ctx);
 
-	if (show.about)
+	if (isVisible[about])
 		aboutSfPongWin();
 
-	if (show.imgui_demo)
-		ShowDemoWindow(&show.imgui_demo);
-	if (show.imgui_about)
-		ImGui::ShowAboutWindow(&show.imgui_about);
+	if (isVisible[imgui_demo])
+		ShowDemoWindow(&isVisible[imgui_demo]);
+	if (isVisible[imgui_about])
+		ImGui::ShowAboutWindow(&isVisible[imgui_about]);
 
 	MainMenuBar mmb;
 	if (!mmb) return;
+
 	TextDisabled("sfPong");
 
 	if (auto m = Menu("Jogo")) {
@@ -156,23 +178,23 @@ void pong::menu::update(game& ctx, sf::Window& window)
 		if (auto m1 = Menu("Novo")) {
 
 			if (MenuItem("1 jogador", nullptr, singleplayer)) {
-				ctx = game(gamemode::singleplayer);
+				ctx.newGame(gamemode::singleplayer);
 				ctx.unpause();
 			}
 			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
-				ctx = game(gamemode::multiplayer);
+				ctx.newGame(gamemode::multiplayer);
 				ctx.unpause();
 			}
 		}
 		if (MenuItem("Reiniciar")) {
-			ctx.resetState();
+			ctx.restart();
 			ctx.unpause();
 		}
 		Separator();
-		MenuItem("Sobre", nullptr, &show.about);
+		MenuItem("Sobre", nullptr, &isVisible[about]);
 	}
 
-	MenuItem(u8"Opções", nullptr, &show.options);
+	MenuItem(u8"Opções", nullptr, &isVisible[options]);
 
 	{
 		auto _styles_ = {
@@ -188,21 +210,20 @@ void pong::menu::update(game& ctx, sf::Window& window)
 	}
 }
 
-void pong::menu::init()
+void pong::menu::init(game_settings* gs)
 {
-	input_settings[(int)playerid::one] = get_input_cfg(playerid::one);
-	input_settings[(int)playerid::two] = get_input_cfg(playerid::two);
-	active_input_settings = input_settings;
+	settings = gs;
+	work_settings = *gs;
 	refresh_joysticks();
 
 	auto* atlas = ImGui::GetIO().Fonts;
 	const auto ui_font_size = 18.f;
 
 	atlas->Clear();
-	font.default_ = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
-	font.rebinding_popup = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
-	font.section_title = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
-	font.monospace = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
+	fonts[font_default_] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
+	fonts[font_default_large] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
+	fonts[font_section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
+	fonts[font_monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 	ImGui::SFML::UpdateFontTexture();
 }
 
@@ -220,7 +241,7 @@ void pong::menu::processEvent(sf::Event& event)
 
 bool pong::menu::rebinding_popup_open() noexcept
 {
-	return show.rebiding_popup;
+	return isVisible[win::rebiding_popup];
 }
 
 
@@ -230,15 +251,13 @@ void optionsWin(game&, sf::Window& window)
 	static auto wip_resolution = window.getSize();
 	static auto active_resolution = wip_resolution;
 
-	bool isDirty = input_settings != active_input_settings
-		|| wip_resolution != active_resolution
-		;
+	bool isDirty = work_settings != *settings;
 
 
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
-	gui::Window guiwindow(u8"Opções", &show.options, wflags);
+	gui::Window guiwindow(u8"Opções", &isVisible[win::options], wflags);
 	if (!guiwindow)
 		return;
 
@@ -266,11 +285,11 @@ void optionsWin(game&, sf::Window& window)
 
 				if (Button("game stats"))
 				{
-					show.game_stats = true;
+					isVisible[win::game_stats] = true;
 				}
 				if (Button("ImGui demo window"))
 				{
-					show.imgui_demo = true;
+					isVisible[win::imgui_demo] = true;
 				}
 			}
 		}
@@ -280,18 +299,12 @@ void optionsWin(game&, sf::Window& window)
 	ImGui::Separator();
 
 	if (ImGui::Button("Descartar")) {
-		input_settings = active_input_settings;
+		work_settings = *settings;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Salvar") && isDirty)
 	{
-		for (auto player : { playerid::one, playerid::two })
-		{
-			set_input_cfg(input_settings[int(player)], player);
-		}
-
-		active_input_settings = input_settings;
-		active_resolution = wip_resolution;
+		*settings = work_settings;
 		window.setSize(wip_resolution);
 	}
 }
@@ -306,7 +319,7 @@ void gameStatsWin(game& ctx)
 	ImGui::SetNextWindowPos(winpos, ImGuiCond_FirstUseEver, { 1.f, 0 });
 
 	auto constexpr wflags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
-	Window overlay("Stats", &show.game_stats, wflags);
+	Window overlay("Stats", &isVisible[win::game_stats], wflags);
 
 	auto players = ctx.get_players();
 
@@ -335,7 +348,7 @@ void aboutSfPongWin()
 	using namespace ImGui;
 	namespace gui = ImScoped;
 
-	auto win = gui::Window("Sobre sfPong", &show.about, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+	auto win = gui::Window("Sobre sfPong", &isVisible[win::about], ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 	if (!win) return;
 
 	Text("sfPong %s", pong::version);
@@ -344,7 +357,7 @@ void aboutSfPongWin()
 	
 	Text("%s: %5s", "ImGui", ImGui::GetVersion()); SameLine();
 	if (SmallButton("about")) {
-		show.imgui_about = true;
+		isVisible[win::imgui_about] = true;
 	}
 	if (IsItemHovered())
 		SetTooltip("ImGui about window");
@@ -368,7 +381,8 @@ void controlsUi()
 {
 	namespace gui = ImScoped;
 	{
-		gui::Font _f_ = font.section_title;
+		
+		gui::Font _f_ = fonts[font_section_title];
 		ImGui::Text("Teclado:");
 	}
 
@@ -385,15 +399,15 @@ void controlsUi()
 		SameLine(75);
 		if (Button(keystr.c_str())) {
 			OpenPopup(popup_id);
-			show.rebiding_popup = true;
+			isVisible[win::rebiding_popup] = true;
 		}
 
 		const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
-		if (auto popup = gui::PopupModal(popup_id, &show.rebiding_popup, flags))
+		if (auto popup = gui::PopupModal(popup_id, &isVisible[win::rebiding_popup], flags))
 		{
 			using Key = sf::Keyboard::Key;
 
-			gui::Font _font_{ font.rebinding_popup };
+			gui::Font _f_{ fonts[font_default_large] };
 			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 			auto key = scan_kb();
@@ -415,8 +429,7 @@ void controlsUi()
 
 		ImGui::Text("%s:", title);
 
-		auto& settings = input_settings[int(pl)];
-		auto& player_ctrls = settings.keyboard_controls;
+		auto& player_ctrls = work_settings.keyboard_keys(pl);
 
 		inputKbKey("Up", player_ctrls.up);
 		inputKbKey("Down", player_ctrls.down);
@@ -431,33 +444,24 @@ void controlsUi()
 	ImGui::Spacing();
 
 	{
-		gui::Font _f_ = font.section_title;
+		gui::Font _f_ = fonts[font_section_title];
 		ImGui::Text("Joystick:");
 	}
 
 	auto inputJoystickSettings = [&](playerid pid) mutable {
-		auto& settings = input_settings[int(pid)];
-
-		auto& joyid = settings.joystick_id;
-		auto& deadzone = settings.joystick_deadzone;
 		auto title = to_string(pid);
 
 		gui::GroupID _grp_ = title;
 		ImGui::Text(title);
 
+		auto joyid = work_settings.get_joystick(pid);
 		auto selected = joystickCombobox(joyid);
 
-		auto dup = find_if(input_settings.begin(), input_settings.end(),
-		[=](const player_input_cfg& input) {
-			return selected != -1 && input.joystick_id == selected;
-		});
-
-		if (dup != input_settings.end()) {
-			std::swap(joyid, dup->joystick_id);
+		if (selected != joyid) {
+			work_settings.set_joystick(pid, selected);
 		}
 
-		joyid = selected;
-
+		auto& deadzone = work_settings.joystick_deadzone(pid);
 		ImGui::SliderFloat("Deadzone", &deadzone, 0, 50, "%.1f%%");
 	};
 

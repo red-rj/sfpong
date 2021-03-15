@@ -13,7 +13,7 @@ namespace pong
 
 namespace menu {
 
-	void init();
+	void init(game_settings* gs);
 
 	void update(game& ctx, sf::Window& window);
 	void processEvent(sf::Event& event);
