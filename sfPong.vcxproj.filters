@@ -13,6 +13,7 @@
     <ClInclude Include="imgui_inc.h" />
     <ClInclude Include="imgui_scoped.h" />
     <ClInclude Include="gvar.h" />
+    <ClInclude Include="game_ents.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />
@@ -20,5 +21,6 @@
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="joyinput.cpp" />
+    <ClCompile Include="game_ents.cpp" />
   </ItemGroup>
 </Project>

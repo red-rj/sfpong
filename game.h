@@ -1,40 +1,18 @@
 #pragma once
 #include <utility>
 #include "common.h"
+#include "game_config.h"
+#include "game_ents.h"
 #include "SFML/Graphics.hpp"
 
 namespace pong
 {
-	// TODO: mover entidades para outro header
-	// não herdar de shape
-	struct paddle : sf::RectangleShape
-	{
-		using base_t = sf::RectangleShape;
-
-		paddle(playerid pid);
-		void update();
-
-		bool ai = false;
-		playerid id;
-		float velocity;
-	};
-
-	struct ball : sf::CircleShape
-	{
-		using base_t = sf::CircleShape;
-		
-		ball();
-		void update();
-
-		vel velocity;
-	};
-
-
 	bool collision(const sf::Shape& a, const sf::Shape& b);
 	bool collision(const sf::Shape& a, const rect& b);
 	bool border_collision(const sf::Shape& p);
 
 	void constrain_pos(pos& p);
+
 
 	enum struct gamemode { singleplayer, multiplayer, aitest };
 	
@@ -56,7 +34,7 @@ namespace pong
 		auto& get_ball() const noexcept { return Ball; }
 
 		auto mode() const noexcept { return currentMode; }
-		void mode(gamemode m) noexcept;
+		void change_mode(gamemode m) noexcept;
 
 		void pause() noexcept { paused = true; }
 		void unpause() noexcept { paused = false; }
@@ -69,7 +47,7 @@ namespace pong
 			return runTime += clock.restart();
 		}
 
-		void resetState();
+		void restart();
 
 	private:
 
@@ -78,8 +56,8 @@ namespace pong
 		void updateBall();
 		bool updateScore();
 
-		void resetPos(ball& b);
-		void resetPos(paddle& p);
+		void reset(ball& b);
+		void reset(paddle& p);
 
 		bool waiting_to_serve() const noexcept;
 
@@ -90,11 +68,12 @@ namespace pong
 
 		//sf::RenderWindow window;
 
+		game_settings* settings;
+
 		paddle Player1, Player2;
 		ball Ball;
 		pair<short> score;
 		dir resume_serve_dir = dir::left;
-
-		game_settings* settings;
+		pong_area Court;
 	};
 }

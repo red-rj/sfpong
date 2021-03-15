@@ -4,6 +4,10 @@
 
 #include "common.h"
 
+namespace std::filesystem {
+    class path;
+}
+
 namespace pong
 {
     using cfgtree = boost::property_tree::ptree;
@@ -72,6 +76,8 @@ namespace ckey
         bool using_joystick(playerid pid) const noexcept {
             return player_joystick[int(pid)] > -1;
         }
+
+        auto& joystick_deadzone(playerid pid) noexcept { return player_deadzone[int(pid)]; }
 
         auto& resolution() noexcept { return win_resolution; }
         auto& fullscreen() noexcept { return win_fullscreen; }
