@@ -51,11 +51,10 @@ int main(int argc, const char* argv[])
 	logger->debug("CWD: {}", fs::current_path().string());
 
 	pong::cfgtree gamecfg;
+	pong::game_settings gamecfg_model;
 	try
 	{
-		logger->info("loading config file");
-		if (fs::exists(config_file))
-			read_ini(config_file.string(), gamecfg);
+		gamecfg_model.load_file(config_file);
 	}
 	catch (const std::exception& e)
 	{
@@ -75,9 +74,6 @@ int main(int argc, const char* argv[])
 
 		window.create(vidmode, "Sf Pong!");
 		window.setFramerateLimit(60u);
-
-		// controls
-		pong::set_user_config(gamecfg);
 
 		// guts
 		pong::cfgtree guts;
@@ -106,7 +102,7 @@ int main(int argc, const char* argv[])
 	pong::game::setup();
 
 	// game instance
-	auto vg = pong::game(pong::gamemode::singleplayer);
+	auto vg = pong::game(pong::gamemode::singleplayer, &gamecfg_model);
 
 	while (window.isOpen())
 	{
@@ -141,12 +137,7 @@ int main(int argc, const char* argv[])
 
 	ImGui::SFML::Shutdown();
 	
-	pong::get_user_config(gamecfg);
-	auto res = window.getSize();
-	gamecfg.put(ckey::RESOLUTION_X, res.x);
-	gamecfg.put(ckey::RESOLUTION_Y, res.y);
-
-	write_ini(config_file.string(), gamecfg);
+	gamecfg_model.save_file(config_file);
 
 	return 0;
 }

@@ -12,6 +12,7 @@
     <ClInclude Include="joyinput.h" />
     <ClInclude Include="imgui_inc.h" />
     <ClInclude Include="imgui_scoped.h" />
+    <ClInclude Include="gvar.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="game.cpp" />

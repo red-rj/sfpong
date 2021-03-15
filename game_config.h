@@ -77,8 +77,11 @@ namespace ckey
         auto& fullscreen() noexcept { return win_fullscreen; }
 
 
-        void load(const cfgtree& cfg);
-        void save(cfgtree& cfg) const;
+        void load_tree(const cfgtree& cfg);
+        void load_file(std::filesystem::path const& iniPath);
+
+        void save_tree(cfgtree& cfg) const;
+        void save_file(std::filesystem::path const& iniPath) const;
     };
 
 

@@ -23,6 +23,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ci_string.h" />
+    <ClInclude Include="gvar.h" />
     <ClInclude Include="imgui_scoped.h" />
     <ClInclude Include="imgui_inc.h" />
     <ClInclude Include="joyinput.h" />

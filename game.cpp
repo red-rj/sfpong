@@ -250,9 +250,9 @@ void pong::game::setup()
 }
 
 
-pong::game::game(gamemode mode_)
+pong::game::game(gamemode mode_, game_settings* sett)
 	: Player1(playerid::one), Player2(playerid::two)
-	
+	, settings(sett)
 {
 	resetPos(Player1);
 	resetPos(Player2);
@@ -377,7 +377,6 @@ static sf::View get_play_view(float target_width)
 
 void pong::game::draw(sf::RenderWindow& window)
 {
-	const auto& prev_view = window.getView();
 	const auto play_view = get_play_view((float)window.getSize().x);
 
 	window.clear();
@@ -390,7 +389,7 @@ void pong::game::draw(sf::RenderWindow& window)
 	window.draw(Player1);
 	window.draw(Player2);
 
-	window.setView(prev_view);
+	window.setView(window.getDefaultView());
 }
 
 

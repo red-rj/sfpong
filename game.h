@@ -5,6 +5,8 @@
 
 namespace pong
 {
+	// TODO: mover entidades para outro header
+	// não herdar de shape
 	struct paddle : sf::RectangleShape
 	{
 		using base_t = sf::RectangleShape;
@@ -40,7 +42,7 @@ namespace pong
 	{
 		static void setup();
 
-		game(gamemode mode_);
+		game(gamemode mode_, game_settings* sett);
 
 		void update();
 		void processEvent(sf::Event& event);
@@ -56,15 +58,15 @@ namespace pong
 		auto mode() const noexcept { return currentMode; }
 		void mode(gamemode m) noexcept;
 
-		auto is_paused() const noexcept { return paused; }
-		bool toggle_pause() noexcept { return paused = !paused; }
+		void pause() noexcept { paused = true; }
 		void unpause() noexcept { paused = false; }
+		auto is_paused() const noexcept { return paused; }
 
 		sf::Time ellapsed_time() const {
-			return m_clock.getElapsedTime();
+			return clock.getElapsedTime();
 		}
 		sf::Time restart_clock() {
-			return runTime += m_clock.restart();
+			return runTime += clock.restart();
 		}
 
 		void resetState();
@@ -83,12 +85,16 @@ namespace pong
 
 		bool paused = true;
 		gamemode currentMode;
-		sf::Clock m_clock;
+		sf::Clock clock;
 		sf::Time runTime;
+
+		//sf::RenderWindow window;
 
 		paddle Player1, Player2;
 		ball Ball;
 		pair<short> score;
 		dir resume_serve_dir = dir::left;
+
+		game_settings* settings;
 	};
 }

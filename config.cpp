@@ -2,6 +2,7 @@
 #include <string_view>
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Mouse.hpp>
@@ -9,6 +10,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <fmt/ostream.h>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include "common.h"
 #include "ci_string.h"
@@ -41,7 +43,7 @@ struct ci_compare
 };
 
 template<class E, class Traits = std::char_traits<char>>
-using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<char>, E>;
+using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<typename Traits::char_type>, E>;
 
 template<>
 struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyboard::Key>
@@ -55,7 +57,8 @@ struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyb
     static void extract(std::istream& is, Keyboard::Key& key)
     {
         auto const& table = sf_keyboard_table();
-        std::string token; is >> token;
+        std::string token;
+        is >> token;
         key = Keyboard::Key(table[token]);
     }
 };
@@ -138,10 +141,10 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
 }
 
 
-void pong::game_settings::load(const cfgtree& tree)
+void pong::game_settings::load_tree(const cfgtree& tree)
 {
     using namespace ckey;
-    const auto P1 = (int)playerid::one, P2 = (int)playerid::two;
+    enum { P1, P2 };
 
     // player one
     player_keys[P1].up = tree.get(P1_UP, Keyboard::W);
@@ -163,10 +166,21 @@ void pong::game_settings::load(const cfgtree& tree)
     win_fullscreen = tree.get(FULLSCREEN, false);
 }
 
-void pong::game_settings::save(cfgtree& tree) const
+void pong::game_settings::load_file(std::filesystem::path const& iniPath)
+{
+    const auto ini = iniPath.string();
+    cfgtree cfg;
+    log::info("loading config file: {}", ini);
+    
+    read_ini(ini, cfg);
+
+    load_tree(cfg);
+}
+
+void pong::game_settings::save_tree(cfgtree& tree) const
 {
     using namespace ckey;
-    const auto P1 = (int)playerid::one, P2 = (int)playerid::two;
+    enum { P1, P2 };
 
     tree.put(P1_UP, player_keys[P1].up);
     tree.put(P1_DOWN, player_keys[P1].down);
@@ -183,6 +197,16 @@ void pong::game_settings::save(cfgtree& tree) const
     tree.put(RESOLUTION_X, win_resolution.x);
     tree.put(RESOLUTION_Y, win_resolution.y);
     tree.put(FULLSCREEN, win_fullscreen);
+}
+
+void pong::game_settings::save_file(std::filesystem::path const& iniPath) const
+{
+    const auto ini = iniPath.string();
+    cfgtree cfg;
+    log::info("saving config file: {}", ini);
+
+    save_tree(cfg);
+    write_ini(ini, cfg);
 }
 
 
