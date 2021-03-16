@@ -75,7 +75,7 @@ namespace pong
 
 		game_settings* settings;
 
-		paddle Player1, Player2;
+		paddle Player1{ playerid::one }, Player2{ playerid::two };
 		ball Ball;
 		pair<short> score;
 		dir resume_serve_dir = dir::left;

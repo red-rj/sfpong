@@ -14,17 +14,14 @@ sfPong TODOs
 * [x] BUG: Mousewheel não funciona no menu
 * [x] tornar posicionamento independende da resolução da janela (sf::View)
 * [x] refatorar Cfg*
-	- CfgPaddle: move.speed e move.acceleration só são usados com input teclado
-* [] Melhorar IA
-	- [wip] refatorar
+* [wip] Melhorar IA
+	- [x] refatorar
 	- [] Dificuldade ajustavel
 * [x] refatorar menu
 
-Branch TODOs
----
-* [] unificar configuração
+* [x] unificar configuração
 	atualmente exite copias de player_input_cfg espalhadas pelo projetos
 	criar classa modelando configs, passar ptrs pra quem precisa
-* [] separar entidades (paddle, ball) da classe game
-* [] encapsular Playarea e pong_court em uma classe
-* [] refatorar startup
+* [wip] encapsular Playarea e pong_court em uma classe
+	parar de depender no valor de playarea
+* [] refatorar startup (main)
