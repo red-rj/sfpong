@@ -13,26 +13,26 @@ pong::ball::ball() : base_t(gvar::ball_radius)
 	setFillColor(sf::Color::Red);
 }
 
-//void pong::ball::update()
-//{
-//	move(velocity);
-//
-//	if (border_collision(*this))
-//	{
-//		velocity.y = -velocity.y;
-//	}
-//}
-//
-//void pong::paddle::update()
-//{
-//	move(0, velocity);
-//
-//	if (border_collision(*this))
-//	{
-//		move(0, -velocity);
-//		velocity = 0;
-//	}
-//}
+void pong::ball::update()
+{
+	move(velocity);
+
+	/*if (border_collision(*this))
+	{
+		velocity.y = -velocity.y;
+	}*/
+}
+
+void pong::paddle::update()
+{
+	move(0, velocity);
+
+	/*if (border_collision(*this))
+	{
+		move(0, -velocity);
+		velocity = 0;
+	}*/
+}
 
 pong::pong_area::pong_area(size2d area, size2d border_size)
 	: top_rect(border_size), bottom_rect(border_size)

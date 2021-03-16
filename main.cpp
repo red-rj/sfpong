@@ -98,7 +98,7 @@ int main(int argc, const char* argv[])
 	}
 
 	ImGui::SFML::Init(window);
-	pong::menu::init();
+	pong::menu::init(&gamecfg_model);
 
 
 	// game instance

@@ -51,6 +51,14 @@ namespace pong
 		void setup_score(sf::Font const& font, unsigned charSize);
 		void set_score(short p1, short p2);
 
+		auto& topBorder() const { return top_rect; }
+		auto& bottomBorder() const { return bottom_rect; }
+
+		bool border_collision(const rect& bounds) const {
+			return bounds.intersects(top_rect.getGlobalBounds()) 
+				or bounds.intersects(bottom_rect.getGlobalBounds());
+		}
+
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 

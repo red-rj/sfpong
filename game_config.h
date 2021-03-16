@@ -66,15 +66,15 @@ namespace ckey
         auto& get_keyboard_keys(playerid pid) const noexcept { return player_keys[int(pid)]; }
         void set_keyboard_keys(playerid pid, keyboard_ctrls ctrls) noexcept { player_keys[int(pid)] = ctrls; }
 
-        //auto& joystick(playerid pid) noexcept { return player_joystick[int(pid)]; }
+        static const int njoystick = -1;
         auto get_joystick(playerid pid) const noexcept { return player_joystick[int(pid)]; }
         void set_joystick(playerid pid, int joyid) noexcept;
 
         void unset_joystick(playerid pid) noexcept {
-            player_joystick[int(pid)] = -1;
+            player_joystick[int(pid)] = njoystick;
         }
         bool using_joystick(playerid pid) const noexcept {
-            return player_joystick[int(pid)] > -1;
+            return player_joystick[int(pid)] != njoystick;
         }
 
         auto& joystick_deadzone(playerid pid) noexcept { return player_deadzone[int(pid)]; }

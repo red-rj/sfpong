@@ -327,6 +327,10 @@ void pong::game::updatePlayer(paddle& player)
 
 	player.velocity = velocity;
 	player.update();
+	if (Court.border_collision(player.getGlobalBounds())) {
+		player.move(0, -velocity);
+		player.velocity = 0;
+	}
 }
 
 void pong::game::updateBall()
@@ -348,7 +352,7 @@ void pong::game::updateBall()
 		velocity.x *= ball_acceleration;
 		velocity.y;
 		if (player->velocity != 0) {
-			velocity.y = player->velocity * 0.75f + random_num(-2, 2);
+			velocity.y = player->velocity * 0.75f;
 			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
 		}
 
@@ -399,7 +403,7 @@ void pong::game::reset(ball& b)
 void pong::game::reset(paddle& p)
 {
 	const auto margin = gvar::playarea.width * .05f;
-	const auto center = pos(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	const auto center = point(gvar::playarea.width / 2, gvar::playarea.height / 2);
 
 	if (p.id == playerid::one) {
 		p.setPosition(margin - gvar::paddle_size.x, center.y);
@@ -414,7 +418,7 @@ bool pong::game::waiting_to_serve() const noexcept
 {
 	return !paused 
 		&& Ball.velocity == vel() 
-		&& Ball.getPosition() == pos(gvar::playarea.width / 2, gvar::playarea.height / 2);
+		&& Ball.getPosition() == point(gvar::playarea.width / 2, gvar::playarea.height / 2);
 }
 
 void pong::game::serve(dir direction)

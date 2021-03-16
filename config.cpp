@@ -143,7 +143,7 @@ std::istream& operator>>(std::istream& is, sf::Mouse::Button& btn)
 
 void pong::game_settings::set_joystick(playerid pid, int joyid) noexcept
 {
-    if (joyid > -1) {
+    if (joyid != njoystick) {
         // nao deixar o mesmo joystick para os 2 jogadores
         const auto end = player_joystick + 2;
         auto dup = std::find(player_joystick, end, joyid);
