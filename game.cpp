@@ -255,21 +255,18 @@ void pong::game::updatePlayer(paddle& player)
 			AIClock.restart();
 			
 			const auto offset = Ball.getPosition() - player.getPosition();
-			const auto y_diff = abs(offset.y);
 			const auto ai_speed = 1;
 
-			float mov = velocity;
-
 			if (offset.y > 0)
-				mov += ai_speed;
+				velocity += ai_speed;
 			else if (offset.y < 0)
-				mov -= ai_speed;
+				velocity -= ai_speed;
 
-			velocity = std::clamp(mov, -paddle_max_speed, paddle_max_speed);
-
-			if (y_diff < 50) {
+			if (abs(offset.y) < 50) {
 				velocity /= 2;
 			}
+
+			velocity = std::clamp(velocity, -paddle_max_speed, paddle_max_speed);
 		}
 	}
 	else // player
