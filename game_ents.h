@@ -5,8 +5,16 @@
 
 namespace pong
 {
-	// TODO: não herdar de shape
+	struct pong_area;
+	struct ball;
 
+	struct update_ctx {
+		pair<paddle const&> players;
+		const ball& ball;
+		const pong_area& court;
+	};
+
+	// TODO: não herdar de shape
 	struct paddle : sf::RectangleShape
 	{
 		using base_t = sf::RectangleShape;
@@ -50,9 +58,6 @@ namespace pong
 
 		void setup_score(sf::Font const& font, unsigned charSize);
 		void set_score(short p1, short p2);
-
-		auto& topBorder() const { return top_rect; }
-		auto& bottomBorder() const { return bottom_rect; }
 
 		bool border_collision(const rect& bounds) const {
 			return bounds.intersects(top_rect.getGlobalBounds()) 
