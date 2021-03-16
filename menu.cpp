@@ -100,16 +100,6 @@ namespace win {
 
 	//fonts
 	ImFont* fonts[font_Count] = {};
-
-	/*struct {
-		using FontPtr = ImFont*;
-		FontPtr
-			rebinding_popup,
-			section_title,
-			monospace,
-			default_
-			;
-	} font;*/
 }
 
 
@@ -248,12 +238,8 @@ bool pong::menu::rebinding_popup_open() noexcept
 void optionsWin(game&, sf::Window& window)
 {
 	namespace gui = ImScoped;
-	static auto wip_resolution = window.getSize();
-	static auto active_resolution = wip_resolution;
 
 	bool isDirty = work_settings != *settings;
-
-
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
@@ -269,10 +255,21 @@ void optionsWin(game&, sf::Window& window)
 		{
 			if (auto tab = gui::TabBarItem("Game"))
 			{
-				static int win_size[2] = { active_resolution.x, active_resolution.y };
-				if (ImGui::InputInt2(u8"Resolução", win_size)) {
-					wip_resolution.x = win_size[0];
-					wip_resolution.y = win_size[1];
+				auto& vidModes = sf::VideoMode::getFullscreenModes();
+				auto curVidMode = sf::VideoMode(work_settings.resolution().x, work_settings.resolution().y);
+				auto preview = fmt::format("{} x {}", curVidMode.width, curVidMode.height);
+
+				if (auto cb = gui::Combo(u8"Resolução", preview.c_str())) {
+					for (auto& vid : vidModes) {
+						preview = fmt::format("{} x {}", vid.width, vid.height);
+						auto isSelected = vid == curVidMode;
+						if (ImGui::Selectable(preview.c_str(), isSelected)) {
+							work_settings.resolution().x = vid.width;
+							work_settings.resolution().y = vid.height;
+						}
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
 				}
 			}
 			if (auto tab = gui::TabBarItem("Controles"))
@@ -305,7 +302,7 @@ void optionsWin(game&, sf::Window& window)
 	if (ImGui::Button("Salvar") && isDirty)
 	{
 		*settings = work_settings;
-		window.setSize(wip_resolution);
+		window.setSize(settings->resolution());
 	}
 }
 
@@ -380,8 +377,8 @@ void aboutSfPongWin()
 void controlsUi()
 {
 	namespace gui = ImScoped;
+
 	{
-		
 		gui::Font _f_ = fonts[font_section_title];
 		ImGui::Text("Teclado:");
 	}
@@ -422,7 +419,7 @@ void controlsUi()
 	};
 	#pragma endregion
 
-	auto inputKbCtrls = [&](pong::playerid pl) mutable
+	auto inputKbCtrls = [&](pong::playerid pl)
 	{
 		auto title = to_string(pl);
 		gui::GroupID _grp_ = title;
@@ -436,7 +433,6 @@ void controlsUi()
 		inputKbKey("Fast", player_ctrls.fast);
 	};
 
-	// ---
 	inputKbCtrls(playerid::one);
 	ImGui::SameLine();
 	inputKbCtrls(playerid::two);

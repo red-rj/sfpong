@@ -42,7 +42,9 @@ namespace pong
 			return clock.getElapsedTime();
 		}
 		sf::Time restart_clock() {
-			return runTime += clock.restart();
+			auto elapsed = clock.restart();
+			runTime += elapsed;
+			return elapsed;
 		}
 
 		void newGame(gamemode m) {

@@ -20,11 +20,6 @@ namespace
 {
 	auto rnd_dev = std::random_device();
 	auto rnd_eng = std::default_random_engine(rnd_dev());
-
-	// TODO: classe para score, expor court
-	//pong_court Court{ Playarea, { Playarea.width * 0.95f, 25 } };
-
-	//sf::Font font_mono;
 }
 
 
