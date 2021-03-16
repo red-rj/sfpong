@@ -9,7 +9,7 @@ namespace pong
 {
 	bool collision(const sf::Shape& a, const sf::Shape& b);
 	bool collision(const sf::Shape& a, const rect& b);
-	bool border_collision(const sf::Shape& p);
+	bool collision(const rect& a, const rect& b);
 
 	void constrain_pos(pos& p);
 

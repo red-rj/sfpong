@@ -49,7 +49,10 @@ bool pong::collision(const sf::Shape& a, const rect& b)
 {
 	return a.getGlobalBounds().intersects(b);
 }
-
+bool pong::collision(const rect& a, const rect& b)
+{
+	return a.intersects(b);
+}
 
 void pong::constrain_pos(pos& p)
 {
@@ -327,6 +330,7 @@ void pong::game::updatePlayer(paddle& player)
 
 	player.velocity = velocity;
 	player.update();
+
 	if (Court.border_collision(player.getGlobalBounds())) {
 		player.move(0, -velocity);
 		player.velocity = 0;
@@ -350,10 +354,8 @@ void pong::game::updateBall()
 		vel velocity = Ball.velocity;
 
 		velocity.x *= ball_acceleration;
-		velocity.y;
 		if (player->velocity != 0) {
 			velocity.y = player->velocity * 0.75f;
-			//velocity.y += player->velocity.y * 0.5 + random_num(-2, 2);
 		}
 
 		Ball.velocity = {
@@ -367,6 +369,11 @@ void pong::game::updateBall()
 		} while (collision(*player, Ball));
 	}
 	else Ball.update();
+
+	if (Court.border_collision(Ball.getGlobalBounds()))
+	{
+		Ball.velocity.y = -Ball.velocity.y;
+	}
 }
 
 bool pong::game::updateScore()

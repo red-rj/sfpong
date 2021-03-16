@@ -5,15 +5,6 @@
 
 namespace pong
 {
-	struct pong_area;
-	struct ball;
-
-	struct update_ctx {
-		pair<paddle const&> players;
-		const ball& ball;
-		const pong_area& court;
-	};
-
 	// TODO: não herdar de shape
 	struct paddle : sf::RectangleShape
 	{
