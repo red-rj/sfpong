@@ -226,18 +226,12 @@ static sf::View get_play_view(float target_width)
 
 void pong::game::draw(sf::RenderWindow& window)
 {
-	const auto play_view = get_play_view((float)window.getSize().x);
-
 	window.clear();
-	window.setView(play_view);
 
 	window.draw(Court);
-
 	window.draw(Ball);
 	window.draw(Player1);
 	window.draw(Player2);
-
-	window.setView(window.getDefaultView());
 }
 
 
@@ -354,9 +348,7 @@ void pong::game::updateBall()
 		vel velocity = Ball.velocity;
 
 		velocity.x *= ball_acceleration;
-		if (player->velocity != 0) {
-			velocity.y = player->velocity * 0.75f;
-		}
+		velocity.y += player->velocity * 0.5f;
 
 		Ball.velocity = {
 			-std::clamp(velocity.x, -ball_max_speed, ball_max_speed),

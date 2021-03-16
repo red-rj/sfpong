@@ -49,11 +49,10 @@ int main(int argc, const char* argv[])
 
 	logger->debug("CWD: {}", fs::current_path().string());
 
-	pong::cfgtree gamecfg;
-	pong::game_settings gamecfg_model;
+	pong::game_settings gamecfg;
 	try
 	{
-		gamecfg_model.load_file(config_file);
+		gamecfg.load_file(config_file);
 	}
 	catch (const std::exception& e)
 	{
@@ -67,8 +66,8 @@ int main(int argc, const char* argv[])
 		logger->info("Setting up...");
 
 		sf::VideoMode vidmode;
-		vidmode.width = gamecfg.get(ckey::RESOLUTION_X, 1024u);
-		vidmode.height = gamecfg.get(ckey::RESOLUTION_Y, 768u);
+		vidmode.width = gamecfg.resolution().x;
+		vidmode.height = gamecfg.resolution().y;
 		vidmode.bitsPerPixel = 32;
 
 		window.create(vidmode, "Sf Pong!");
@@ -98,11 +97,10 @@ int main(int argc, const char* argv[])
 	}
 
 	ImGui::SFML::Init(window);
-	pong::menu::init(&gamecfg_model);
-
+	pong::menu::init(&gamecfg);
 
 	// game instance
-	auto vg = pong::game(pong::gamemode::singleplayer, &gamecfg_model);
+	auto vg = pong::game(pong::gamemode::singleplayer, &gamecfg);
 
 	while (window.isOpen())
 	{
@@ -137,7 +135,7 @@ int main(int argc, const char* argv[])
 
 	ImGui::SFML::Shutdown();
 	
-	gamecfg_model.save_file(config_file);
+	gamecfg.save_file(config_file);
 
 	return 0;
 }
