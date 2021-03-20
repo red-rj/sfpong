@@ -50,13 +50,10 @@ pong::pong_area::pong_area(size2d area, size2d border_size)
 	net.setRotation(90);
 	net.setPosition(size.x / 2, 20);
 
+	scoreFont.loadFromFile(files::mono_tff);
 	scoreTxt.setPosition(size.x / 2 - 100, border_size.y + 5);
 	scoreTxt.setCharacterSize(55);
-
-	scoreFont.loadFromFile(files::mono_tff);
-
 	scoreTxt.setFont(scoreFont);
-
 }
 
 void pong::pong_area::setup_score(sf::Font const& font, unsigned charSize)

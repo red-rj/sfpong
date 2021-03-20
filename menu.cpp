@@ -239,7 +239,7 @@ void optionsWin(game&, sf::Window& window)
 {
 	namespace gui = ImScoped;
 
-	bool isDirty = work_settings != *settings;
+	const bool isDirty = work_settings != *settings;
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
@@ -392,6 +392,7 @@ void controlsUi()
 		auto constexpr popup_id = "Rebind popup";
 		auto keystr = fmt::format("{}", curKey);
 
+		// butão
 		Text("%5s:", label);
 		SameLine(75);
 		if (Button(keystr.c_str())) {
@@ -399,6 +400,7 @@ void controlsUi()
 			isVisible[win::rebiding_popup] = true;
 		}
 
+		// popup
 		const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
 		if (auto popup = gui::PopupModal(popup_id, &isVisible[win::rebiding_popup], flags))
 		{
