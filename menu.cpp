@@ -71,9 +71,7 @@ namespace
 	int _joystick_count;
 
 	// window ids
-namespace win {
-	enum Id
-	{
+	namespace win { enum Id {
 		options,
 		game_stats,
 		about,
@@ -82,24 +80,23 @@ namespace win {
 		rebiding_popup,
 
 		Count
-	};
-}
+	};}
 
-	enum fontId 
-	{
-		font_default_,
-		font_default_large,
-		font_monospace,
-		font_section_title,
+	// font ids
+	namespace ft { enum Id {
+		default_,
+		default_large,
+		monospace,
+		section_title,
 
-		font_Count
-	};
+		Count
+	};}
 
 	// show flags
 	bool isVisible[win::Count] = {};
 
 	//fonts
-	ImFont* fonts[font_Count] = {};
+	ImFont* fonts[ft::Count] = {};
 }
 
 
@@ -149,7 +146,7 @@ void pong::menu::update(game& ctx, sf::Window& window)
 		aboutSfPongWin();
 
 	if (isVisible[imgui_demo])
-		ShowDemoWindow(&isVisible[imgui_demo]);
+		ImGui::ShowDemoWindow(&isVisible[imgui_demo]);
 	if (isVisible[imgui_about])
 		ImGui::ShowAboutWindow(&isVisible[imgui_about]);
 
@@ -187,10 +184,10 @@ void pong::menu::update(game& ctx, sf::Window& window)
 	MenuItem(u8"Opções", nullptr, &isVisible[options]);
 
 	{
-		auto _styles_ = {
-			StyleColor(ImGuiCol_Button, sf::Color::Transparent),
-			StyleColor(ImGuiCol_ButtonHovered, sf::Color::Red),
-			StyleColor(ImGuiCol_ButtonActive, sf::Color(255, 50, 50))
+		StyleColor _s_[] = {
+			{ImGuiCol_Button, sf::Color::Transparent},
+			{ImGuiCol_ButtonHovered, sf::Color::Red},
+			{ImGuiCol_ButtonActive, sf::Color(255, 50, 50)}
 		};
 
 		if (Button("Sair")) {
@@ -210,10 +207,10 @@ void pong::menu::init(game_settings* gs)
 	const auto ui_font_size = 18.f;
 
 	atlas->Clear();
-	fonts[font_default_] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
-	fonts[font_default_large] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
-	fonts[font_section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
-	fonts[font_monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
+	fonts[ft::default_] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
+	fonts[ft::default_large] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
+	fonts[ft::section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
+	fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 	ImGui::SFML::UpdateFontTexture();
 }
 
@@ -379,7 +376,7 @@ void controlsUi()
 	namespace gui = ImScoped;
 
 	{
-		gui::Font _f_ = fonts[font_section_title];
+		gui::Font _f_ = fonts[ft::section_title];
 		ImGui::Text("Teclado:");
 	}
 
@@ -406,7 +403,7 @@ void controlsUi()
 		{
 			using Key = sf::Keyboard::Key;
 
-			gui::Font _f_{ fonts[font_default_large] };
+			gui::Font _f_{ fonts[ft::default_large] };
 			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 			auto key = scan_kb();
@@ -442,7 +439,7 @@ void controlsUi()
 	ImGui::Spacing();
 
 	{
-		gui::Font _f_ = fonts[font_section_title];
+		gui::Font _f_ = fonts[ft::section_title];
 		ImGui::Text("Joystick:");
 	}
 

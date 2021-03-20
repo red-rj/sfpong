@@ -55,8 +55,8 @@ void pong::constrain_pos(pos& p)
 
 	while (p.x >= playarea.width)	p.x -= playarea.width;
 	while (p.y >= playarea.height)	p.y -= playarea.height;
-	while (p.x < 0)		p.x += playarea.width;
-	while (p.y < 0)		p.x += playarea.height;
+	while (p.x < 0)	p.x += playarea.width;
+	while (p.y < 0)	p.x += playarea.height;
 }
 
 
@@ -94,7 +94,6 @@ void pong::constrain_pos(pos& p)
 //
 //	return guts;
 //}
-
 
 
 pong::game::game(gamemode mode_, game_settings* sett)
