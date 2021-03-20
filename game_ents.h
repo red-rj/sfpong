@@ -30,17 +30,6 @@ namespace pong
 
 	//---
 
-	struct dashed_line : sf::Drawable, sf::Transformable
-	{
-		dashed_line(size2d pieceSize, float gapLen, float maxLen);
-		//dashed_line(std::vector<float> const& pattern, float thickness);
-
-	private:
-		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-
-		sf::VertexArray verts{ sf::Triangles };
-	};
-
 	struct pong_area : sf::Drawable, sf::Transformable
 	{
 		pong_area(size2d area, size2d border_size);
@@ -60,12 +49,13 @@ namespace pong
 
 		// court
 		sf::RectangleShape top_rect, bottom_rect;
-		dashed_line net;
 		size2d size;
+		// net
+		sf::VertexArray net_verts{ sf::Triangles };
+		sf::Transform net_transform;
 
 		// score
 		sf::Text scoreTxt;
 		sf::Font scoreFont;
-		//std::shared_ptr<sf::Font> scoreFont;
 	};
 }

@@ -36,7 +36,7 @@ void pong::paddle::update()
 
 pong::pong_area::pong_area(size2d area, size2d border_size)
 	: top_rect(border_size), bottom_rect(border_size)
-	, size(area), net({20,20}, 20, area.y)
+	, size(area) //, net({20,20}, 20, area.y)
 {
 	auto origin = point(border_size.x / 2, 0);
 
@@ -47,8 +47,43 @@ pong::pong_area::pong_area(size2d area, size2d border_size)
 	bottom_rect.setOrigin(origin);
 	bottom_rect.setPosition(size.x / 2, size.y - 5);
 
-	net.setRotation(90);
-	net.setPosition(size.x / 2, 20);
+	//net.setRotation(90);
+	//net.setPosition(size.x / 2, 20);
+
+	// build net alongside the X axis
+	const size2d pieceSize = { 20,20 };
+	const float gapLen = 20;
+	point current;
+	bool gap{};
+
+	for (int count = 1; (pieceSize.x + gapLen) * count < size.y; gap = !gap)
+	{
+		if (gap) {
+			current.x += pieceSize.x + gapLen;
+		}
+		else {
+			sf::Vertex v{ current, sf::Color::Magenta };
+
+			// triangle1
+			net_verts.append(v);
+			v.position = current + pos(pieceSize.x, 0);
+			net_verts.append(v);
+			v.position = current + pieceSize;
+			net_verts.append(v);
+			// triangle2
+			v.position = current;
+			net_verts.append(v);
+			v.position = current + pos(0, pieceSize.y);
+			net_verts.append(v);
+			v.position = current + pieceSize;
+			net_verts.append(v);
+
+			count++;
+		}
+	}
+
+	// nessa ordem
+	net_transform.translate(size.x / 2, 20).rotate(90);
 
 	scoreFont.loadFromFile(files::mono_tff);
 	scoreTxt.setPosition(size.x / 2 - 100, border_size.y + 5);
@@ -69,48 +104,11 @@ void pong::pong_area::set_score(short p1, short p2)
 
 void pong::pong_area::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-	states.transform *= getTransform();
+	states.transform *= getTransform() * net_transform;
+	target.draw(net_verts, states);
+	
+	states.transform *= net_transform.getInverse() * getTransform();
 	target.draw(top_rect, states);
 	target.draw(bottom_rect, states);
-	target.draw(net, states);
 	target.draw(scoreTxt, states);
-}
-
-pong::dashed_line::dashed_line(size2d pieceSize, float gapLen, float maxLen)
-{
-	point current;
-	bool gap{};
-
-	// creat verts alongside the X axis
-	for (int count = 1; (pieceSize.x + gapLen) * count < maxLen; gap = !gap)
-	{
-		if (gap) {
-			current.x += pieceSize.x + gapLen;
-		}
-		else {
-			// rect from 2 triangles
-			sf::Vertex v = current;
-			// t1
-			verts.append(v);
-			v.position.x += pieceSize.x;
-			verts.append(v);
-			v.position.y += pieceSize.y;
-			verts.append(v);
-			// t2
-			verts.append(v);
-			v.position.x -= pieceSize.x;
-			verts.append(v);
-			v.position.y -= pieceSize.y;
-			verts.append(v);
-
-			count++;
-		}
-	}
-}
-
-
-void pong::dashed_line::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
-	states.transform *= getTransform();
-	target.draw(verts, states);
 }
