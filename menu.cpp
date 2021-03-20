@@ -138,64 +138,66 @@ void pong::menu::update(game& ctx, sf::Window& window)
 	using namespace ImScoped;
 	using namespace win;
 
-	if (isVisible[options])
-		optionsWin(ctx, window);
-
 	if (isVisible[game_stats])
 		gameStatsWin(ctx);
-
-	if (isVisible[about])
-		aboutSfPongWin();
-
-	if (isVisible[imgui_demo])
-		ImGui::ShowDemoWindow(&isVisible[imgui_demo]);
-	if (isVisible[imgui_about])
-		ImGui::ShowAboutWindow(&isVisible[imgui_about]);
 	
-	MainMenuBar mmb;
-	if (!mmb) return;
+	if (ctx.is_paused()) {
+		// windows
+		if (isVisible[options])
+			optionsWin(ctx, window);
+		if (isVisible[about])
+			aboutSfPongWin();
+		if (isVisible[imgui_demo])
+			ImGui::ShowDemoWindow(&isVisible[imgui_demo]);
+		if (isVisible[imgui_about])
+			ImGui::ShowAboutWindow(&isVisible[imgui_about]);
 
-	TextDisabled("sfPong");
+		// main menu
+		if (auto mm = MainMenuBar()) {
+			TextDisabled("sfPong");
 
-	if (auto m = Menu("Jogo")) {
-		auto currentMode = ctx.mode();	
-		bool singleplayer = currentMode == gamemode::singleplayer,
-			 multiplayer = currentMode == gamemode::multiplayer;
+			if (auto m = Menu("Jogo")) {
+				auto currentMode = ctx.mode();
+				bool singleplayer = currentMode == gamemode::singleplayer,
+					multiplayer = currentMode == gamemode::multiplayer;
 
-		if (MenuItem("Continuar", "ESC"))
-			ctx.unpause();
-		if (auto m1 = Menu("Novo")) {
+				if (MenuItem("Continuar", "ESC"))
+					ctx.unpause();
+				if (auto m1 = Menu("Novo")) {
 
-			if (MenuItem("1 jogador", nullptr, singleplayer)) {
-				ctx.newGame(gamemode::singleplayer);
-				ctx.unpause();
+					if (MenuItem("1 jogador", nullptr, singleplayer)) {
+						ctx.newGame(gamemode::singleplayer);
+						ctx.unpause();
+					}
+					if (MenuItem("2 jogadores", nullptr, multiplayer)) {
+						ctx.newGame(gamemode::multiplayer);
+						ctx.unpause();
+					}
+				}
+				if (MenuItem("Reiniciar")) {
+					ctx.restart();
+					ctx.unpause();
+				}
+				Separator();
+				MenuItem("Sobre", nullptr, &isVisible[about]);
 			}
-			if (MenuItem("2 jogadores", nullptr, multiplayer)) {
-				ctx.newGame(gamemode::multiplayer);
-				ctx.unpause();
+
+			MenuItem(u8"Opções", nullptr, &isVisible[options]);
+
+			if (auto m = Menu("Extra")) {
+				MenuItem("Stats", "F12", &isVisible[game_stats]);
 			}
-		}
-		if (MenuItem("Reiniciar")) {
-			ctx.restart();
-			ctx.unpause();
-		}
-		Separator();
-		MenuItem("Sobre", nullptr, &isVisible[about]);
-	}
 
-	if (MenuItem(u8"Opções", nullptr, &isVisible[options])) {
-	}
+			StyleColor _s_[] = {
+				{ImGuiCol_Button, sf::Color::Transparent},
+				{ImGuiCol_ButtonHovered, sf::Color::Red},
+				{ImGuiCol_ButtonActive, sf::Color(255, 50, 50)}
+			};
 
-	{
-		StyleColor _s_[] = {
-			{ImGuiCol_Button, sf::Color::Transparent},
-			{ImGuiCol_ButtonHovered, sf::Color::Red},
-			{ImGuiCol_ButtonActive, sf::Color(255, 50, 50)}
-		};
-
-		if (Button("Sair")) {
-			log::info("Tchau! :)");
-			window.close();
+			if (Button("Sair")) {
+				log::info("Tchau! :)");
+				window.close();
+			}
 		}
 	}
 }
@@ -228,6 +230,11 @@ void pong::menu::processEvent(sf::Event& event)
 		clear_joysticks();
 		refresh_joysticks();
 		break;
+	case Event::KeyPressed:
+		if (event.key.code == sf::Keyboard::F12) {
+			isVisible[win::game_stats] = !isVisible[win::game_stats];
+		}
+		break;
 	}
 }
 
@@ -249,50 +256,50 @@ void optionsWin(game&, sf::Window& window)
 	if (!guiwindow)
 		return;
 
+{
+	auto guiwindowsize = ImGui::GetWindowSize();
+	gui::Child _content_{ "conteudo opções", { guiwindowsize.x - 10, guiwindowsize.y - 100 } };
+
+	if (auto tabbar = gui::TabBar("##Tabs"))
 	{
-		auto guiwindowsize = ImGui::GetWindowSize();
-		gui::Child _content_{ "conteudo opções", { guiwindowsize.x - 10, guiwindowsize.y - 100 } };
-
-		if (auto tabbar = gui::TabBar("##Tabs"))
+		if (auto tab = gui::TabBarItem("Game"))
 		{
-			if (auto tab = gui::TabBarItem("Game"))
-			{
-				auto& vidModes = sf::VideoMode::getFullscreenModes();
-				auto curVidMode = sf::VideoMode(work_settings.resolution().x, work_settings.resolution().y);
-				auto preview = fmt::format("{} x {}", curVidMode.width, curVidMode.height);
+			auto& vidModes = sf::VideoMode::getFullscreenModes();
+			auto curVidMode = sf::VideoMode(work_settings.resolution().x, work_settings.resolution().y);
+			auto preview = fmt::format("{} x {}", curVidMode.width, curVidMode.height);
 
-				if (auto cb = gui::Combo(u8"Resolução", preview.c_str())) {
-					for (auto& vid : vidModes) {
-						preview = fmt::format("{} x {}", vid.width, vid.height);
-						auto isSelected = vid == curVidMode;
-						if (ImGui::Selectable(preview.c_str(), isSelected)) {
-							work_settings.resolution().x = vid.width;
-							work_settings.resolution().y = vid.height;
-						}
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();
+			if (auto cb = gui::Combo(u8"Resolução", preview.c_str())) {
+				for (auto& vid : vidModes) {
+					preview = fmt::format("{} x {}", vid.width, vid.height);
+					auto isSelected = vid == curVidMode;
+					if (ImGui::Selectable(preview.c_str(), isSelected)) {
+						work_settings.resolution().x = vid.width;
+						work_settings.resolution().y = vid.height;
 					}
-				}
-			}
-			if (auto tab = gui::TabBarItem("Controles"))
-			{
-				controlsUi();
-			}
-			if (auto tab = gui::TabBarItem("DEV"))
-			{
-				using ImGui::Button;
-
-				if (Button("game stats"))
-				{
-					isVisible[win::game_stats] = true;
-				}
-				if (Button("ImGui demo window"))
-				{
-					isVisible[win::imgui_demo] = true;
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
 				}
 			}
 		}
+		if (auto tab = gui::TabBarItem("Controles"))
+		{
+			controlsUi();
+		}
+		if (auto tab = gui::TabBarItem("DEV"))
+		{
+			using ImGui::Button;
+
+			if (Button("game stats"))
+			{
+				isVisible[win::game_stats] = true;
+			}
+			if (Button("ImGui demo window"))
+			{
+				isVisible[win::imgui_demo] = true;
+			}
+		}
 	}
+}
 
 	ImGui::Spacing();
 	ImGui::Separator();
@@ -315,9 +322,10 @@ void gameStatsWin(game& ctx)
 	ImGuiIO& io = ImGui::GetIO();
 	pos winpos = { io.DisplaySize.x - 10.f, 15.f };
 	ImGui::SetNextWindowBgAlpha(0.5f);
-	ImGui::SetNextWindowPos(winpos, ImGuiCond_FirstUseEver, { 1.f, 0 });
+	ImGui::SetNextWindowPos(winpos, ImGuiCond_Always, { 1.f, 0 });
 
-	auto constexpr wflags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
+	auto const wflags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings 
+						| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 	Window overlay("Stats", &isVisible[win::game_stats], wflags);
 
 	auto players = ctx.get_players();

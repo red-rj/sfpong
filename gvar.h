@@ -7,6 +7,7 @@ namespace gvar
 
 	constexpr float paddle_kb_speed = 1;
 	constexpr float paddle_max_speed = 30;
+	constexpr float paddle_width = 25, paddle_height = 150;
 	inline const pong::size2d paddle_size = { 25, 150 };
 	
 	constexpr float ball_speed = 5;

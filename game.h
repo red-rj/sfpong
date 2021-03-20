@@ -71,8 +71,8 @@ namespace pong
 		sf::Clock clock;
 		sf::Time runTime;
 
-		//sf::RenderWindow window;
 
+		//sf::RenderWindow window;
 		game_settings* settings;
 
 		paddle Player1{ playerid::one }, Player2{ playerid::two };
