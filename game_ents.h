@@ -47,6 +47,8 @@ namespace pong
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+		void init_net();
+
 		// court
 		sf::RectangleShape top_rect, bottom_rect;
 		size2d size;
