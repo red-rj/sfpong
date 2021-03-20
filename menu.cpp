@@ -116,15 +116,14 @@ static void refresh_joysticks()
 {
 	using sf::Joystick;
 
-	int i = 0;
-	for (; i < Joystick::Count; i++)
+	for (int i=0; i < Joystick::Count; i++)
 	{
 		if (Joystick::isConnected(i)) {
 			auto info = Joystick::getIdentification(i);
 			_joystick_names[i] = info.name;
+			_joystick_count++;
 		}
 	}
-	_joystick_count = i;
 }
 static void clear_joysticks()
 {
@@ -152,7 +151,7 @@ void pong::menu::update(game& ctx, sf::Window& window)
 		ImGui::ShowDemoWindow(&isVisible[imgui_demo]);
 	if (isVisible[imgui_about])
 		ImGui::ShowAboutWindow(&isVisible[imgui_about]);
-
+	
 	MainMenuBar mmb;
 	if (!mmb) return;
 
@@ -184,7 +183,8 @@ void pong::menu::update(game& ctx, sf::Window& window)
 		MenuItem("Sobre", nullptr, &isVisible[about]);
 	}
 
-	MenuItem(u8"Opções", nullptr, &isVisible[options]);
+	if (MenuItem(u8"Opções", nullptr, &isVisible[options])) {
+	}
 
 	{
 		StyleColor _s_[] = {
@@ -213,7 +213,7 @@ void pong::menu::init(game_settings* gs)
 	fonts[ft::default_] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
 	fonts[ft::default_large] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
 	fonts[ft::section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
-	fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
+	//fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 	ImGui::SFML::UpdateFontTexture();
 }
 
@@ -330,11 +330,10 @@ void gameStatsWin(game& ctx)
 	auto p2_pos = P2.getPosition();
 	auto ball_pos = Ball.getPosition();
 
-	auto text = fmt::format("P1: [{:.2f}, {:.2f}]\nP2: [{:.2f}, {:.2f}]\nBall: [{:.2f}, {:.2f}]",
+	auto text = fmt::format("P1: [{:.2f}, {:.2f}]\n" "P2: [{:.2f}, {:.2f}]\n" "Ball: [{:.2f}, {:.2f}]",
 		p1_pos.x, p1_pos.y, p2_pos.x, p2_pos.y, ball_pos.x, ball_pos.y);
 
 	ImGui::Text("Positions:\n%s", text.c_str());
-
 
 	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: [{:.3f}, {:.3f}]", 
 		P1.velocity, P2.velocity, Ball.velocity.x, Ball.velocity.y);
@@ -353,15 +352,15 @@ void aboutSfPongWin()
 	Text("sfPong %s", pong::version);
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
-	
-	Text("%s: %5s", "ImGui", ImGui::GetVersion()); SameLine();
-	if (SmallButton("about")) {
-		isVisible[win::imgui_about] = true;
-	}
-	if (IsItemHovered())
-		SetTooltip("ImGui about window");
+{
+	using ImScoped::StyleColor;
+	StyleColor _a_{ ImGuiCol_Button, sf::Color::Transparent };
 
-	const auto libver = "%s: %5d.%d.%d";
+	if (SmallButton("ImGui: " IMGUI_VERSION))
+		isVisible[win::imgui_about] = true;
+}
+
+	const auto libver = " %s: %d.%d.%d";
 	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
 	Text(libver, "Boost",
 		BOOST_VERSION / 100000,
@@ -476,7 +475,7 @@ int joystickCombobox(int current_joyid)
 	namespace gui = ImScoped;
 	using sf::Joystick;
 
-	const auto npos = -1;
+	const auto npos = game_settings::njoystick;
 	const auto nitem = "Nenhum";
 
 	auto previewItem = current_joyid == npos ? nitem : _joystick_names[current_joyid].c_str();

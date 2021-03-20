@@ -24,6 +24,7 @@ using sf::Joystick;
 using sf::Mouse;
 using namespace std::literals;
 using iof = std::ios_base;
+
 struct ci_compare;
 using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
 
@@ -76,7 +77,6 @@ public:
 };
 
 // convert
-
 std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
 {
     auto const& table = sf_keyboard_table();
