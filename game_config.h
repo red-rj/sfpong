@@ -45,9 +45,7 @@ namespace ckey
         sf::Keyboard::Key up, down, fast;
 
         bool operator== (const keyboard_ctrls& rhs) const noexcept;
-        bool operator!= (const keyboard_ctrls& rhs) const noexcept {
-            return !(*this == rhs);
-        }
+        bool operator!= (const keyboard_ctrls& rhs) const noexcept { return !(*this == rhs); }
     };
     
     // modelo de game.cfg

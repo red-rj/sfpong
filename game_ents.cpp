@@ -95,7 +95,7 @@ void pong::pong_area::init_net()
 
 			// triangle1
 			net_verts.append(v);
-			v.position += current + pos(pieceSize.x, 0);
+			v.position = current + pos(pieceSize.x, 0);
 			net_verts.append(v);
 			v.position = current + pieceSize;
 			net_verts.append(v);
