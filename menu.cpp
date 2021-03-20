@@ -29,6 +29,7 @@ static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 	return {};
 }
 
+#if 0
 static auto scan_mouse_btn() noexcept -> std::optional<sf::Mouse::Button>
 {
 	using sf::Mouse;
@@ -59,6 +60,7 @@ static auto scan_joy_btn() noexcept
 		}
 	}
 }
+#endif
 
 using namespace pong;
 
@@ -97,6 +99,7 @@ namespace
 
 	//fonts
 	ImFont* fonts[ft::Count] = {};
+
 }
 
 
@@ -216,10 +219,12 @@ void pong::menu::init(game_settings* gs)
 
 void pong::menu::processEvent(sf::Event& event)
 {
+	using sf::Event;
+
 	switch (event.type)
 	{
-	case sf::Event::JoystickConnected:
-	case sf::Event::JoystickDisconnected:
+	case Event::JoystickConnected:
+	case Event::JoystickDisconnected:
 		clear_joysticks();
 		refresh_joysticks();
 		break;

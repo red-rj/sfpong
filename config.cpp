@@ -145,12 +145,9 @@ void pong::game_settings::set_joystick(playerid pid, int joyid) noexcept
 {
     if (joyid != njoystick) {
         // nao deixar o mesmo joystick para os 2 jogadores
-        const auto end = player_joystick + 2;
-        auto dup = std::find(player_joystick, end, joyid);
-        auto owner = playerid(dup - player_joystick);
-
-        if (dup != end && owner != pid) {
-            std::swap(joyid, *dup);
+        playerid other = pid == playerid::one ? playerid::two : playerid::one;
+        if (player_joystick[int(other)] == joyid) {
+            player_joystick[int(other)] = njoystick;
         }
     }
 
