@@ -163,14 +163,14 @@ void pong::game_settings::load_tree(const cfgtree& tree)
     player_keys[P1].up = tree.get(P1_UP, Keyboard::W);
     player_keys[P1].down = tree.get(P1_DOWN, Keyboard::S);
     player_keys[P1].fast = tree.get(P1_FAST, Keyboard::LShift);
-    player_joystick[P1] = tree.get(P1_JOYSTICK, -1, joyid_translator());
+    player_joystick[P1] = tree.get(P1_JOYSTICK, njoystick, joyid_translator());
     player_deadzone[P1] = tree.get(P1_JSDEADZONE, 10.f);
 
     // player two
     player_keys[P2].up = tree.get(P2_UP, Keyboard::Up);
     player_keys[P2].down = tree.get(P2_DOWN, Keyboard::Down);
     player_keys[P2].fast = tree.get(P2_FAST, Keyboard::RControl);
-    player_joystick[P2] = tree.get(P2_JOYSTICK, -1, joyid_translator());
+    player_joystick[P2] = tree.get(P2_JOYSTICK, njoystick, joyid_translator());
     player_deadzone[P2] = tree.get(P2_JSDEADZONE, 10.f);
 
     // game
