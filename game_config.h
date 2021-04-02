@@ -12,8 +12,6 @@ namespace pong
 {
     using cfgtree = boost::property_tree::ptree;
 
-    /*void overrideGuts(const cfgtree& tree);
-    cfgtree createGuts();*/
 
 // config keys
 namespace ckey

@@ -27,7 +27,6 @@ int main(int argc, const char* argv[])
 	auto cli = lyra::cli()
 		| lyra::help(show_help).description("sfPong cmd options")
 		| lyra::opt(config_file, "game.cfg")["--config"]("arquivo config.")
-		//| lyra::opt(guts_arg)["--guts"]("usar/criar arquivo GUTS.")
 		;
 
 	auto cli_result = cli.parse({ argc, argv });
@@ -73,23 +72,6 @@ int main(int argc, const char* argv[])
 
 		window.create(vidmode, "Sf Pong!");
 		window.setFramerateLimit(60u);
-
-		// guts
-		//pong::cfgtree guts;
-
-		//if (guts_arg and fs::exists(guts_file)) {
-		//	read_info(guts_file.string(), guts);
-		//	logger->debug("got GUTS file: {}", guts_file.string());
-		//	pong::overrideGuts(guts);
-		//}
-		//else if (guts_arg) {
-		//	logger->debug("{} not found! Creating...", guts_file.string());
-		//	guts = pong::createGuts();
-		//	write_info(guts_file.string(), guts);
-		//	logger->debug("{} - ok!", fs::absolute(guts_file).string());
-		//	logger->debug("exiting...");
-		//	return 0;
-		//}
 	}
 	catch (std::exception& e)
 	{

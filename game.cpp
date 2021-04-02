@@ -59,42 +59,6 @@ void pong::constrain_pos(pos& p)
 }
 
 
-//void pong::overrideGuts(const cfgtree& guts)
-//{
-//	using namespace engine;
-//
-//	paddle_kb_speed = guts.get("paddle.kb_speed", paddle_kb_speed);
-//	paddle_max_speed = guts.get("paddle.max_speed", paddle_max_speed);
-//	paddle_size.x = guts.get("paddle.width", paddle_size.x);
-//	paddle_size.y = guts.get("paddle.height", paddle_size.y);
-//
-//	ball_speed = guts.get("ball.speed", ball_speed);
-//	ball_acceleration = guts.get("ball.acceleration", ball_acceleration);
-//	ball_max_speed = guts.get("ball.max_speed", ball_max_speed);
-//	ball_radius = guts.get("ball.radius", ball_radius);
-//}
-//
-//pong::cfgtree pong::createGuts()
-//{
-//	using namespace engine;
-//	
-//	auto guts = cfgtree();
-//	guts.put("version", version);
-//
-//	guts.put("paddle.kb_speed", paddle_kb_speed);
-//	guts.put("paddle.max_speed", paddle_max_speed);
-//	guts.put("paddle.width", paddle_size.x);
-//	guts.put("paddle.height", paddle_size.y);
-//
-//	guts.put("ball.speed", ball_speed);
-//	guts.put("ball.acceleration", ball_acceleration);
-//	guts.put("ball.max_speed", ball_max_speed);
-//	guts.put("ball.radius", ball_radius);
-//
-//	return guts;
-//}
-
-
 pong::game::game(gamemode mode_, game_settings* sett)
 	: Court({ gvar::playarea.width, gvar::playarea.height }, { gvar::playarea.width * .95f, 25 })
 	, settings(sett)
