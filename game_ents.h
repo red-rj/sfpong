@@ -42,10 +42,9 @@ namespace pong
 			set_score(s.first, s.second);
 		}
 
-		bool border_collision(const rect& bounds) const {
-			return bounds.intersects(top_rect.getGlobalBounds()) 
-				or bounds.intersects(bottom_rect.getGlobalBounds());
-		}
+		bool border_collision(const rect& bounds) const;
+
+		rect getBounds() const noexcept;
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

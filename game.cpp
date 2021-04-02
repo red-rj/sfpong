@@ -125,9 +125,11 @@ void pong::game::devEvents(const sf::Event& event)
 		{
 		case sf::Keyboard::F1:
 			Player1.ai = !Player1.ai;
+			log::debug("DEV. Player1 Ai = {}", Player1.ai);
 			break;
 		case sf::Keyboard::F2:
 			Player2.ai = !Player2.ai;
+			log::debug("DEV. Player2 Ai = {}", Player2.ai);
 			break;
 		}
 
@@ -318,7 +320,9 @@ void pong::game::updateBall()
 
 bool pong::game::updateScore()
 {
-	if (!gvar::playarea.intersects(Ball.getGlobalBounds()))
+	auto bounds = Court.getBounds();
+
+	if (!bounds.intersects(Ball.getGlobalBounds()))
 	{
 		// ponto!
 		if (Ball.velocity.x < 0)

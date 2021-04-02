@@ -5,6 +5,8 @@
 pong::paddle::paddle(playerid pid) : base_t(gvar::paddle_size), id(pid)
 {
 	setOrigin(0, gvar::paddle_size.y / 2);
+	setOutlineThickness(1.5f);
+	setOutlineColor(sf::Color::Black);
 }
 
 pong::ball::ball() : base_t(gvar::ball_radius)
@@ -16,22 +18,11 @@ pong::ball::ball() : base_t(gvar::ball_radius)
 void pong::ball::update()
 {
 	move(velocity);
-
-	/*if (border_collision(*this))
-	{
-		velocity.y = -velocity.y;
-	}*/
 }
 
 void pong::paddle::update()
 {
 	move(0, velocity);
-
-	/*if (border_collision(*this))
-	{
-		move(0, -velocity);
-		velocity = 0;
-	}*/
 }
 
 pong::pong_area::pong_area(size2d area, size2d border_size)
@@ -41,18 +32,22 @@ pong::pong_area::pong_area(size2d area, size2d border_size)
 	auto origin = point(border_size.x / 2, 0);
 
 	top_rect.setOrigin(origin);
-	top_rect.setPosition(size.x / 2, 5);
+	top_rect.setPosition(size.x / 2, 0);
 
 	origin.y = border_size.y;
 	bottom_rect.setOrigin(origin);
-	bottom_rect.setPosition(size.x / 2, size.y - 5);
+	bottom_rect.setPosition(size.x / 2, size.y);
 
 	init_net();
 
 	scoreFont.loadFromFile(files::mono_tff);
-	scoreTxt.setPosition(size.x / 2 - 100, border_size.y + 5);
+	scoreTxt.setPosition(size.x / 2 - 100, border_size.y);
 	scoreTxt.setCharacterSize(55);
 	scoreTxt.setFont(scoreFont);
+
+	// margin
+	top_rect.move(0, 6);
+	bottom_rect.move(0, -6);
 }
 
 void pong::pong_area::setup_score(sf::Font const& font, unsigned charSize)
@@ -108,11 +103,29 @@ void pong::pong_area::init_net()
 			net_verts.append(v);
 
 			current.x += pieceSize.x;
-
 			count++;
 		}
 	}
 
 	// nessa ordem
 	net_transform.translate(size.x / 2, 20).rotate(90);
+}
+
+auto pong::pong_area::getBounds() const noexcept -> rect
+{
+	auto top = top_rect.getGlobalBounds();
+	auto bottom = bottom_rect.getGlobalBounds();
+
+	auto r = rect(getPosition(), size);
+	r.top = top.top + top.height;
+	r.height = bottom.top;
+
+	return getTransform().transformRect(r);
+}
+
+bool pong::pong_area::border_collision(const rect& bounds) const
+{
+	auto top = getTransform().transformRect(top_rect.getGlobalBounds());
+	auto bottom = getTransform().transformRect(bottom_rect.getGlobalBounds());
+	return bounds.intersects(top) or bounds.intersects(bottom);
 }
