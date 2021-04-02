@@ -18,8 +18,7 @@ using namespace std::literals;
 
 namespace
 {
-	auto rnd_dev = std::random_device();
-	auto rnd_eng = std::default_random_engine(rnd_dev());
+	auto rnd_eng = std::default_random_engine(1337);
 }
 
 
@@ -179,6 +178,9 @@ void pong::game::update()
 {
 	if (!paused)
 	{
+		updatePlayer(Player1);
+		updatePlayer(Player2);
+
 		updateBall();
 
 		if (runTime.asMilliseconds() % 20 == 0) {
@@ -189,9 +191,6 @@ void pong::game::update()
 				reset(Ball);
 			}
 		}
-
-		updatePlayer(Player1);
-		updatePlayer(Player2);
 	}
 }
 
@@ -241,28 +240,25 @@ void pong::game::restart()
 void pong::game::updatePlayer(paddle& player)
 {
 	auto velocity = player.velocity;
+	using gvar::paddle_max_speed;
 
 	if (player.ai)
 	{
-		using gvar::paddle_max_speed;
-
 		static sf::Clock AIClock;
-		static const sf::Time AITime = sf::seconds(0.1f);
+		static const sf::Time AITime = sf::seconds(0.1);
 
 		if (AIClock.getElapsedTime() > AITime) {
 			AIClock.restart();
 			
 			const auto offset = Ball.getPosition() - player.getPosition();
-			const auto ai_speed = 1;
+			const auto absOffset = pos(abs(offset.x), abs(offset.y));
 
-			if (offset.y > 0)
-				velocity += ai_speed;
-			else if (offset.y < 0)
-				velocity -= ai_speed;
-
-			if (abs(offset.y) < 50) {
-				velocity /= 2;
+			if (absOffset.y > 20) {
+				velocity += std::copysign(1, offset.y);
 			}
+			//if (absOffset.x < 25 and absOffset.y < gvar::paddle_height*.8) {
+			//	auto mixup = random_num(-3, 3);
+			//}
 
 			velocity = std::clamp(velocity, -paddle_max_speed, paddle_max_speed);
 		}
@@ -298,7 +294,6 @@ void pong::game::updatePlayer(paddle& player)
 		}
 
 		if (player.velocity != velocity) {
-			using gvar::paddle_max_speed;
 			velocity = std::clamp(velocity, -paddle_max_speed, paddle_max_speed);
 			auto gofast = gofast_kb || gofast_js;
 

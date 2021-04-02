@@ -63,6 +63,7 @@ static auto scan_joy_btn() noexcept
 #endif
 
 using namespace pong;
+using win = pong::menu::win::Id;
 
 namespace
 {
@@ -71,18 +72,6 @@ namespace
 
 	std::array<std::string, sf::Joystick::Count> _joystick_names;
 	int _joystick_count;
-
-	// window ids
-	namespace win { enum Id {
-		options,
-		game_stats,
-		about,
-		imgui_demo,
-		imgui_about,
-		rebiding_popup,
-
-		Count
-	};}
 
 	// font ids
 	namespace ft { enum Id {
@@ -238,9 +227,9 @@ void pong::menu::processEvent(sf::Event& event)
 	}
 }
 
-bool pong::menu::rebinding_popup_open() noexcept
+bool pong::menu::is_open(win::Id id) noexcept
 {
-	return isVisible[win::rebiding_popup];
+	return isVisible[id];
 }
 
 

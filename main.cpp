@@ -126,8 +126,7 @@ int main(int argc, const char* argv[])
 		vg.update();
 		vg.draw(window);
 
-		//if (vg.is_paused())
-			pong::menu::update(vg, window);
+		pong::menu::update(vg, window);
 		
 		ImGui::SFML::Render(window);
 		window.display();
