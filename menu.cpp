@@ -306,7 +306,7 @@ void optionsWin(game&, sf::Window& window)
 
 void gameStatsWin(game& ctx)
 {
-	using namespace ImScoped;
+	namespace ims = ImScoped;
 
 	ImGuiIO& io = ImGui::GetIO();
 	pos winpos = { io.DisplaySize.x - 10.f, 15.f };
@@ -315,27 +315,34 @@ void gameStatsWin(game& ctx)
 
 	auto const wflags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings 
 						| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-	Window overlay("Stats", &isVisible[win::game_stats], wflags);
+	ims::Window overlay("Stats", &isVisible[win::game_stats], wflags);
 
 	auto players = ctx.get_players();
-
-	auto& P1 = players.first;
-	auto& P2 = players.second;
 	auto& Ball = ctx.get_ball();
 
-	auto p1_pos = P1.getPosition();
-	auto p2_pos = P2.getPosition();
-	auto ball_pos = Ball.getPosition();
+#define VEC2 "[{:.2f},{:.2f}]"
 
-	auto text = fmt::format("P1: [{:.2f}, {:.2f}]\n" "P2: [{:.2f}, {:.2f}]\n" "Ball: [{:.2f}, {:.2f}]",
-		p1_pos.x, p1_pos.y, p2_pos.x, p2_pos.y, ball_pos.x, ball_pos.y);
+	enum { P1, P2, B };
+
+	point Pos[] = {
+		players.first.getPosition(),
+		players.second.getPosition(),
+		Ball.getPosition()
+	};
+
+	auto text = fmt::format("P1: " VEC2 "\n" "P2: " VEC2 "\n" "Ball: " VEC2 "",
+		Pos[P1].x, Pos[P1].y, Pos[P2].x, Pos[P2].y, Pos[B].x, Pos[B].y);
 
 	ImGui::Text("Positions:\n%s", text.c_str());
 
-	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: [{:.3f}, {:.3f}]", 
-		P1.velocity, P2.velocity, Ball.velocity.x, Ball.velocity.y);
+#define VEC2 "[{:.3f},{:.3f}]"
+
+	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: " VEC2 "", 
+		players.first.velocity, players.second.velocity, Ball.velocity.x, Ball.velocity.y);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
+
+#undef VEC2
 }
 
 void aboutSfPongWin()
