@@ -38,6 +38,9 @@ namespace pong
 
 		void setup_score(sf::Font const& font, unsigned charSize);
 		void set_score(short p1, short p2);
+		void set_score(pair<short> s) {
+			set_score(s.first, s.second);
+		}
 
 		bool border_collision(const rect& bounds) const {
 			return bounds.intersects(top_rect.getGlobalBounds()) 

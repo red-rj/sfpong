@@ -127,30 +127,28 @@ void pong::game::processEvent(sf::Event& event)
 
 	devEvents(event);
 
-	switch (event.type)
-	{
-	case Event::KeyReleased:
-	{
-		if (menu::rebinding_popup_open())
-			break;
-
-		switch (event.key.code)
+	if (!menu::is_open(menu::win::rebiding_popup)) {
+		switch (event.type)
 		{
-		case Keyboard::Enter:
-			if (waiting_to_serve()) {
-				serve(resume_serve_dir);
+		case Event::KeyReleased:
+		{
+			switch (event.key.code)
+			{
+			case Keyboard::Enter:
+				if (waiting_to_serve()) {
+					serve(resume_serve_dir);
+				}
+				break;
+			case Keyboard::Escape:
+				paused = !paused;
+				// imgui deve capturar input só com o jogo pausado
+				auto& io = ImGui::GetIO();
+				io.WantCaptureKeyboard = paused;
+				io.WantCaptureMouse = paused;
+				break;
 			}
-			break;
-		case Keyboard::Escape:
-			paused = !paused;
-			// imgui deve capturar input só com o jogo pausado
-			auto& io = ImGui::GetIO();
-			io.WantCaptureKeyboard = paused;
-			io.WantCaptureMouse = paused;
-			break;
+		} break;
 		}
-	} break;
-
 	}
 }
 void pong::game::devEvents(const sf::Event& event)
@@ -178,9 +176,10 @@ void pong::game::update()
 {
 	if (!paused)
 	{
+		tickcount++;
+		
 		updatePlayer(Player1);
 		updatePlayer(Player2);
-
 		updateBall();
 
 		if (runTime.asMilliseconds() % 20 == 0) {
@@ -370,7 +369,7 @@ bool pong::game::updateScore()
 			score.second++;
 			resume_serve_dir = dir::right;
 		}
-		Court.set_score(score.first, score.second);
+		Court.set_score(score);
 		log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
 
 		return true;

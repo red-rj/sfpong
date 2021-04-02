@@ -68,10 +68,10 @@ void pong::pong_area::set_score(short p1, short p2)
 
 void pong::pong_area::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-	states.transform *= getTransform() * net_transform;
+	states.transform = getTransform() * net_transform;
 	target.draw(net_verts, states);
 	
-	states.transform *= net_transform.getInverse() * getTransform();
+	states.transform = sf::Transform::Identity * getTransform();
 	target.draw(top_rect, states);
 	target.draw(bottom_rect, states);
 	target.draw(scoreTxt, states);

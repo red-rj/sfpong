@@ -25,3 +25,4 @@ sfPong TODOs
 * [wip] encapsular Playarea e pong_court em uma classe
 	parar de depender no valor de playarea
 * [] refatorar startup (main)
+* [] não herdar de shape para player e ball

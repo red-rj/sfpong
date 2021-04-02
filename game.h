@@ -61,6 +61,7 @@ namespace pong
 		void updateBall();
 		bool updateScore();
 
+
 		void reset(ball& b);
 		void reset(paddle& p);
 
@@ -70,7 +71,7 @@ namespace pong
 		gamemode currentMode;
 		sf::Clock clock;
 		sf::Time runTime;
-
+		uint_fast64_t tickcount{};
 
 		//sf::RenderWindow window;
 		game_settings* settings;
