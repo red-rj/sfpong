@@ -20,7 +20,8 @@ using fmt::print;
 
 int main(int argc, const char* argv[])
 {
-	fs::path guts_file = "guts.info", config_file = "game.cfg";
+	//fs::path guts_file = "guts.info";
+	fs::path config_file = "game.cfg";
 	bool show_help=false, guts_arg = false;
 
 	auto cli = lyra::cli()
@@ -40,14 +41,14 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
-	auto logger = spdlog::stdout_color_st("sfPong");
-	spdlog::set_default_logger(logger);
-
+	auto logger_ = spdlog::stdout_color_st("sfPong");
+	spdlog::set_default_logger(logger_);
+	namespace log = spdlog;
 #ifndef NDEBUG
 	spdlog::set_level(spdlog::level::debug);
 #endif // !NDEBUG
 
-	logger->debug("CWD: {}", fs::current_path().string());
+	log::debug("CWD: {}", fs::current_path().string());
 
 	pong::game_settings gamecfg;
 	try
@@ -56,14 +57,14 @@ int main(int argc, const char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		logger->error("{}", e.what());
+		log::error("config: {}", e.what());
 	}
 
 	sf::RenderWindow window;
 
 	try
 	{
-		logger->info("Setting up...");
+		log::info("Setting up...");
 
 		sf::VideoMode vidmode;
 		vidmode.width = gamecfg.resolution().x;
@@ -92,7 +93,7 @@ int main(int argc, const char* argv[])
 	}
 	catch (std::exception& e)
 	{
-		logger->error("Game setup failed! {}", e.what());
+		log::error("Game setup failed! {}", e.what());
 		return 5;
 	}
 

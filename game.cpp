@@ -11,7 +11,7 @@
 #include "menu.h"
 #include "gvar.h"
 
-const char pong::version[] = "0.8.1";
+const char pong::version[] = "0.8.2";
 
 using namespace std::literals;
 
@@ -55,7 +55,7 @@ void pong::constrain_pos(pos& p)
 	while (p.x >= playarea.width)	p.x -= playarea.width;
 	while (p.y >= playarea.height)	p.y -= playarea.height;
 	while (p.x < 0)	p.x += playarea.width;
-	while (p.y < 0)	p.x += playarea.height;
+	while (p.y < 0)	p.y += playarea.height;
 }
 
 
