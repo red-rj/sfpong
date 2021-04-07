@@ -43,13 +43,16 @@ struct ci_compare
     }
 };
 
-template<class E, class Traits = std::char_traits<char>>
-using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<typename Traits::char_type>, E>;
+template<class E, class Traits = std::char_traits<char>, class Alloc = std::allocator<typename Traits::char_type>>
+using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, Alloc, E>;
 
 namespace boost::property_tree
 {
+#define TRAITS(traits) traits ## ::char_type, traits
+#define STDTRAITS(c) TRAITS(std::char_traits<c>)
+
     template<>
-    struct customize_stream<char, std::char_traits<char>, Keyboard::Key>
+    struct customize_stream<STDTRAITS(char), Keyboard::Key>
     {
         static void insert(std::ostream& os, Keyboard::Key key)
         {
@@ -67,7 +70,7 @@ namespace boost::property_tree
     };
 
     template<>
-    struct customize_stream<char, std::char_traits<char>, Mouse::Button>
+    struct customize_stream<STDTRAITS(char), Mouse::Button>
     {
         static auto insert(std::ostream& os, Mouse::Button btn)
         {
@@ -83,6 +86,9 @@ namespace boost::property_tree
         }
 
     };
+
+#undef TRAITS
+#undef STDTRAITS
 }
 
 class joyid_translator : iostream_translator<int>
