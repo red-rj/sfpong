@@ -320,8 +320,6 @@ void gameStatsWin(game& ctx)
 	auto players = ctx.get_players();
 	auto& Ball = ctx.get_ball();
 
-#define VEC2 "[{:.2f},{:.2f}]"
-
 	enum { P1, P2, B };
 
 	point Pos[] = {
@@ -330,19 +328,15 @@ void gameStatsWin(game& ctx)
 		Ball.getPosition()
 	};
 
-	auto text = fmt::format("P1: " VEC2 "\n" "P2: " VEC2 "\n" "Ball: " VEC2 "",
-		Pos[P1].x, Pos[P1].y, Pos[P2].x, Pos[P2].y, Pos[B].x, Pos[B].y);
+	auto text = fmt::format("P1: [{:.2f}]\n" "P2: [{:.2f}]\n" "Ball: [{:.2f}]",
+		Pos[P1], Pos[P2], Pos[B]);
 
 	ImGui::Text("Positions:\n%s", text.c_str());
 
-#define VEC2 "[{:.3f},{:.3f}]"
-
-	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: " VEC2 "", 
-		players.first.velocity, players.second.velocity, Ball.velocity.x, Ball.velocity.y);
+	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: [{:.2f}]", 
+		players.first.velocity, players.second.velocity, Ball.velocity);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
-
-#undef VEC2
 }
 
 void aboutSfPongWin()
