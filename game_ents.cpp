@@ -2,25 +2,28 @@
 #include "gvar.h"
 
 
-pong::paddle::paddle(playerid pid) : base_t(gvar::paddle_size), id(pid)
+pong::paddle::paddle(playerid pid) : base_type(gvar::paddle_size), id(pid)
 {
 	setOrigin(0, gvar::paddle_size.y / 2);
-	setOutlineThickness(1.5f);
+
+	//const sf::Int32 lightgray = 0x45 << 24 | 0x45 << 16 | 0x45 << 8 | 127;
 	setOutlineColor(sf::Color::Black);
+	setOutlineThickness(1.5f);
 }
 
-pong::ball::ball() : base_t(gvar::ball_radius)
+pong::ball::ball() : base_type(gvar::ball_radius)
 {
 	setOrigin(gvar::ball_radius, gvar::ball_radius);
 	setFillColor(sf::Color::Red);
 }
 
-void pong::ball::update()
+
+void pong::ball::move()
 {
 	move(velocity);
 }
 
-void pong::paddle::update()
+void pong::paddle::move()
 {
 	move(0, velocity);
 }
@@ -45,7 +48,7 @@ pong::pong_area::pong_area(size2d area, size2d border_size)
 	scoreTxt.setCharacterSize(55);
 	scoreTxt.setFont(scoreFont);
 
-	// margin
+	// margin  
 	top_rect.move(0, 6);
 	bottom_rect.move(0, -6);
 }

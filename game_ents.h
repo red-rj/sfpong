@@ -8,10 +8,11 @@ namespace pong
 	// TODO: não herdar de shape
 	struct paddle : sf::RectangleShape
 	{
-		using base_t = sf::RectangleShape;
+		using base_type = sf::RectangleShape;
 
 		paddle(playerid pid);
-		void update();
+		void move();
+		using base_type::move;
 
 		bool ai = false;
 		playerid id;
@@ -20,10 +21,11 @@ namespace pong
 
 	struct ball : sf::CircleShape
 	{
-		using base_t = sf::CircleShape;
+		using base_type = sf::CircleShape;
 
 		ball();
-		void update();
+		void move();
+		using base_type::move;
 
 		vel velocity;
 	};

@@ -94,24 +94,24 @@ void pong::game::processEvent(sf::Event& event)
 	if (!menu::is_open(menu::win::rebiding_popup)) {
 		switch (event.type)
 		{
-		case Event::KeyReleased:
-		{
-			switch (event.key.code)
+			case Event::KeyReleased:
 			{
-			case Keyboard::Enter:
-				if (waiting_to_serve()) {
-					serve(resume_serve_dir);
+				switch (event.key.code)
+				{
+					case Keyboard::Enter:
+						if (waiting_to_serve()) {
+							serve(resume_serve_dir);
+						}
+						break;
+					case Keyboard::Escape:
+						paused = !paused;
+						// imgui deve capturar input só com o jogo pausado
+						auto& io = ImGui::GetIO();
+						io.WantCaptureKeyboard = paused;
+						io.WantCaptureMouse = paused;
+						break;
 				}
-				break;
-			case Keyboard::Escape:
-				paused = !paused;
-				// imgui deve capturar input só com o jogo pausado
-				auto& io = ImGui::GetIO();
-				io.WantCaptureKeyboard = paused;
-				io.WantCaptureMouse = paused;
-				break;
-			}
-		} break;
+			} break;
 		}
 	}
 }
@@ -273,7 +273,7 @@ void pong::game::updatePlayer(paddle& player)
 	}
 
 	player.velocity = velocity;
-	player.update();
+	player.move();
 
 	if (Court.border_collision(player.getGlobalBounds())) {
 		player.move(0, -velocity);
@@ -307,10 +307,10 @@ void pong::game::updateBall()
 
 		do
 		{
-			Ball.update();
+			Ball.move();
 		} while (collision(*player, Ball));
 	}
-	else Ball.update();
+	else Ball.move();
 
 	if (Court.border_collision(Ball.getGlobalBounds()))
 	{

@@ -34,9 +34,5 @@ namespace menu {
 
 	bool is_open(win::Id id) noexcept;
 
-	inline bool rebinding_popup_open() noexcept {
-		return is_open(win::rebiding_popup);
-	}
-
 } // menu
 }

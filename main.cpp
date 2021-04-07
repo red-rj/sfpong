@@ -110,8 +110,8 @@ int main(int argc, const char* argv[])
 		vg.draw(window);
 
 		pong::menu::update(vg, window);
-		
 		ImGui::SFML::Render(window);
+		
 		window.display();
 	}
 
