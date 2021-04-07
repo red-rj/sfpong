@@ -53,7 +53,7 @@ namespace files
 
     extern const char version[];
 
-    constexpr auto to_string(playerid pl) noexcept
+    constexpr auto nameof(playerid pl) noexcept
     {
         switch (pl)
         {
@@ -63,7 +63,7 @@ namespace files
         }
     }
 
-    constexpr auto to_string(dir d) noexcept {
+    constexpr auto nameof(dir d) noexcept {
         switch (d)
         {
         case dir::up: return "up";

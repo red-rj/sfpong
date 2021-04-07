@@ -338,7 +338,7 @@ bool pong::game::updateScore()
 			resume_serve_dir = dir::right;
 		}
 		Court.set_score(score);
-		log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
+		log::info("score: {}x{} ; serve: {}", score.first, score.second, nameof(resume_serve_dir));
 
 		return true;
 	}

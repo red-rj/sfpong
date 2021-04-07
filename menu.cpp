@@ -422,7 +422,7 @@ void controlsUi()
 
 	auto inputKbCtrls = [&](pong::playerid pl)
 	{
-		auto title = to_string(pl);
+		auto title = nameof(pl);
 		gui::GroupID _grp_ = title;
 
 		ImGui::Text("%s:", title);
@@ -446,7 +446,7 @@ void controlsUi()
 	}
 
 	auto inputJoystickSettings = [&](playerid pid) mutable {
-		auto title = to_string(pid);
+		auto title = nameof(pid);
 
 		gui::GroupID _grp_ = title;
 		ImGui::Text(title);
