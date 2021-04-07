@@ -80,7 +80,10 @@ namespace
 		monospace,
 		section_title,
 
-		Count
+		Count,
+
+		normal = default_,
+		larger = default_large
 	};}
 
 	// show flags
@@ -204,7 +207,7 @@ void pong::menu::init(game_settings* gs)
 	fonts[ft::default_] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
 	fonts[ft::default_large] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
 	fonts[ft::section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
-	//fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
+	fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 	ImGui::SFML::UpdateFontTexture();
 }
 
@@ -344,22 +347,32 @@ void aboutSfPongWin()
 	using namespace ImGui;
 	namespace gui = ImScoped;
 
-	auto win = gui::Window("Sobre sfPong", &isVisible[win::about], ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-	if (!win) return;
+	auto window = gui::Window("Sobre sfPong", &isVisible[win::about], ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+	if (!window) return;
 
 	Text("sfPong %s", pong::version);
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
-{
-	using ImScoped::StyleColor;
-	StyleColor _a_{ ImGuiCol_Button, sf::Color::Transparent };
 
-	if (SmallButton("ImGui: " IMGUI_VERSION))
+	gui::Font _f_ = fonts[ft::monospace];
+
+	const auto libver = "%-7s %d.%d.%d";
+	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
+
+{ // imgui
+	Text(libver, "ImGui", 
+		IMGUI_VERSION_NUM / 10000,
+		IMGUI_VERSION_NUM / 100 % 100,
+		IMGUI_VERSION_NUM % 100
+	);
+
+	SameLine();
+
+	gui::Font _ff_ = fonts[ft::normal];
+	if (SmallButton(" + "))
 		isVisible[win::imgui_about] = true;
 }
 
-	const auto libver = " %s: %d.%d.%d";
-	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
 	Text(libver, "Boost",
 		BOOST_VERSION / 100000,
 		BOOST_VERSION / 100 % 1000,
