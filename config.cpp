@@ -46,23 +46,44 @@ struct ci_compare
 template<class E, class Traits = std::char_traits<char>>
 using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<typename Traits::char_type>, E>;
 
-template<>
-struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyboard::Key>
+namespace boost::property_tree
 {
-    static void insert(std::ostream& os, Keyboard::Key key)
+    template<>
+    struct customize_stream<char, std::char_traits<char>, Keyboard::Key>
     {
-        auto const& table = sf_keyboard_table();
-        os << table[key];
-    }
+        static void insert(std::ostream& os, Keyboard::Key key)
+        {
+            auto const& table = sf_keyboard_table();
+            os << table[key];
+        }
 
-    static void extract(std::istream& is, Keyboard::Key& key)
+        static void extract(std::istream& is, Keyboard::Key& key)
+        {
+            auto const& table = sf_keyboard_table();
+            std::string token;
+            is >> token;
+            key = Keyboard::Key(table[token]);
+        }
+    };
+
+    template<>
+    struct customize_stream<char, std::char_traits<char>, Mouse::Button>
     {
-        auto const& table = sf_keyboard_table();
-        std::string token;
-        is >> token;
-        key = Keyboard::Key(table[token]);
-    }
-};
+        static auto insert(std::ostream& os, Mouse::Button btn)
+        {
+            auto& table = sf_mouse_table();
+            os << table[btn];
+        }
+        static void extract(std::istream& is, Mouse::Button& btn)
+        {
+            auto& table = sf_mouse_table();
+            std::string token;
+            is >> token;
+            btn = Mouse::Button(table[token]);
+        }
+
+    };
+}
 
 class joyid_translator : iostream_translator<int>
 {
