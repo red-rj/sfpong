@@ -18,7 +18,6 @@
 #include "game_config.h"
 #include "convert.h"
 
-
 using sf::Keyboard;
 using sf::Joystick;
 using sf::Mouse;
@@ -172,9 +171,9 @@ void pong::game_settings::set_joystick(playerid pid, int joyid) noexcept
 {
     if (joyid != njoystick) {
         // nao deixar o mesmo joystick para os 2 jogadores
-        playerid other = pid == playerid::one ? playerid::two : playerid::one;
-        if (player_joystick[int(other)] == joyid) {
-            player_joystick[int(other)] = njoystick;
+        auto& otherJs = pid == playerid::one ? player_joystick[1] : player_joystick[0];
+        if (otherJs == joyid) {
+            otherJs = njoystick;
         }
     }
 
@@ -187,16 +186,20 @@ void pong::game_settings::load_tree(const cfgtree& tree)
     enum { P1, P2 };
 
     // player one
-    player_keys[P1].up = tree.get(P1_UP, Keyboard::W);
-    player_keys[P1].down = tree.get(P1_DOWN, Keyboard::S);
-    player_keys[P1].fast = tree.get(P1_FAST, Keyboard::LShift);
+    player_keys[P1] = {
+        tree.get(P1_UP, Keyboard::W),
+        tree.get(P1_DOWN, Keyboard::S),
+        tree.get(P1_FAST, Keyboard::LShift)
+    };
     player_joystick[P1] = tree.get(P1_JOYSTICK, njoystick, joyid_translator());
     player_deadzone[P1] = tree.get(P1_JSDEADZONE, 10.f);
 
     // player two
-    player_keys[P2].up = tree.get(P2_UP, Keyboard::Up);
-    player_keys[P2].down = tree.get(P2_DOWN, Keyboard::Down);
-    player_keys[P2].fast = tree.get(P2_FAST, Keyboard::RControl);
+    player_keys[P2] = {
+        tree.get(P2_UP, Keyboard::Up),
+        tree.get(P2_DOWN, Keyboard::Down),
+        tree.get(P2_FAST, Keyboard::RControl)
+    };
     player_joystick[P2] = tree.get(P2_JOYSTICK, njoystick, joyid_translator());
     player_deadzone[P2] = tree.get(P2_JSDEADZONE, 10.f);
 
@@ -213,7 +216,6 @@ void pong::game_settings::load_file(std::filesystem::path const& iniPath)
     log::info("loading config file: {}", ini);
     
     read_ini(ini, cfg);
-
     load_tree(cfg);
 }
 
@@ -251,13 +253,11 @@ void pong::game_settings::save_file(std::filesystem::path const& iniPath) const
 
 bool pong::game_settings::operator==(const game_settings& rhs) const noexcept
 {
-    using std::tie; using std::equal;
-    return 
-        tie(win_fullscreen, win_resolution) == tie(rhs.win_fullscreen, rhs.win_resolution) &&
-        // input
-        equal(player_keys, player_keys+2, rhs.player_keys) &&
-        equal(player_joystick, player_joystick+2, rhs.player_joystick) &&
-        equal(player_deadzone, player_deadzone+2, rhs.player_deadzone)
+    using std::tie;
+    return
+        tie(win_fullscreen, win_resolution, player_keys, player_joystick, player_deadzone)
+        ==
+        tie(rhs.win_fullscreen, rhs.win_resolution, rhs.player_keys, rhs.player_joystick, rhs.player_deadzone)
     ;
 }
 
@@ -269,7 +269,6 @@ bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
 }
 
 // enum name tables
-
 auto sf_keyboard_table() ->enum_name_table const&
 {
     static enum_name_table names
