@@ -38,7 +38,6 @@ namespace pong
 
 		auto& get_size() const { return size; }
 
-		void setup_score(sf::Font const& font, unsigned charSize);
 		void set_score(short p1, short p2);
 		void set_score(pair<short> s) {
 			set_score(s.first, s.second);

@@ -3,7 +3,8 @@
 
 namespace gvar
 {
-	inline const pong::rect playarea = { 0.f, 0.f, 1280.f, 1024.f };
+	constexpr float playarea_width = 1280, playarea_height = 1024;
+	//inline const pong::rect playarea = { 0.f, 0.f, playarea_width, playarea_height };
 
 	constexpr float paddle_kb_speed = 1;
 	constexpr float paddle_max_speed = 30;

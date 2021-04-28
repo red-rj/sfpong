@@ -13,6 +13,7 @@ namespace pong
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
 
+    /*
     template<class T>
     class size_2d
     {
@@ -28,6 +29,7 @@ namespace pong
 
         T width, height;
     };
+    */
 
     // position type
     using pos = sf::Vector2f;

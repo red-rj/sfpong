@@ -53,12 +53,6 @@ pong::pong_area::pong_area(size2d area, size2d border_size)
 	bottom_rect.move(0, -6);
 }
 
-void pong::pong_area::setup_score(sf::Font const& font, unsigned charSize)
-{
-	scoreTxt.setFont(font);
-	scoreTxt.setCharacterSize(charSize);
-}
-
 void pong::pong_area::set_score(short p1, short p2)
 {
 	scoreTxt.setString(fmt::format("{}    {}", p1, p2));
@@ -93,16 +87,16 @@ void pong::pong_area::init_net()
 
 			// triangle1
 			net_verts.append(v);
-			v.position = current + pos(pieceSize.x, 0);
+			v.position.x += pieceSize.x;
 			net_verts.append(v);
-			v.position = current + pieceSize;
+			v.position.y += pieceSize.y;
 			net_verts.append(v);
 			// triangle2
 			v.position = current;
 			net_verts.append(v);
-			v.position = current + pos(0, pieceSize.y);
+			v.position.y += pieceSize.y;
 			net_verts.append(v);
-			v.position = current + pieceSize;
+			v.position.x += pieceSize.x;
 			net_verts.append(v);
 
 			current.x += pieceSize.x;

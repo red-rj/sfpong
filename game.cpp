@@ -4,7 +4,6 @@
 #include <bitset>
 #include <fmt/format.h>
 #include <imgui.h>
-#include <boost/property_tree/ptree.hpp>
 #include "common.h"
 #include "game.h"
 #include "rng.h"
@@ -50,17 +49,17 @@ bool pong::collision(const rect& a, const rect& b)
 
 void pong::constrain_pos(pos& p)
 {
-	using gvar::playarea;
+	using namespace gvar;
 
-	while (p.x >= playarea.width)	p.x -= playarea.width;
-	while (p.y >= playarea.height)	p.y -= playarea.height;
-	while (p.x < 0)	p.x += playarea.width;
-	while (p.y < 0)	p.y += playarea.height;
+	while (p.x >= playarea_width)	p.x -= playarea_width;
+	while (p.y >= playarea_height)	p.y -= playarea_height;
+	while (p.x < 0)	p.x += playarea_width;
+	while (p.y < 0)	p.y += playarea_height;
 }
 
 
 pong::game::game(gamemode mode_, game_settings* sett)
-	: Court({ gvar::playarea.width, gvar::playarea.height }, { gvar::playarea.width * .95f, 25 })
+	: Court({ gvar::playarea_width, gvar::playarea_height }, { gvar::playarea_width * .95f, 25 })
 	, settings(sett)
 {
 	change_mode(mode_);
@@ -163,7 +162,7 @@ void pong::game::update()
 static sf::View get_play_view(float target_width)
 {
 	float to_w = target_width;
-	float from_w = gvar::playarea.width;
+	float from_w = gvar::playarea_width;
 
 	if (from_w > to_w) {
 		std::swap(from_w, to_w);
@@ -175,7 +174,7 @@ static sf::View get_play_view(float target_width)
 	auto space_ratio = (to_w - from_w) / to_w;
 	vp.left = space_ratio / 2;
 
-	auto view = sf::View(gvar::playarea);
+	auto view = sf::View(pong::rect(0,0, gvar::playarea_width, gvar::playarea_height));
 	view.setViewport(vp);
 
 	return view;
@@ -348,19 +347,19 @@ bool pong::game::updateScore()
 void pong::game::reset(ball& b)
 {
 	b.velocity = vel();
-	b.setPosition(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	b.setPosition(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
 void pong::game::reset(paddle& p)
 {
-	const auto margin = gvar::playarea.width * .05f;
-	const auto center = point(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	const auto margin = gvar::playarea_width * .05f;
+	const auto center = point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 
 	if (p.id == playerid::one) {
 		p.setPosition(margin - gvar::paddle_size.x, center.y);
 	}
 	else if (p.id == playerid::two) {
-		p.setPosition(gvar::playarea.width - margin, center.y);
+		p.setPosition(gvar::playarea_width - margin, center.y);
 	}
 	p.velocity = 0;
 }
@@ -369,7 +368,7 @@ bool pong::game::waiting_to_serve() const noexcept
 {
 	return !paused 
 		&& Ball.velocity == vel() 
-		&& Ball.getPosition() == point(gvar::playarea.width / 2, gvar::playarea.height / 2);
+		&& Ball.getPosition() == point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
 void pong::game::serve(dir direction)
@@ -379,6 +378,6 @@ void pong::game::serve(dir direction)
 		mov = -mov;
 	}
 
-	Ball.setPosition(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	Ball.setPosition(gvar::playarea_width / 2, gvar::playarea_height / 2);
 	Ball.velocity = { mov, 0 };
 }
