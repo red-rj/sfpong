@@ -87,10 +87,11 @@ void pong::game::processEvent(sf::Event& event)
 {
 	using sf::Event;
 	using sf::Keyboard;
+	using mwin = menu::win::Id;
 
 	devEvents(event);
 
-	if (!menu::is_open(menu::win::rebiding_popup)) {
+	if (!menu::is_open(mwin::rebiding_popup)) {
 		switch (event.type)
 		{
 			case Event::KeyReleased:
@@ -209,20 +210,18 @@ void pong::game::updatePlayer(paddle& player)
 	if (player.ai)
 	{
 		static sf::Clock AIClock;
-		static const sf::Time AITime = sf::seconds(0.1);
+		static const sf::Time AITime = sf::seconds(0.3f);
 
 		if (AIClock.getElapsedTime() > AITime) {
 			AIClock.restart();
 			
 			const auto offset = Ball.getPosition() - player.getPosition();
-			const auto absOffset = pos(abs(offset.x), abs(offset.y));
 
-			if (absOffset.y > 20) {
-				velocity += std::copysign(1, offset.y);
+			if (abs(offset.y) > 20) {
+				//velocity += std::copysign(1, offset.y);
+				auto m = offset.y / 20;
+				velocity += m;
 			}
-			//if (absOffset.x < 25 and absOffset.y < gvar::paddle_height*.8) {
-			//	auto mixup = random_num(-3, 3);
-			//}
 
 			velocity = std::clamp(velocity, -paddle_max_speed, paddle_max_speed);
 		}
@@ -272,7 +271,7 @@ void pong::game::updatePlayer(paddle& player)
 	}
 
 	player.velocity = velocity;
-	player.move();
+	player.update();
 
 	if (Court.border_collision(player.getGlobalBounds())) {
 		player.move(0, -velocity);
@@ -306,10 +305,10 @@ void pong::game::updateBall()
 
 		do
 		{
-			Ball.move();
+			Ball.update();
 		} while (collision(*player, Ball));
 	}
-	else Ball.move();
+	else Ball.update();
 
 	if (Court.border_collision(Ball.getGlobalBounds()))
 	{

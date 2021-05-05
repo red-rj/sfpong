@@ -87,10 +87,10 @@ namespace
 	};}
 
 	// show flags
-	bool isVisible[win::Count] = {};
+	bool isVisible[win::Count];
 
 	//fonts
-	ImFont* fonts[ft::Count] = {};
+	ImFont* fonts[ft::Count];
 
 }
 
@@ -204,8 +204,8 @@ void pong::menu::init(game_settings* gs)
 	const auto ui_font_size = 18.f;
 
 	atlas->Clear();
-	fonts[ft::default_] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
-	fonts[ft::default_large] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
+	fonts[ft::normal] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
+	fonts[ft::larger] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
 	fonts[ft::section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
 	fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
 	ImGui::SFML::UpdateFontTexture();

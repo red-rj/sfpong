@@ -18,12 +18,12 @@ pong::ball::ball() : base_type(gvar::ball_radius)
 }
 
 
-void pong::ball::move()
+void pong::ball::update()
 {
 	move(velocity);
 }
 
-void pong::paddle::move()
+void pong::paddle::update()
 {
 	move(0, velocity);
 }
@@ -110,14 +110,7 @@ void pong::pong_area::init_net()
 
 auto pong::pong_area::getBounds() const noexcept -> rect
 {
-	auto top = top_rect.getGlobalBounds();
-	auto bottom = bottom_rect.getGlobalBounds();
-
-	auto r = rect(getPosition(), size);
-	r.top = top.top + top.height;
-	r.height = bottom.top;
-
-	return getTransform().transformRect(r);
+	return getTransform().transformRect(rect({}, size));
 }
 
 bool pong::pong_area::border_collision(const rect& bounds) const

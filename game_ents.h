@@ -11,8 +11,7 @@ namespace pong
 		using base_type = sf::RectangleShape;
 
 		paddle(playerid pid);
-		void move();
-		using base_type::move;
+		void update();
 
 		bool ai = false;
 		playerid id;
@@ -24,8 +23,7 @@ namespace pong
 		using base_type = sf::CircleShape;
 
 		ball();
-		void move();
-		using base_type::move;
+		void update();
 
 		vel velocity;
 	};
