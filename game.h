@@ -71,7 +71,6 @@ namespace pong
 		gamemode currentMode;
 		sf::Clock clock;
 		sf::Time runTime;
-		uint_fast64_t tickcount{};
 
 		//sf::RenderWindow window;
 		game_settings* settings;

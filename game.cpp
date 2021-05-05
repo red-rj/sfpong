@@ -142,8 +142,6 @@ void pong::game::update()
 {
 	if (!paused)
 	{
-		tickcount++;
-		
 		updatePlayer(Player1);
 		updatePlayer(Player2);
 		updateBall();

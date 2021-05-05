@@ -99,10 +99,8 @@ namespace
 static void optionsWin(game& ctx, sf::Window& window);
 static void gameStatsWin(game& ctx);
 static void aboutSfPongWin();
-
 // ui
 static void controlsUi();
-static int joystickCombobox(int current_joyid);
 
 static void refresh_joysticks()
 {
@@ -465,7 +463,36 @@ void controlsUi()
 		ImGui::Text(title);
 
 		auto joyid = work_settings.get_joystick(pid);
-		auto selected = joystickCombobox(joyid);
+		int selected = joyid;
+
+		// joystick combobox
+		{
+			using sf::Joystick;
+			const auto npos = game_settings::njoystick;
+			const auto nitem = "Nenhum";
+
+			auto previewItem = joyid == npos ? nitem : _joystick_names[joyid].c_str();
+
+			if (auto cb = gui::Combo("", previewItem))
+			{
+				bool is_selected = joyid == npos;
+				if (ImGui::Selectable(nitem, is_selected)) {
+					selected = npos;
+				}
+
+				for (int s{}; s < _joystick_count; s++)
+				{
+					is_selected = s == joyid;
+					auto& name = _joystick_names[s];
+
+					if (ImGui::Selectable(name.c_str(), is_selected))
+						selected = s;
+
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+			}
+		}
 
 		if (selected != joyid) {
 			work_settings.set_joystick(pid, selected);
@@ -478,38 +505,4 @@ void controlsUi()
 	inputJoystickSettings(playerid::one);
 	ImGui::NewLine();
 	inputJoystickSettings(playerid::two);
-}
-
-int joystickCombobox(int current_joyid)
-{
-	using namespace ImGui;
-	namespace gui = ImScoped;
-	using sf::Joystick;
-
-	const auto npos = game_settings::njoystick;
-	const auto nitem = "Nenhum";
-
-	auto previewItem = current_joyid == npos ? nitem : _joystick_names[current_joyid].c_str();
-
-	if (auto cb = gui::Combo("", previewItem))
-	{
-		bool is_selected = current_joyid == npos;
-		if (Selectable(nitem, is_selected)) {
-			current_joyid = npos;
-		}
-
-		for (int s{}; s < _joystick_count; s++)
-		{
-			is_selected = s == current_joyid;
-			auto& name = _joystick_names[s];
-
-			if (Selectable(name.c_str(), is_selected))
-				current_joyid = s;
-
-			if (is_selected)
-				SetItemDefaultFocus();
-		}
-	}
-
-	return current_joyid;
 }
