@@ -301,7 +301,8 @@ void optionsWin(game&, sf::Window& window)
 	if (ImGui::Button("Salvar") && isDirty)
 	{
 		*settings = work_settings;
-		window.setSize(settings->resolution());
+		// TODO: resolução
+		//window.setSize(settings->resolution());
 	}
 }
 
@@ -321,16 +322,13 @@ void gameStatsWin(game& ctx)
 	auto players = ctx.get_players();
 	auto& Ball = ctx.get_ball();
 
-	enum { P1, P2, B };
-
 	point Pos[] = {
 		players.first.getPosition(),
 		players.second.getPosition(),
 		Ball.getPosition()
 	};
 
-	auto text = fmt::format("P1: [{:.2f}]\n" "P2: [{:.2f}]\n" "Ball: [{:.2f}]",
-		Pos[P1], Pos[P2], Pos[B]);
+	auto text = fmt::format("P1: [{:.2f}]\n" "P2: [{:.2f}]\n" "Ball: [{:.2f}]", Pos[0], Pos[1], Pos[2]);
 
 	ImGui::Text("Positions:\n%s", text.c_str());
 

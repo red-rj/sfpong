@@ -65,8 +65,8 @@ namespace ckey
         static const int njoystick = -1;
         auto get_joystick(playerid pid) const noexcept { return player_joystick[int(pid)]; }
         void set_joystick(playerid pid, int joyid) noexcept;
-
         void unset_joystick(playerid pid) noexcept { set_joystick(pid, njoystick); }
+
         bool using_joystick(playerid pid) const noexcept {
             return player_joystick[int(pid)] != njoystick;
         }
