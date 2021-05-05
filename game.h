@@ -18,7 +18,7 @@ namespace pong
 	
 	struct game
 	{
-		game(gamemode mode_, game_settings* sett);
+		game(gamemode mode_, game_settings& sett);
 
 		void update();
 		void processEvent(sf::Event& event);
@@ -73,7 +73,7 @@ namespace pong
 		sf::Time runTime;
 
 		//sf::RenderWindow window;
-		game_settings* settings;
+		game_settings& settings;
 
 		paddle Player1{ playerid::one }, Player2{ playerid::two };
 		ball Ball;

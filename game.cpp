@@ -58,7 +58,7 @@ void pong::constrain_pos(pos& p)
 }
 
 
-pong::game::game(gamemode mode_, game_settings* sett)
+pong::game::game(gamemode mode_, game_settings& sett)
 	: Court({ gvar::playarea_width, gvar::playarea_height }, { gvar::playarea_width * .95f, 25 })
 	, settings(sett)
 {
@@ -230,7 +230,7 @@ void pong::game::updatePlayer(paddle& player)
 		using sf::Joystick;
 
 		// keyboard
-		auto& kb_controls = settings->get_keyboard_keys(player.id);
+		auto& kb_controls = settings.get_keyboard_keys(player.id);
 		bool gofast_kb = Keyboard::isKeyPressed(kb_controls.fast);
 		
 		if (Keyboard::isKeyPressed(kb_controls.up))
@@ -241,10 +241,10 @@ void pong::game::updatePlayer(paddle& player)
 
 		// joystick
 		bool gofast_js = false;
-		if (settings->using_joystick(player.id))
+		if (settings.using_joystick(player.id))
 		{
-			auto joyid = settings->get_joystick(player.id);
-			auto deadzone = settings->joystick_deadzone(player.id);
+			auto joyid = settings.get_joystick(player.id);
+			auto deadzone = settings.joystick_deadzone(player.id);
 
 			auto axis = Joystick::getAxisPosition(joyid, Joystick::Y);
 			// deadzone

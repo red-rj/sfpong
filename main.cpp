@@ -83,7 +83,7 @@ int main(int argc, const char* argv[])
 	pong::menu::init(&gamecfg);
 
 	// game instance
-	auto vg = pong::game(pong::gamemode::singleplayer, &gamecfg);
+	auto vg = pong::game(pong::gamemode::singleplayer, gamecfg);
 
 	while (window.isOpen())
 	{
