@@ -18,7 +18,21 @@ namespace menu {
 	void update(game& ctx, sf::Window& window);
 	void processEvent(sf::Event& event);
 
-	bool rebinding_popup_open() noexcept;
+
+	// window ids
+	namespace win { enum Id {
+		options,
+		game_stats,
+		about,
+		imgui_demo,
+		imgui_about,
+		rebiding_popup,
+
+		Count
+	};}
+
+
+	bool is_open(win::Id id) noexcept;
 
 } // menu
 }

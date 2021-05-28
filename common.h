@@ -13,7 +13,23 @@ namespace pong
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
 
-    //template<typename T> using pair_of = std::pair<T, T>;
+    /*
+    template<class T>
+    class size_2d
+    {
+    public:
+        size_2d() = default;
+
+        size_2d(T width_, T height_) : width(width_), height(height_) {}
+
+        size_2d(sf::Vector2<T> const& vec) : size_2d(vec.x, vec.y) {}
+
+        operator sf::Vector2<T>() const { return { width, height }; }
+
+
+        T width, height;
+    };
+    */
 
     // position type
     using pos = sf::Vector2f;
@@ -39,7 +55,7 @@ namespace files
 
     extern const char version[];
 
-    constexpr auto to_string(playerid pl) noexcept
+    constexpr auto nameof(playerid pl) noexcept
     {
         switch (pl)
         {
@@ -49,7 +65,7 @@ namespace files
         }
     }
 
-    constexpr auto to_string(dir d) noexcept {
+    constexpr auto nameof(dir d) noexcept {
         switch (d)
         {
         case dir::up: return "up";

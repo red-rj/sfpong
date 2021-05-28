@@ -20,13 +20,13 @@ using fmt::print;
 
 int main(int argc, const char* argv[])
 {
-	fs::path guts_file = "guts.info", config_file = "game.cfg";
+	//fs::path guts_file = "guts.info";
+	fs::path config_file = "game.cfg";
 	bool show_help=false, guts_arg = false;
 
 	auto cli = lyra::cli()
 		| lyra::help(show_help).description("sfPong cmd options")
 		| lyra::opt(config_file, "game.cfg")["--config"]("arquivo config.")
-		//| lyra::opt(guts_arg)["--guts"]("usar/criar arquivo GUTS.")
 		;
 
 	auto cli_result = cli.parse({ argc, argv });
@@ -40,14 +40,14 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
-	auto logger = spdlog::stdout_color_st("sfPong");
-	spdlog::set_default_logger(logger);
-
+	auto logger_ = spdlog::stdout_color_st("sfPong");
+	spdlog::set_default_logger(logger_);
+	namespace log = spdlog;
 #ifndef NDEBUG
 	spdlog::set_level(spdlog::level::debug);
 #endif // !NDEBUG
 
-	logger->debug("CWD: {}", fs::current_path().string());
+	log::debug("CWD: {}", fs::current_path().string());
 
 	pong::game_settings gamecfg;
 	try
@@ -56,14 +56,14 @@ int main(int argc, const char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		logger->error("{}", e.what());
+		log::error("config: {}", e.what());
 	}
 
 	sf::RenderWindow window;
 
 	try
 	{
-		logger->info("Setting up...");
+		log::info("Setting up...");
 
 		sf::VideoMode vidmode;
 		vidmode.width = gamecfg.resolution().x;
@@ -72,27 +72,10 @@ int main(int argc, const char* argv[])
 
 		window.create(vidmode, "Sf Pong!");
 		window.setFramerateLimit(60u);
-
-		// guts
-		//pong::cfgtree guts;
-
-		//if (guts_arg and fs::exists(guts_file)) {
-		//	read_info(guts_file.string(), guts);
-		//	logger->debug("got GUTS file: {}", guts_file.string());
-		//	pong::overrideGuts(guts);
-		//}
-		//else if (guts_arg) {
-		//	logger->debug("{} not found! Creating...", guts_file.string());
-		//	guts = pong::createGuts();
-		//	write_info(guts_file.string(), guts);
-		//	logger->debug("{} - ok!", fs::absolute(guts_file).string());
-		//	logger->debug("exiting...");
-		//	return 0;
-		//}
 	}
 	catch (std::exception& e)
 	{
-		logger->error("Game setup failed! {}", e.what());
+		log::error("Game setup failed! {}", e.what());
 		return 5;
 	}
 
@@ -100,7 +83,7 @@ int main(int argc, const char* argv[])
 	pong::menu::init(&gamecfg);
 
 	// game instance
-	auto vg = pong::game(pong::gamemode::singleplayer, &gamecfg);
+	auto vg = pong::game(pong::gamemode::singleplayer, gamecfg);
 
 	while (window.isOpen())
 	{
@@ -126,10 +109,9 @@ int main(int argc, const char* argv[])
 		vg.update();
 		vg.draw(window);
 
-		if (vg.is_paused())
-			pong::menu::update(vg, window);
-		
+		pong::menu::update(vg, window);
 		ImGui::SFML::Render(window);
+		
 		window.display();
 	}
 

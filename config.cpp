@@ -18,12 +18,12 @@
 #include "game_config.h"
 #include "convert.h"
 
-
 using sf::Keyboard;
 using sf::Joystick;
 using sf::Mouse;
 using namespace std::literals;
 using iof = std::ios_base;
+
 struct ci_compare;
 using enum_name_table = symbol_table<std::string_view, int, ci_compare>;
 
@@ -42,26 +42,53 @@ struct ci_compare
     }
 };
 
-template<class E, class Traits = std::char_traits<char>>
-using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, std::allocator<typename Traits::char_type>, E>;
+template<class E, class Traits = std::char_traits<char>, class Alloc = std::allocator<typename Traits::char_type>>
+using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, Alloc, E>;
 
-template<>
-struct boost::property_tree::customize_stream<char, std::char_traits<char>, Keyboard::Key>
+namespace boost::property_tree
 {
-    static void insert(std::ostream& os, Keyboard::Key key)
-    {
-        auto const& table = sf_keyboard_table();
-        os << table[key];
-    }
+#define TRAITS(traits) traits ## ::char_type, traits
+#define STDTRAITS(c) TRAITS(std::char_traits<c>)
 
-    static void extract(std::istream& is, Keyboard::Key& key)
+    template<>
+    struct customize_stream<STDTRAITS(char), Keyboard::Key>
     {
-        auto const& table = sf_keyboard_table();
-        std::string token;
-        is >> token;
-        key = Keyboard::Key(table[token]);
-    }
-};
+        static void insert(std::ostream& os, Keyboard::Key key)
+        {
+            auto const& table = sf_keyboard_table();
+            os << table[key];
+        }
+
+        static void extract(std::istream& is, Keyboard::Key& key)
+        {
+            auto const& table = sf_keyboard_table();
+            std::string token;
+            is >> token;
+            key = Keyboard::Key(table[token]);
+        }
+    };
+
+    template<>
+    struct customize_stream<STDTRAITS(char), Mouse::Button>
+    {
+        static auto insert(std::ostream& os, Mouse::Button btn)
+        {
+            auto& table = sf_mouse_table();
+            os << table[btn];
+        }
+        static void extract(std::istream& is, Mouse::Button& btn)
+        {
+            auto& table = sf_mouse_table();
+            std::string token;
+            is >> token;
+            btn = Mouse::Button(table[token]);
+        }
+
+    };
+
+#undef TRAITS
+#undef STDTRAITS
+}
 
 class joyid_translator : iostream_translator<int>
 {
@@ -76,7 +103,6 @@ public:
 };
 
 // convert
-
 std::ostream& operator<<(std::ostream& os, sf::Keyboard::Key key)
 {
     auto const& table = sf_keyboard_table();
@@ -145,12 +171,9 @@ void pong::game_settings::set_joystick(playerid pid, int joyid) noexcept
 {
     if (joyid != njoystick) {
         // nao deixar o mesmo joystick para os 2 jogadores
-        const auto end = player_joystick + 2;
-        auto dup = std::find(player_joystick, end, joyid);
-        auto owner = playerid(dup - player_joystick);
-
-        if (dup != end && owner != pid) {
-            std::swap(joyid, *dup);
+        auto& otherJs = pid == playerid::one ? player_joystick[1] : player_joystick[0];
+        if (otherJs == joyid) {
+            otherJs = njoystick;
         }
     }
 
@@ -160,25 +183,28 @@ void pong::game_settings::set_joystick(playerid pid, int joyid) noexcept
 void pong::game_settings::load_tree(const cfgtree& tree)
 {
     using namespace ckey;
-    enum { P1, P2 };
 
     // player one
-    player_keys[P1].up = tree.get(P1_UP, Keyboard::W);
-    player_keys[P1].down = tree.get(P1_DOWN, Keyboard::S);
-    player_keys[P1].fast = tree.get(P1_FAST, Keyboard::LShift);
-    player_joystick[P1] = tree.get(P1_JOYSTICK, -1, joyid_translator());
-    player_deadzone[P1] = tree.get(P1_JSDEADZONE, 10.f);
+    player_keys[0] = {
+        tree.get(P1_UP, Keyboard::W),
+        tree.get(P1_DOWN, Keyboard::S),
+        tree.get(P1_FAST, Keyboard::LShift)
+    };
+    player_joystick[0] = tree.get(P1_JOYSTICK, njoystick, joyid_translator());
+    player_deadzone[0] = tree.get(P1_JSDEADZONE, 10.f);
 
     // player two
-    player_keys[P2].up = tree.get(P2_UP, Keyboard::Up);
-    player_keys[P2].down = tree.get(P2_DOWN, Keyboard::Down);
-    player_keys[P2].fast = tree.get(P2_FAST, Keyboard::RControl);
-    player_joystick[P2] = tree.get(P2_JOYSTICK, -1, joyid_translator());
-    player_deadzone[P2] = tree.get(P2_JSDEADZONE, 10.f);
+    player_keys[1] = {
+        tree.get(P2_UP, Keyboard::Up),
+        tree.get(P2_DOWN, Keyboard::Down),
+        tree.get(P2_FAST, Keyboard::RControl)
+    };
+    player_joystick[1] = tree.get(P2_JOYSTICK, njoystick, joyid_translator());
+    player_deadzone[1] = tree.get(P2_JSDEADZONE, 10.f);
 
     // game
-    win_resolution.x = tree.get(RESOLUTION_X, 1024u);
-    win_resolution.y = tree.get(RESOLUTION_Y, 768u);
+    win_resolution.x = tree.get(RESOLUTION_X, 1280u);
+    win_resolution.y = tree.get(RESOLUTION_Y, 1024u);
     win_fullscreen = tree.get(FULLSCREEN, false);
 }
 
@@ -187,29 +213,29 @@ void pong::game_settings::load_file(std::filesystem::path const& iniPath)
     const auto ini = iniPath.string();
     cfgtree cfg;
     log::info("loading config file: {}", ini);
-    
     read_ini(ini, cfg);
-
     load_tree(cfg);
 }
 
 void pong::game_settings::save_tree(cfgtree& tree) const
 {
     using namespace ckey;
-    enum { P1, P2 };
+    
+    // player one
+    tree.put(P1_UP, player_keys[0].up);
+    tree.put(P1_DOWN, player_keys[0].down);
+    tree.put(P1_FAST, player_keys[0].fast);
+    tree.put(P1_JOYSTICK, player_joystick[0], joyid_translator());
+    tree.put(P1_JSDEADZONE, player_deadzone[0]);
 
-    tree.put(P1_UP, player_keys[P1].up);
-    tree.put(P1_DOWN, player_keys[P1].down);
-    tree.put(P1_FAST, player_keys[P1].fast);
-    tree.put(P1_JOYSTICK, player_joystick[P1], joyid_translator());
-    tree.put(P1_JSDEADZONE, player_deadzone[P1]);
+    // player two
+    tree.put(P2_UP, player_keys[1].up);
+    tree.put(P2_DOWN, player_keys[1].down);
+    tree.put(P2_FAST, player_keys[1].fast);
+    tree.put(P2_JOYSTICK, player_joystick[1], joyid_translator());
+    tree.put(P2_JSDEADZONE, player_deadzone[1]);
 
-    tree.put(P2_UP, player_keys[P2].up);
-    tree.put(P2_DOWN, player_keys[P2].down);
-    tree.put(P2_FAST, player_keys[P2].fast);
-    tree.put(P2_JOYSTICK, player_joystick[P2], joyid_translator());
-    tree.put(P2_JSDEADZONE, player_deadzone[P2]);
-
+    // game
     tree.put(RESOLUTION_X, win_resolution.x);
     tree.put(RESOLUTION_Y, win_resolution.y);
     tree.put(FULLSCREEN, win_fullscreen);
@@ -220,20 +246,17 @@ void pong::game_settings::save_file(std::filesystem::path const& iniPath) const
     const auto ini = iniPath.string();
     cfgtree cfg;
     log::info("saving config file: {}", ini);
-
     save_tree(cfg);
     write_ini(ini, cfg);
 }
 
 bool pong::game_settings::operator==(const game_settings& rhs) const noexcept
 {
-    using std::tie; using std::equal;
-    return 
-        tie(win_fullscreen, win_resolution) == tie(rhs.win_fullscreen, rhs.win_resolution) &&
-        // input
-        equal(player_keys, player_keys+2, rhs.player_keys) &&
-        equal(player_joystick, player_joystick+2, rhs.player_joystick) &&
-        equal(player_deadzone, player_deadzone+2, rhs.player_deadzone)
+    using std::tie;
+    return
+        tie(win_fullscreen, win_resolution, player_keys, player_joystick, player_deadzone)
+        ==
+        tie(rhs.win_fullscreen, rhs.win_resolution, rhs.player_keys, rhs.player_joystick, rhs.player_deadzone)
     ;
 }
 
@@ -245,7 +268,6 @@ bool pong::keyboard_ctrls::operator==(const keyboard_ctrls& rhs) const noexcept
 }
 
 // enum name tables
-
 auto sf_keyboard_table() ->enum_name_table const&
 {
     static enum_name_table names

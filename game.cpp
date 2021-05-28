@@ -4,22 +4,20 @@
 #include <bitset>
 #include <fmt/format.h>
 #include <imgui.h>
-#include <boost/property_tree/ptree.hpp>
 #include "common.h"
 #include "game.h"
 #include "rng.h"
 #include "menu.h"
 #include "gvar.h"
 
-const char pong::version[] = "0.8.1";
+const char pong::version[] = "0.8.2";
 
 using namespace std::literals;
 
 
 namespace
 {
-	auto rnd_dev = std::random_device();
-	auto rnd_eng = std::default_random_engine(rnd_dev());
+	auto rnd_eng = std::default_random_engine(1337);
 }
 
 
@@ -51,55 +49,17 @@ bool pong::collision(const rect& a, const rect& b)
 
 void pong::constrain_pos(pos& p)
 {
-	using gvar::playarea;
+	using namespace gvar;
 
-	while (p.x >= playarea.width)	p.x -= playarea.width;
-	while (p.y >= playarea.height)	p.y -= playarea.height;
-	while (p.x < playarea.left)		p.x += playarea.left;
-	while (p.y < playarea.top)		p.x += playarea.top;
+	while (p.x >= playarea_width)	p.x -= playarea_width;
+	while (p.y >= playarea_height)	p.y -= playarea_height;
+	while (p.x < 0)	p.x += playarea_width;
+	while (p.y < 0)	p.y += playarea_height;
 }
 
 
-//void pong::overrideGuts(const cfgtree& guts)
-//{
-//	using namespace engine;
-//
-//	paddle_kb_speed = guts.get("paddle.kb_speed", paddle_kb_speed);
-//	paddle_max_speed = guts.get("paddle.max_speed", paddle_max_speed);
-//	paddle_size.x = guts.get("paddle.width", paddle_size.x);
-//	paddle_size.y = guts.get("paddle.height", paddle_size.y);
-//
-//	ball_speed = guts.get("ball.speed", ball_speed);
-//	ball_acceleration = guts.get("ball.acceleration", ball_acceleration);
-//	ball_max_speed = guts.get("ball.max_speed", ball_max_speed);
-//	ball_radius = guts.get("ball.radius", ball_radius);
-//}
-//
-//pong::cfgtree pong::createGuts()
-//{
-//	using namespace engine;
-//	
-//	auto guts = cfgtree();
-//	guts.put("version", version);
-//
-//	guts.put("paddle.kb_speed", paddle_kb_speed);
-//	guts.put("paddle.max_speed", paddle_max_speed);
-//	guts.put("paddle.width", paddle_size.x);
-//	guts.put("paddle.height", paddle_size.y);
-//
-//	guts.put("ball.speed", ball_speed);
-//	guts.put("ball.acceleration", ball_acceleration);
-//	guts.put("ball.max_speed", ball_max_speed);
-//	guts.put("ball.radius", ball_radius);
-//
-//	return guts;
-//}
-
-
-
-pong::game::game(gamemode mode_, game_settings* sett)
-	: Player1(playerid::one), Player2(playerid::two)
-	, Court({ gvar::playarea.width, gvar::playarea.height }, { gvar::playarea.width * .95f, 25 })
+pong::game::game(gamemode mode_, game_settings& sett)
+	: Court({ gvar::playarea_width, gvar::playarea_height }, { gvar::playarea_width * .95f, 25 })
 	, settings(sett)
 {
 	change_mode(mode_);
@@ -127,33 +87,32 @@ void pong::game::processEvent(sf::Event& event)
 {
 	using sf::Event;
 	using sf::Keyboard;
+	using mwin = menu::win::Id;
 
 	devEvents(event);
 
-	switch (event.type)
-	{
-	case Event::KeyReleased:
-	{
-		if (menu::rebinding_popup_open())
-			break;
-
-		switch (event.key.code)
+	if (!menu::is_open(mwin::rebiding_popup)) {
+		switch (event.type)
 		{
-		case Keyboard::Enter:
-			if (waiting_to_serve()) {
-				serve(resume_serve_dir);
-			}
-			break;
-		case Keyboard::Escape:
-			paused = !paused;
-			// imgui deve capturar input só com o jogo pausado
-			auto& io = ImGui::GetIO();
-			io.WantCaptureKeyboard = paused;
-			io.WantCaptureMouse = paused;
-			break;
+			case Event::KeyReleased:
+			{
+				switch (event.key.code)
+				{
+					case Keyboard::Enter:
+						if (waiting_to_serve()) {
+							serve(resume_serve_dir);
+						}
+						break;
+					case Keyboard::Escape:
+						paused = !paused;
+						// imgui deve capturar input só com o jogo pausado
+						auto& io = ImGui::GetIO();
+						io.WantCaptureKeyboard = paused;
+						io.WantCaptureMouse = paused;
+						break;
+				}
+			} break;
 		}
-	} break;
-
 	}
 }
 void pong::game::devEvents(const sf::Event& event)
@@ -166,9 +125,11 @@ void pong::game::devEvents(const sf::Event& event)
 		{
 		case sf::Keyboard::F1:
 			Player1.ai = !Player1.ai;
+			log::debug("DEV. Player1 Ai = {}", Player1.ai);
 			break;
 		case sf::Keyboard::F2:
 			Player2.ai = !Player2.ai;
+			log::debug("DEV. Player2 Ai = {}", Player2.ai);
 			break;
 		}
 
@@ -181,6 +142,8 @@ void pong::game::update()
 {
 	if (!paused)
 	{
+		updatePlayer(Player1);
+		updatePlayer(Player2);
 		updateBall();
 
 		if (runTime.asMilliseconds() % 20 == 0) {
@@ -191,9 +154,6 @@ void pong::game::update()
 				reset(Ball);
 			}
 		}
-
-		updatePlayer(Player1);
-		updatePlayer(Player2);
 	}
 }
 
@@ -201,7 +161,7 @@ void pong::game::update()
 static sf::View get_play_view(float target_width)
 {
 	float to_w = target_width;
-	float from_w = gvar::playarea.width;
+	float from_w = gvar::playarea_width;
 
 	if (from_w > to_w) {
 		std::swap(from_w, to_w);
@@ -213,7 +173,7 @@ static sf::View get_play_view(float target_width)
 	auto space_ratio = (to_w - from_w) / to_w;
 	vp.left = space_ratio / 2;
 
-	auto view = sf::View(gvar::playarea);
+	auto view = sf::View(pong::rect(0,0, gvar::playarea_width, gvar::playarea_height));
 	view.setViewport(vp);
 
 	return view;
@@ -243,13 +203,12 @@ void pong::game::restart()
 void pong::game::updatePlayer(paddle& player)
 {
 	auto velocity = player.velocity;
+	using gvar::paddle_max_speed;
 
 	if (player.ai)
 	{
-		using gvar::paddle_max_speed;
-
 		static sf::Clock AIClock;
-		static const sf::Time AITime = sf::seconds(0.1f);
+		static const sf::Time AITime = sf::seconds(0.3f);
 
 		if (AIClock.getElapsedTime() > AITime) {
 			AIClock.restart();
@@ -275,7 +234,7 @@ void pong::game::updatePlayer(paddle& player)
 		using sf::Joystick;
 
 		// keyboard
-		auto& kb_controls = settings->get_keyboard_keys(player.id);
+		auto& kb_controls = settings.get_keyboard_keys(player.id);
 		bool gofast_kb = Keyboard::isKeyPressed(kb_controls.fast);
 		
 		if (Keyboard::isKeyPressed(kb_controls.up))
@@ -286,10 +245,10 @@ void pong::game::updatePlayer(paddle& player)
 
 		// joystick
 		bool gofast_js = false;
-		if (settings->using_joystick(player.id))
+		if (settings.using_joystick(player.id))
 		{
-			auto joyid = settings->get_joystick(player.id);
-			auto deadzone = settings->joystick_deadzone(player.id);
+			auto joyid = settings.get_joystick(player.id);
+			auto deadzone = settings.joystick_deadzone(player.id);
 
 			auto axis = Joystick::getAxisPosition(joyid, Joystick::Y);
 			// deadzone
@@ -300,7 +259,6 @@ void pong::game::updatePlayer(paddle& player)
 		}
 
 		if (player.velocity != velocity) {
-			using gvar::paddle_max_speed;
 			velocity = std::clamp(velocity, -paddle_max_speed, paddle_max_speed);
 			auto gofast = gofast_kb || gofast_js;
 
@@ -362,7 +320,9 @@ void pong::game::updateBall()
 
 bool pong::game::updateScore()
 {
-	if (!gvar::playarea.intersects(Ball.getGlobalBounds()))
+	auto bounds = Court.getBounds();
+
+	if (!bounds.intersects(Ball.getGlobalBounds()))
 	{
 		// ponto!
 		if (Ball.velocity.x < 0)
@@ -377,8 +337,8 @@ bool pong::game::updateScore()
 			score.second++;
 			resume_serve_dir = dir::right;
 		}
-		Court.set_score(score.first, score.second);
-		log::info("score: {}x{} ; serve: {}", score.first, score.second, to_string(resume_serve_dir));
+		Court.set_score(score);
+		log::info("score: {}x{} ; serve: {}", score.first, score.second, nameof(resume_serve_dir));
 
 		return true;
 	}
@@ -388,19 +348,19 @@ bool pong::game::updateScore()
 void pong::game::reset(ball& b)
 {
 	b.velocity = vel();
-	b.setPosition(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	b.setPosition(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
 void pong::game::reset(paddle& p)
 {
-	const auto margin = gvar::playarea.width * .05f;
-	const auto center = point(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	const auto margin = gvar::playarea_width * .05f;
+	const auto center = point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 
 	if (p.id == playerid::one) {
 		p.setPosition(margin - gvar::paddle_size.x, center.y);
 	}
 	else if (p.id == playerid::two) {
-		p.setPosition(gvar::playarea.width - margin, center.y);
+		p.setPosition(gvar::playarea_width - margin, center.y);
 	}
 	p.velocity = 0;
 }
@@ -409,7 +369,7 @@ bool pong::game::waiting_to_serve() const noexcept
 {
 	return !paused 
 		&& Ball.velocity == vel() 
-		&& Ball.getPosition() == point(gvar::playarea.width / 2, gvar::playarea.height / 2);
+		&& Ball.getPosition() == point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
 void pong::game::serve(dir direction)
@@ -419,6 +379,6 @@ void pong::game::serve(dir direction)
 		mov = -mov;
 	}
 
-	Ball.setPosition(gvar::playarea.width / 2, gvar::playarea.height / 2);
+	Ball.setPosition(gvar::playarea_width / 2, gvar::playarea_height / 2);
 	Ball.velocity = { mov, 0 };
 }

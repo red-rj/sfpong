@@ -1,7 +1,7 @@
 #pragma once
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <SFML/Window/Keyboard.hpp>
-
+#include <array>
 #include "common.h"
 
 namespace std::filesystem {
@@ -12,8 +12,6 @@ namespace pong
 {
     using cfgtree = boost::property_tree::ptree;
 
-    /*void overrideGuts(const cfgtree& tree);
-    cfgtree createGuts();*/
 
 // config keys
 namespace ckey
@@ -45,17 +43,15 @@ namespace ckey
         sf::Keyboard::Key up, down, fast;
 
         bool operator== (const keyboard_ctrls& rhs) const noexcept;
-        bool operator!= (const keyboard_ctrls& rhs) const noexcept {
-            return !(*this == rhs);
-        }
+        bool operator!= (const keyboard_ctrls& rhs) const noexcept { return !(*this == rhs); }
     };
     
     // modelo de game.cfg
     class game_settings
     {
-        keyboard_ctrls player_keys[2];
-        int player_joystick[2];
-        float player_deadzone[2];
+        std::array<keyboard_ctrls, 2> player_keys;
+        std::array<int, 2> player_joystick;
+        std::array<float, 2> player_deadzone;
 
         sf::Vector2u win_resolution;
         bool win_fullscreen;
@@ -69,10 +65,8 @@ namespace ckey
         static const int njoystick = -1;
         auto get_joystick(playerid pid) const noexcept { return player_joystick[int(pid)]; }
         void set_joystick(playerid pid, int joyid) noexcept;
+        void unset_joystick(playerid pid) noexcept { set_joystick(pid, njoystick); }
 
-        void unset_joystick(playerid pid) noexcept {
-            player_joystick[int(pid)] = njoystick;
-        }
         bool using_joystick(playerid pid) const noexcept {
             return player_joystick[int(pid)] != njoystick;
         }
@@ -83,17 +77,14 @@ namespace ckey
         auto& fullscreen() noexcept { return win_fullscreen; }
 
         // IO
-        void load_tree(const cfgtree& cfg);
         void load_file(std::filesystem::path const& iniPath);
-
-        void save_tree(cfgtree& cfg) const;
         void save_file(std::filesystem::path const& iniPath) const;
 
+        void load_tree(const cfgtree& cfg);
+        void save_tree(cfgtree& cfg) const;
 
         bool operator== (const game_settings& rhs) const noexcept;
         bool operator!= (const game_settings& rhs) const noexcept { return !(*this == rhs); }
-
     };
-
 
 }
