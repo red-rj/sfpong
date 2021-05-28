@@ -24,5 +24,6 @@ sfPong TODOs
 	criar classa modelando configs, passar ptrs pra quem precisa
 * [wip] encapsular Playarea e pong_court em uma classe
 	parar de depender no valor de playarea
-* [] refatorar startup (main)
+* [] refatorar startup (main) e game
+	remover classe `game`, quebrar em partes
 * [] não herdar de shape para player e ball

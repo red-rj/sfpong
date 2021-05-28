@@ -16,6 +16,21 @@ namespace pong
 
 	enum struct gamemode { singleplayer, multiplayer, aitest };
 	
+	struct arguments_t
+	{
+		std::string configFile;
+		bool showHelp;
+	};
+
+	class globals
+	{
+	public:
+		sf::RenderWindow window;
+
+	};
+
+	// --- rm ---
+
 	struct game
 	{
 		game(gamemode mode_, game_settings& sett);
@@ -60,7 +75,6 @@ namespace pong
 		void updatePlayer(paddle& player);
 		void updateBall();
 		bool updateScore();
-
 
 		void reset(ball& b);
 		void reset(paddle& p);

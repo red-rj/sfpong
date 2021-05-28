@@ -42,12 +42,11 @@ int main(int argc, const char* argv[])
 
 	auto logger_ = spdlog::stdout_color_st("sfPong");
 	spdlog::set_default_logger(logger_);
-	namespace log = spdlog;
 #ifndef NDEBUG
 	spdlog::set_level(spdlog::level::debug);
 #endif // !NDEBUG
 
-	log::debug("CWD: {}", fs::current_path().string());
+	spdlog::debug("CWD: {}", fs::current_path().string());
 
 	pong::game_settings gamecfg;
 	try
@@ -56,14 +55,14 @@ int main(int argc, const char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		log::error("config: {}", e.what());
+		spdlog::error("config: {}", e.what());
 	}
 
 	sf::RenderWindow window;
 
 	try
 	{
-		log::info("Setting up...");
+		spdlog::info("Setting up...");
 
 		sf::VideoMode vidmode;
 		vidmode.width = gamecfg.resolution().x;
@@ -75,7 +74,7 @@ int main(int argc, const char* argv[])
 	}
 	catch (std::exception& e)
 	{
-		log::error("Game setup failed! {}", e.what());
+		spdlog::error("Game setup failed! {}", e.what());
 		return 5;
 	}
 
