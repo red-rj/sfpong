@@ -16,9 +16,6 @@ namespace ckey = pong::ckey;
 using namespace std::literals;
 using fmt::print;
 
-pong::game_instance* G = nullptr;
-
-
 int main(int argc, const char* argv[])
 {
 	using pong::G;
@@ -50,14 +47,18 @@ int main(int argc, const char* argv[])
 
 	// game instance
 	spdlog::info("setting-up game");
-	G = new pong::game_instance(params);
+	try {
+		G = new pong::game_instance(params);
+	}
+	catch (int e) {
+		return e;
+	}
 	ImGui::SFML::Init(G->window);
 	pong::menu::init();
 
 	int ec = pong::main();
 
 	ImGui::SFML::Shutdown();
-	G->settings.save_file(params.configFile);
 	delete G;
 
 	return ec;

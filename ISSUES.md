@@ -22,8 +22,8 @@ sfPong TODOs
 * [x] unificar configuração
 	atualmente exite copias de player_input_cfg espalhadas pelo projetos
 	criar classa modelando configs, passar ptrs pra quem precisa
-* [wip] encapsular Playarea e pong_court em uma classe
+* [X] encapsular Playarea e pong_court em uma classe
 	parar de depender no valor de playarea
-* [] refatorar startup (main) e game
+* [X] refatorar startup (main) e game
 	remover classe `game`, quebrar em partes
-* [] não herdar de shape para player e ball
+* [X] não herdar de shape para player e ball

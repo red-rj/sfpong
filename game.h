@@ -16,8 +16,8 @@ namespace pong
 	
 	struct arguments_t
 	{
-		std::string configFile;
-		bool showHelp;
+		std::string configFile = "game.cfg";
+		bool showHelp = false;
 	};
 
 	struct player_t
@@ -114,6 +114,7 @@ namespace pong
 	{
 	public:
 		explicit game_instance(arguments_t params);
+		~game_instance();
 
 		sf::RenderWindow window;
 		arguments_t params;
@@ -156,14 +157,6 @@ namespace pong
 			changeMode(m);
 			paused = false;
 		}
-
-		/*struct Input
-		{
-			bool kb_up, kb_down;
-			float js_axis;
-			bool turbo;
-
-		} input[2];*/
 
 	private:
 		void reset(player_t& player);

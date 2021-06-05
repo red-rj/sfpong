@@ -15,6 +15,7 @@ const char pong::version[] = "0.8.2";
 
 using namespace std::literals;
 
+namespace pong { game_instance* G = nullptr; }
 
 namespace
 {
@@ -164,11 +165,6 @@ bool pong::background::border_collision(const rect& bounds) const
 	return bounds.intersects(R[0]) or bounds.intersects(R[1]);
 }
 
-//auto pong::pong_area::getBounds() const noexcept -> rect
-//{
-//	return getTransform().transformRect(rect({}, size));
-//}
-
 
 pong::game_instance::game_instance(arguments_t params_)
 	: bg({gvar::playarea_width, gvar::playarea_height})
@@ -202,17 +198,27 @@ pong::game_instance::game_instance(arguments_t params_)
 	reset();
 }
 
+pong::game_instance::~game_instance()
+{
+	spdlog::info("Tchau! ;D");
+	settings.save_file(params.configFile);
+}
+
 void pong::game_instance::changeMode(gamemode m) noexcept
 {
-	if (m == gamemode::singleplayer) {
+	switch (m)
+	{
+	default:
+	case pong::gamemode::singleplayer:
 		player1.ai = false;
 		player2.ai = true;
-	}
-	else if (m == gamemode::multiplayer) {
+		break;
+	case pong::gamemode::multiplayer:
 		player1.ai = player2.ai = false;
-	}
-	else if (m == gamemode::aitest) {
+		break;
+	case pong::gamemode::aitest:
 		player1.ai = player2.ai = true;
+		break;
 	}
 
 	mode = m;
@@ -278,10 +284,6 @@ bool pong::game_instance::waiting_to_serve() const noexcept
 	return !paused
 		&& ball.velocity == vel()
 		&& ball.shape.getPosition() == point(gvar::playarea_width / 2, gvar::playarea_height / 2);
-}
-
-void pong::game_instance::reset()
-{
 }
 
 void pong::game_instance::serve(dir direction)
@@ -402,7 +404,6 @@ void pong::game_instance::updateBall()
 	}
 	else ball.update();
 
-
 	if (bg.border_collision(ball.shape.getGlobalBounds()))
 	{
 		ball.velocity.y = -ball.velocity.y;
@@ -469,9 +470,6 @@ int pong::main()
 
 	return 0;
 }
-
-
-// --- fix ---
 
 void pong::game_instance::update()
 {
