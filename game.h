@@ -2,7 +2,6 @@
 #include <utility>
 #include "common.h"
 #include "game_config.h"
-#include "game_ents.h"
 #include "SFML/Graphics.hpp"
 
 namespace pong
@@ -13,7 +12,6 @@ namespace pong
 
 	void constrain_pos(pos& p);
 
-
 	enum struct gamemode { singleplayer, multiplayer, aitest };
 	
 	struct arguments_t
@@ -22,77 +20,116 @@ namespace pong
 		bool showHelp;
 	};
 
-	class globals
+	struct player_t
+	{
+		player_t(playerid pid) : id(pid)
+		{}
+
+		sf::RectangleShape shape;
+		sf::Vector2f velocity, momentum;
+		playerid id;
+		bool ai = false;
+	};
+
+	struct ball_t
+	{
+		sf::CircleShape shape;
+		sf::Vector2f velocity, momentum;
+	};
+
+	struct pong_area : sf::Drawable, sf::Transformable
+	{
+		pong_area(size2d area, size2d border_size);
+
+		auto& get_size() const { return size; }
+
+		void set_score(short p1, short p2);
+		void set_score(pair<short> s) {
+			set_score(s.first, s.second);
+		}
+
+		bool border_collision(const rect& bounds) const;
+
+		rect getBounds() const noexcept;
+
+	private:
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+
+		void init_net();
+
+		// court
+		sf::RectangleShape top_rect, bottom_rect;
+		size2d size;
+		// net
+		sf::VertexArray net_verts{ sf::Triangles };
+		sf::Transform net_transform;
+
+		// score
+		sf::Text scoreTxt;
+		sf::Font scoreFont;
+	};
+
+	struct background : sf::Drawable, sf::Transformable
+	{
+		background(size2d area, size2d border_size);
+
+		void update_score(int p1, int p2);
+
+	private:
+		size2d mySize, borderSize;
+
+		sf::RectangleShape top, bottom;
+		struct {
+			sf::VertexArray verts{ sf::Triangles };
+			sf::Transform transform;
+		} net;
+		struct {
+			sf::Text text;
+			sf::Font font;
+		} score;
+
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+	};
+
+	class game_instance
 	{
 	public:
 		sf::RenderWindow window;
+		arguments_t params;
+		game_settings settings;
+		sf::Clock clock;
 
-	};
-
-	// --- rm ---
-
-	struct game
-	{
-		game(gamemode mode_, game_settings& sett);
-
-		void update();
-		void processEvent(sf::Event& event);
-		void draw(sf::RenderWindow& window);
-
-		void serve(dir direction);
-
-		auto get_players() const noexcept -> pair<paddle const&> {
-			return { Player1, Player2 };
-		}
-		auto& get_ball() const noexcept { return Ball; }
-
-		auto mode() const noexcept { return currentMode; }
-		void change_mode(gamemode m) noexcept;
-
-		void pause() noexcept { paused = true; }
-		void unpause() noexcept { paused = false; }
-		auto is_paused() const noexcept { return paused; }
-
-		sf::Time ellapsed_time() const {
-			return clock.getElapsedTime();
-		}
 		sf::Time restart_clock() {
 			auto elapsed = clock.restart();
 			runTime += elapsed;
 			return elapsed;
 		}
 
-		void newGame(gamemode m) {
-			restart();
-			change_mode(m);
-		}
+		// entities
+		player_t player1{ playerid::one }, player2{ playerid::two };
+		ball_t ball;
 
-		void restart();
-
-	private:
-
-		void devEvents(const sf::Event& event);
-		void updatePlayer(paddle& player);
-		void updateBall();
-		bool updateScore();
-
-		void reset(ball& b);
-		void reset(paddle& p);
-
-		bool waiting_to_serve() const noexcept;
-
+		// status
 		bool paused = true;
-		gamemode currentMode;
-		sf::Clock clock;
+		pair<int> score;
+		dir serveDir = dir::left;
 		sf::Time runTime;
 
-		//sf::RenderWindow window;
-		game_settings& settings;
+		void reset();
 
-		paddle Player1{ playerid::one }, Player2{ playerid::two };
-		ball Ball;
-		pair<short> score;
-		dir resume_serve_dir = dir::left;
-		pong_area Court;
+		gamemode mode;
+		void changeMode(gamemode m) noexcept;
+
+		void newGame(gamemode m) {
+			reset();
+			changeMode(m);
+		}
 	};
+
+	extern game_instance* G;
+
+
+	void setup(arguments_t params);
+
+	int game_main();
 }

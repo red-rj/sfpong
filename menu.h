@@ -18,7 +18,6 @@ namespace menu {
 	void update(game& ctx, sf::Window& window);
 	void processEvent(sf::Event& event);
 
-
 	// window ids
 	namespace win { enum Id {
 		options,

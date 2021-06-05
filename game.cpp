@@ -58,6 +58,83 @@ void pong::constrain_pos(pos& p)
 }
 
 
+
+pong::background::background(size2d area, size2d border_size)
+	: mySize(area), borderSize(border_size)
+{
+	auto origin = point(border_size.x / 2, 0);
+
+	top.setOrigin(origin);
+	top.setPosition(mySize.x / 2, 0);
+
+	origin.y = border_size.y;
+	bottom.setOrigin(origin);
+	bottom.setPosition(mySize.x / 2, mySize.y);
+	// margin  
+	top.move(0, 6);
+	bottom.move(0, -6);
+
+	// init net
+	// build alongside the X axis
+	const size2d pieceSize = { 20,20 };
+	const float gapLen = 20;
+	point current;
+	bool gap{};
+
+	for (int count = 1; (pieceSize.x + gapLen) * count < mySize.y; gap = !gap)
+	{
+		if (gap) {
+			current.x += gapLen;
+		}
+		else {
+			sf::Vertex v{ current, sf::Color(200,200,200) };
+
+			// triangle1
+			net.verts.append(v);
+			v.position.x += pieceSize.x;
+			net.verts.append(v);
+			v.position.y += pieceSize.y;
+			net.verts.append(v);
+			// triangle2
+			v.position = current;
+			net.verts.append(v);
+			v.position.y += pieceSize.y;
+			net.verts.append(v);
+			v.position.x += pieceSize.x;
+			net.verts.append(v);
+
+			current.x += pieceSize.x;
+			count++;
+		}
+	}
+
+	// nessa ordem
+	net.transform.translate(mySize.x / 2, 20).rotate(90);
+
+	score.font.loadFromFile(files::mono_tff);
+	score.text.setPosition(mySize.x / 2 - 100, border_size.y);
+	score.text.setCharacterSize(55);
+	score.text.setFont(score.font);
+}
+
+void pong::background::update_score(int p1, int p2)
+{
+	score.text.setString(fmt::format("{}    {}", p1, p2));
+}
+
+void pong::background::draw(sf::RenderTarget& target, sf::RenderStates states) const
+{
+	states.transform = getTransform() * net.transform;
+	target.draw(net.verts, states);
+
+	states.transform = sf::Transform::Identity * getTransform();
+	target.draw(top, states);
+	target.draw(bottom, states);
+	target.draw(score.text, states);
+}
+
+// --- fix ---
+
 pong::game::game(gamemode mode_, game_settings& sett)
 	: Court({ gvar::playarea_width, gvar::playarea_height }, { gvar::playarea_width * .95f, 25 })
 	, settings(sett)

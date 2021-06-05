@@ -3,7 +3,6 @@
 #include <imgui-SFML.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/info_parser.hpp>
 #include <lyra/lyra.hpp>
 #include <fmt/format.h>
 #include <filesystem>
@@ -17,16 +16,17 @@ namespace ckey = pong::ckey;
 using namespace std::literals;
 using fmt::print;
 
+pong::game_instance* G = nullptr;
+
 
 int main(int argc, const char* argv[])
 {
-	//fs::path guts_file = "guts.info";
-	fs::path config_file = "game.cfg";
-	bool show_help=false, guts_arg = false;
+	using pong::G;
+	pong::arguments_t params;
 
 	auto cli = lyra::cli()
-		| lyra::help(show_help).description("sfPong cmd options")
-		| lyra::opt(config_file, "game.cfg")["--config"]("arquivo config.")
+		| lyra::help(params.showHelp).description("sfPong cmd options")
+		| lyra::opt(params.configFile, "game.cfg")["--config"]("arquivo config.")
 		;
 
 	auto cli_result = cli.parse({ argc, argv });
@@ -35,7 +35,7 @@ int main(int argc, const char* argv[])
 		return 5;
 	}
 	
-	if (show_help) {
+	if (params.showHelp) {
 		std::cout << cli << '\n';
 		return 0;
 	}
@@ -48,17 +48,19 @@ int main(int argc, const char* argv[])
 
 	spdlog::debug("CWD: {}", fs::current_path().string());
 
-	pong::game_settings gamecfg;
+	spdlog::info("create game instance");
+	G = new pong::game_instance;
+	G->params = params;
+
 	try
 	{
-		gamecfg.load_file(config_file);
+		G->settings.load_file(params.configFile);
 	}
 	catch (const std::exception& e)
 	{
 		spdlog::error("config: {}", e.what());
 	}
 
-	sf::RenderWindow window;
 
 	try
 	{
