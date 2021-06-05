@@ -9,13 +9,11 @@ namespace sf {
 
 namespace pong
 {
-	struct game;
-
 namespace menu {
 
-	void init(game_settings* gs);
+	void init();
 
-	void update(game& ctx, sf::Window& window);
+	void update();
 	void processEvent(sf::Event& event);
 
 	// window ids

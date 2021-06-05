@@ -96,8 +96,8 @@ namespace
 
 
 // windows
-static void optionsWin(game& ctx, sf::Window& window);
-static void gameStatsWin(game& ctx);
+static void optionsWin();
+static void gameStatsWin();
 static void aboutSfPongWin();
 // ui
 static void controlsUi();
@@ -122,19 +122,19 @@ static void clear_joysticks()
 }
 
 
-void pong::menu::update(game& ctx, sf::Window& window)
+void pong::menu::update()
 {
 	using namespace ImGui;
 	using namespace ImScoped;
 	using namespace win;
 
 	if (isVisible[game_stats])
-		gameStatsWin(ctx);
+		gameStatsWin();
 	
-	if (ctx.is_paused()) {
+	if (G->paused) {
 		// windows
 		if (isVisible[options])
-			optionsWin(ctx, window);
+			optionsWin();
 		if (isVisible[about])
 			aboutSfPongWin();
 		if (isVisible[imgui_demo])
@@ -147,26 +147,20 @@ void pong::menu::update(game& ctx, sf::Window& window)
 			TextDisabled("sfPong");
 
 			if (auto m = Menu("Jogo")) {
-				auto currentMode = ctx.mode();
-				bool singleplayer = currentMode == gamemode::singleplayer,
-					multiplayer = currentMode == gamemode::multiplayer;
-
 				if (MenuItem("Continuar", "ESC"))
-					ctx.unpause();
+					G->paused = false;
 				if (auto m1 = Menu("Novo")) {
 
-					if (MenuItem("1 jogador", nullptr, singleplayer)) {
-						ctx.newGame(gamemode::singleplayer);
-						ctx.unpause();
+					if (MenuItem("1 jogador", nullptr, G->mode == gamemode::singleplayer)) {
+						G->newGame(gamemode::singleplayer);
 					}
-					if (MenuItem("2 jogadores", nullptr, multiplayer)) {
-						ctx.newGame(gamemode::multiplayer);
-						ctx.unpause();
+					if (MenuItem("2 jogadores", nullptr, G->mode == gamemode::multiplayer)) {
+						G->newGame(gamemode::multiplayer);
 					}
 				}
 				if (MenuItem("Reiniciar")) {
-					ctx.restart();
-					ctx.unpause();
+					G->reset();
+					G->paused = false;
 				}
 				Separator();
 				MenuItem("Sobre", nullptr, &isVisible[about]);
@@ -185,17 +179,17 @@ void pong::menu::update(game& ctx, sf::Window& window)
 			};
 
 			if (Button("Sair")) {
-				log::info("Tchau! :)");
-				window.close();
+				spdlog::info("Tchau! :)");
+				G->window.close();
 			}
 		}
 	}
 }
 
-void pong::menu::init(game_settings* gs)
+void pong::menu::init()
 {
-	settings = gs;
-	work_settings = *gs;
+	settings = &G->settings;
+	work_settings = *settings;
 	refresh_joysticks();
 
 	auto* atlas = ImGui::GetIO().Fonts;
@@ -234,7 +228,7 @@ bool pong::menu::is_open(win::Id id) noexcept
 }
 
 
-void optionsWin(game&, sf::Window& window)
+void optionsWin()
 {
 	namespace gui = ImScoped;
 
@@ -255,7 +249,7 @@ void optionsWin(game&, sf::Window& window)
 		if (auto tab = gui::TabBarItem("Game"))
 		{
 			auto& vidModes = sf::VideoMode::getFullscreenModes();
-			auto curVidMode = sf::VideoMode(work_settings.resolution().x, work_settings.resolution().y);
+			auto curVidMode = sf::VideoMode(work_settings.resolution.x, work_settings.resolution.y);
 			auto preview = fmt::format("{} x {}", curVidMode.width, curVidMode.height);
 
 			if (auto cb = gui::Combo(u8"Resolução", preview.c_str())) {
@@ -263,8 +257,8 @@ void optionsWin(game&, sf::Window& window)
 					preview = fmt::format("{} x {}", vid.width, vid.height);
 					auto isSelected = vid == curVidMode;
 					if (ImGui::Selectable(preview.c_str(), isSelected)) {
-						work_settings.resolution().x = vid.width;
-						work_settings.resolution().y = vid.height;
+						work_settings.resolution.x = vid.width;
+						work_settings.resolution.y = vid.height;
 					}
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();
@@ -306,7 +300,7 @@ void optionsWin(game&, sf::Window& window)
 	}
 }
 
-void gameStatsWin(game& ctx)
+void gameStatsWin()
 {
 	namespace ims = ImScoped;
 
@@ -319,13 +313,10 @@ void gameStatsWin(game& ctx)
 						| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 	ims::Window overlay("Stats", &isVisible[win::game_stats], wflags);
 
-	auto players = ctx.get_players();
-	auto& Ball = ctx.get_ball();
-
 	point Pos[] = {
-		players.first.getPosition(),
-		players.second.getPosition(),
-		Ball.getPosition()
+		G->player1.shape.getPosition(),
+		G->player2.shape.getPosition(),
+		G->ball.shape.getPosition()
 	};
 
 	auto text = fmt::format("P1: [{:.2f}]\n" "P2: [{:.2f}]\n" "Ball: [{:.2f}]", Pos[0], Pos[1], Pos[2]);
@@ -333,7 +324,7 @@ void gameStatsWin(game& ctx)
 	ImGui::Text("Positions:\n%s", text.c_str());
 
 	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: [{:.2f}]", 
-		players.first.velocity, players.second.velocity, Ball.velocity);
+		G->player1.velocity, G->player2.velocity, G->ball.velocity);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }

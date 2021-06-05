@@ -8,26 +8,23 @@
 
 namespace pong
 {
-    namespace log = spdlog;
+    //namespace log = spdlog;
 
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
 
     /*
     template<class T>
-    class size_2d
+    class vec2
     {
     public:
-        size_2d() = default;
+        vec2() = default;
+        constexpr vec2(T x_, T y_) : x(width_), y(height_) {}
+        vec2(sf::Vector2<T> const& vec) : size_2d(vec.x, vec.y) {}
 
-        size_2d(T width_, T height_) : width(width_), height(height_) {}
+        operator sf::Vector2<T>() const { return { x, y }; }
 
-        size_2d(sf::Vector2<T> const& vec) : size_2d(vec.x, vec.y) {}
-
-        operator sf::Vector2<T>() const { return { width, height }; }
-
-
-        T width, height;
+        T x{}, y{};
     };
     */
 

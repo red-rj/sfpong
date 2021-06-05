@@ -22,21 +22,33 @@ namespace pong
 
 	struct player_t
 	{
-		player_t(playerid pid) : id(pid)
-		{}
+		player_t(playerid pid);
+
+		void update()
+		{
+			shape.move(velocity);
+		}
 
 		sf::RectangleShape shape;
-		sf::Vector2f velocity, momentum;
+		sf::Vector2f velocity;
 		playerid id;
 		bool ai = false;
 	};
 
 	struct ball_t
 	{
+		ball_t();
+
+		void update()
+		{
+			shape.move(velocity);
+		}
+
 		sf::CircleShape shape;
-		sf::Vector2f velocity, momentum;
+		sf::Vector2f velocity;
 	};
 
+	/*
 	struct pong_area : sf::Drawable, sf::Transformable
 	{
 		pong_area(size2d area, size2d border_size);
@@ -68,12 +80,19 @@ namespace pong
 		sf::Text scoreTxt;
 		sf::Font scoreFont;
 	};
+	*/
 
 	struct background : sf::Drawable, sf::Transformable
 	{
-		background(size2d area, size2d border_size);
+		explicit background(size2d area);
 
 		void update_score(int p1, int p2);
+
+		auto size() const { return mySize; }
+		void size(size2d value);
+
+		bool border_collision(const rect& bounds) const;
+
 
 	private:
 		size2d mySize, borderSize;
@@ -94,12 +113,20 @@ namespace pong
 	class game_instance
 	{
 	public:
+		explicit game_instance(arguments_t params);
+
 		sf::RenderWindow window;
 		arguments_t params;
 		game_settings settings;
 		sf::Clock clock;
 
-		sf::Time restart_clock() {
+		void processEvent(sf::Event& event);
+
+		void update();
+		void reset();
+		void render();
+
+		sf::Time restartClock() {
 			auto elapsed = clock.restart();
 			runTime += elapsed;
 			return elapsed;
@@ -108,28 +135,47 @@ namespace pong
 		// entities
 		player_t player1{ playerid::one }, player2{ playerid::two };
 		ball_t ball;
+		background bg;
+
+		// controls
+		void serve(dir direction);
 
 		// status
 		bool paused = true;
 		pair<int> score;
 		dir serveDir = dir::left;
 		sf::Time runTime;
-
-		void reset();
-
 		gamemode mode;
+		
 		void changeMode(gamemode m) noexcept;
+
+		bool waiting_to_serve() const noexcept;
 
 		void newGame(gamemode m) {
 			reset();
 			changeMode(m);
+			paused = false;
 		}
+
+		/*struct Input
+		{
+			bool kb_up, kb_down;
+			float js_axis;
+			bool turbo;
+
+		} input[2];*/
+
+	private:
+		void reset(player_t& player);
+		void reset(ball_t& ball);
+
+		void updatePlayer(player_t& player);
+		void updateBall();
+		bool updateScore();
+
 	};
 
 	extern game_instance* G;
 
-
-	void setup(arguments_t params);
-
-	int game_main();
+	int main();
 }

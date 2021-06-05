@@ -53,10 +53,10 @@ namespace ckey
         std::array<int, 2> player_joystick;
         std::array<float, 2> player_deadzone;
 
-        sf::Vector2u win_resolution;
-        bool win_fullscreen;
-
     public:
+
+        sf::Vector2u resolution;
+        bool fullscreen;
 
         auto& keyboard_keys(playerid pid) noexcept { return player_keys[int(pid)]; }
         auto& get_keyboard_keys(playerid pid) const noexcept { return player_keys[int(pid)]; }
@@ -72,9 +72,6 @@ namespace ckey
         }
 
         auto& joystick_deadzone(playerid pid) noexcept { return player_deadzone[int(pid)]; }
-
-        auto& resolution() noexcept { return win_resolution; }
-        auto& fullscreen() noexcept { return win_fullscreen; }
 
         // IO
         void load_file(std::filesystem::path const& iniPath);

@@ -20,6 +20,5 @@
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="joyinput.cpp" />
-    <ClCompile Include="game_ents.cpp" />
   </ItemGroup>
 </Project>

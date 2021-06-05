@@ -48,77 +48,17 @@ int main(int argc, const char* argv[])
 
 	spdlog::debug("CWD: {}", fs::current_path().string());
 
-	spdlog::info("create game instance");
-	G = new pong::game_instance;
-	G->params = params;
-
-	try
-	{
-		G->settings.load_file(params.configFile);
-	}
-	catch (const std::exception& e)
-	{
-		spdlog::error("config: {}", e.what());
-	}
-
-
-	try
-	{
-		spdlog::info("Setting up...");
-
-		sf::VideoMode vidmode;
-		vidmode.width = gamecfg.resolution().x;
-		vidmode.height = gamecfg.resolution().y;
-		vidmode.bitsPerPixel = 32;
-
-		window.create(vidmode, "Sf Pong!");
-		window.setFramerateLimit(60u);
-	}
-	catch (std::exception& e)
-	{
-		spdlog::error("Game setup failed! {}", e.what());
-		return 5;
-	}
-
-	ImGui::SFML::Init(window);
-	pong::menu::init(&gamecfg);
-
 	// game instance
-	auto vg = pong::game(pong::gamemode::singleplayer, gamecfg);
+	spdlog::info("setting-up game");
+	G = new pong::game_instance(params);
+	ImGui::SFML::Init(G->window);
+	pong::menu::init();
 
-	while (window.isOpen())
-	{
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			// global events
-			switch (event.type)
-			{
-			case sf::Event::Closed:
-				window.close();
-				break;
-			}
-
-			ImGui::SFML::ProcessEvent(event);
-			pong::menu::processEvent(event);
-			vg.processEvent(event);
-		}
-
-		auto dt = vg.restart_clock();
-		ImGui::SFML::Update(window, dt);
-
-		vg.update();
-		vg.draw(window);
-
-		pong::menu::update(vg, window);
-		ImGui::SFML::Render(window);
-		
-		window.display();
-	}
+	int ec = pong::main();
 
 	ImGui::SFML::Shutdown();
-	
-	gamecfg.save_file(config_file);
+	G->settings.save_file(params.configFile);
+	delete G;
 
-	return 0;
+	return ec;
 }

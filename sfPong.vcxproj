@@ -35,7 +35,6 @@
   <ItemGroup>
     <ClCompile Include="game.cpp" />
     <ClCompile Include="config.cpp" />
-    <ClCompile Include="game_ents.cpp" />
     <ClCompile Include="joyinput.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="menu.cpp" />

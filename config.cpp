@@ -203,16 +203,16 @@ void pong::game_settings::load_tree(const cfgtree& tree)
     player_deadzone[1] = tree.get(P2_JSDEADZONE, 10.f);
 
     // game
-    win_resolution.x = tree.get(RESOLUTION_X, 1280u);
-    win_resolution.y = tree.get(RESOLUTION_Y, 1024u);
-    win_fullscreen = tree.get(FULLSCREEN, false);
+    resolution.x = tree.get(RESOLUTION_X, 1280u);
+    resolution.y = tree.get(RESOLUTION_Y, 1024u);
+    fullscreen = tree.get(FULLSCREEN, false);
 }
 
 void pong::game_settings::load_file(std::filesystem::path const& iniPath)
 {
     const auto ini = iniPath.string();
     cfgtree cfg;
-    log::info("loading config file: {}", ini);
+    spdlog::info("loading config file: {}", ini);
     read_ini(ini, cfg);
     load_tree(cfg);
 }
@@ -236,16 +236,16 @@ void pong::game_settings::save_tree(cfgtree& tree) const
     tree.put(P2_JSDEADZONE, player_deadzone[1]);
 
     // game
-    tree.put(RESOLUTION_X, win_resolution.x);
-    tree.put(RESOLUTION_Y, win_resolution.y);
-    tree.put(FULLSCREEN, win_fullscreen);
+    tree.put(RESOLUTION_X, resolution.x);
+    tree.put(RESOLUTION_Y, resolution.y);
+    tree.put(FULLSCREEN, fullscreen);
 }
 
 void pong::game_settings::save_file(std::filesystem::path const& iniPath) const
 {
     const auto ini = iniPath.string();
     cfgtree cfg;
-    log::info("saving config file: {}", ini);
+    spdlog::info("saving config file: {}", ini);
     save_tree(cfg);
     write_ini(ini, cfg);
 }
@@ -254,9 +254,9 @@ bool pong::game_settings::operator==(const game_settings& rhs) const noexcept
 {
     using std::tie;
     return
-        tie(win_fullscreen, win_resolution, player_keys, player_joystick, player_deadzone)
+        tie(fullscreen, resolution, player_keys, player_joystick, player_deadzone)
         ==
-        tie(rhs.win_fullscreen, rhs.win_resolution, rhs.player_keys, rhs.player_joystick, rhs.player_deadzone)
+        tie(rhs.fullscreen, rhs.resolution, rhs.player_keys, rhs.player_joystick, rhs.player_deadzone)
     ;
 }
 
