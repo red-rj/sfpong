@@ -48,40 +48,6 @@ namespace pong
 		sf::Vector2f velocity;
 	};
 
-	/*
-	struct pong_area : sf::Drawable, sf::Transformable
-	{
-		pong_area(size2d area, size2d border_size);
-
-		auto& get_size() const { return size; }
-
-		void set_score(short p1, short p2);
-		void set_score(pair<short> s) {
-			set_score(s.first, s.second);
-		}
-
-		bool border_collision(const rect& bounds) const;
-
-		rect getBounds() const noexcept;
-
-	private:
-		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-
-		void init_net();
-
-		// court
-		sf::RectangleShape top_rect, bottom_rect;
-		size2d size;
-		// net
-		sf::VertexArray net_verts{ sf::Triangles };
-		sf::Transform net_transform;
-
-		// score
-		sf::Text scoreTxt;
-		sf::Font scoreFont;
-	};
-	*/
-
 	struct background : sf::Drawable, sf::Transformable
 	{
 		explicit background(size2d area);
@@ -93,6 +59,14 @@ namespace pong
 
 		bool border_collision(const rect& bounds) const;
 
+		auto& topBorder() const noexcept { return top; }
+		auto& bottomBorder() const noexcept { return bottom; }
+
+		auto innerBounds() const {
+			auto topleft = top.getTransform().transformPoint(top.getPoint(3));
+			auto bottright = bottom.getTransform().transformPoint(bottom.getPoint(1));
+			return rect(topleft, bottright - topleft);
+		}
 
 	private:
 		size2d mySize, borderSize;

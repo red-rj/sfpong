@@ -133,16 +133,16 @@ void pong::background::size(size2d value)
 	borderSize = { value.x * .95f, 25 };
 
 	auto origin = point(borderSize.x / 2, 0);
+	// margin = 6
+
 	top.setSize(borderSize);
 	top.setOrigin(origin);
-	top.setPosition(mySize.x / 2, 0);
-	top.move(0, 6);
+	top.setPosition(mySize.x / 2, 0 + 6);
 
 	origin.y = borderSize.y;
 	bottom.setSize(borderSize);
 	bottom.setOrigin(origin);
-	bottom.setPosition(mySize.x / 2, mySize.y);
-	bottom.move(0, -6);
+	bottom.setPosition(mySize.x / 2, mySize.y - 6);
 }
 
 void pong::background::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -305,6 +305,7 @@ void pong::game_instance::updatePlayer(player_t& player)
 
 	if (player.ai)
 	{
+		// TODO
 		static sf::Clock AIClock;
 		static const sf::Time AITime = sf::seconds(0.3f);
 
@@ -332,9 +333,9 @@ void pong::game_instance::updatePlayer(player_t& player)
 		bool gofast_kb = Keyboard::isKeyPressed(kb_controls.fast);
 
 		if (Keyboard::isKeyPressed(kb_controls.up))
-			mom.y = -gvar::paddle_kb_speed;
+			mom.y -= gvar::paddle_kb_speed;
 		else if (Keyboard::isKeyPressed(kb_controls.down))
-			mom.y = gvar::paddle_kb_speed;
+			mom.y += gvar::paddle_kb_speed;
 
 		// joystick
 		bool gofast_js = false;
@@ -368,9 +369,25 @@ void pong::game_instance::updatePlayer(player_t& player)
 	player.update();
 
 	if (bg.border_collision(player.shape.getGlobalBounds())) {
-		player.shape.move(-mom);
 		player.velocity = {};
+		auto position = player.shape.getPosition();
+
+		if (collision(player.shape, bg.topBorder())) {
+			auto b = bg.topBorder();
+			//auto i = player.id == playerid::one ? 3 : 2;
+			position.y = b.getTransform().transformPoint(b.getPoint(3)).y + player.shape.getOrigin().y + 2;
+			//	p.y = 108;
+		}
+		else {
+			auto b = bg.bottomBorder();
+			//auto i = player.id == playerid::one ? 0 : 1;
+			position.y = b.getTransform().transformPoint(b.getPoint(0)).y - player.shape.getOrigin().y - 2;
+			//	p.y = 916;
+		}
+
+		player.shape.setPosition(position);
 	}
+
 }
 
 void pong::game_instance::updateBall()
@@ -412,7 +429,7 @@ void pong::game_instance::updateBall()
 
 bool pong::game_instance::updateScore()
 {
-	auto bounds = rect({}, (size2d)settings.resolution);
+	auto bounds = rect({}, bg.size());
 
 	if (!bounds.intersects(ball.shape.getGlobalBounds()))
 	{
