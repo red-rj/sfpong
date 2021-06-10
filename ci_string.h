@@ -36,11 +36,9 @@ namespace util
         }
 
     private:
-        static T to_upper(T c)
-        {
+        static T to_upper(T c) {
             return toupper(c, std::locale::classic());
         }
-
     };
 
     using ci_string_view = std::basic_string_view<char, ci_char_traits<char>>;
@@ -48,5 +46,9 @@ namespace util
     inline constexpr int ci_compare(std::string_view lhs, std::string_view rhs)
     {
         return ci_string_view(lhs.data(), lhs.size()).compare(ci_string_view(rhs.data(), rhs.size()));
+    }
+    inline constexpr bool ci_equal(std::string_view lhs, std::string_view rhs)
+    {
+        return ci_compare(lhs, rhs) == 0;
     }
 }
