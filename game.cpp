@@ -165,6 +165,17 @@ bool pong::background::border_collision(const rect& bounds) const
 	return bounds.intersects(R[0]) or bounds.intersects(R[1]);
 }
 
+pong::point pong::background::getPoint(size_t i) const
+{
+	switch (i)
+	{
+	case 0: return top.getTransform().transformPoint(top.getPoint(3));
+	case 1: return top.getTransform().transformPoint(top.getPoint(2));
+	case 2: return bottom.getTransform().transformPoint(bottom.getPoint(1));
+	case 3: return bottom.getTransform().transformPoint(bottom.getPoint(0));
+	}
+}
+
 
 pong::game_instance::game_instance(arguments_t params_)
 	: bg({gvar::playarea_width, gvar::playarea_height})
@@ -355,6 +366,7 @@ void pong::game_instance::updatePlayer(player_t& player)
 		turbo = gofast_kb || gofast_js;
 	}
 
+	// mover pra player.update()
 	mom.y = std::clamp(mom.y, -paddle_max_speed, paddle_max_speed);
 
 	if (turbo && mom != vel())
@@ -454,40 +466,6 @@ bool pong::game_instance::updateScore()
 	else return false;
 }
 
-int pong::main()
-{
-	while (G->window.isOpen())
-	{
-		sf::Event event;
-		while (G->window.pollEvent(event))
-		{
-			// global events
-			switch (event.type)
-			{
-			case sf::Event::Closed:
-				G->window.close();
-				break;
-			}
-
-			ImGui::SFML::ProcessEvent(event);
-			pong::menu::processEvent(event);
-			G->processEvent(event);
-		}
-
-		auto dt = G->restartClock();
-		ImGui::SFML::Update(G->window, dt);
-
-		G->update();
-		G->render();
-		pong::menu::update();
-		ImGui::SFML::Render(G->window);
-
-		G->window.display();
-	}
-
-	return 0;
-}
-
 void pong::game_instance::update()
 {
 	if (!paused)
@@ -568,4 +546,39 @@ void pong::game_instance::reset(player_t& p)
 		p.shape.setPosition(gvar::playarea_width - margin, center.y);
 	}
 	p.velocity = {};
+}
+
+
+int pong::main()
+{
+	while (G->window.isOpen())
+	{
+		sf::Event event;
+		while (G->window.pollEvent(event))
+		{
+			// global events
+			switch (event.type)
+			{
+			case sf::Event::Closed:
+				G->window.close();
+				break;
+			}
+
+			ImGui::SFML::ProcessEvent(event);
+			pong::menu::processEvent(event);
+			G->processEvent(event);
+		}
+
+		auto dt = G->restartClock();
+		ImGui::SFML::Update(G->window, dt);
+
+		G->update();
+		G->render();
+		pong::menu::update();
+		ImGui::SFML::Render(G->window);
+
+		G->window.display();
+	}
+
+	return 0;
 }

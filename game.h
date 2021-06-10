@@ -68,6 +68,8 @@ namespace pong
 			return rect(topleft, bottright - topleft);
 		}
 
+		point getPoint(size_t i) const;
+
 	private:
 		size2d mySize, borderSize;
 
