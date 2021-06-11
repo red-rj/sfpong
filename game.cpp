@@ -11,7 +11,7 @@
 #include "menu.h"
 #include "gvar.h"
 
-const char pong::version[] = "0.8.2";
+const char pong::version[] = "0.9.0";
 
 using namespace std::literals;
 
@@ -169,6 +169,7 @@ pong::point pong::background::getPoint(size_t i) const
 {
 	switch (i)
 	{
+	default:
 	case 0: return top.getTransform().transformPoint(top.getPoint(3));
 	case 1: return top.getTransform().transformPoint(top.getPoint(2));
 	case 2: return bottom.getTransform().transformPoint(bottom.getPoint(1));
@@ -318,20 +319,19 @@ void pong::game_instance::updatePlayer(player_t& player)
 	{
 		// TODO
 		static sf::Clock AIClock;
-		static const sf::Time AITime = sf::seconds(0.3f);
+		static const sf::Time AITime = sf::seconds(0.1f);
 
 		if (AIClock.getElapsedTime() > AITime) {
 			AIClock.restart();
 
 			const auto offset = ball.shape.getPosition() - player.shape.getPosition();
 			const auto ai_speed = 1;
+			const auto ydiff = abs(offset.y);
 
-			if (offset.y > 0)
-				mom.y += ai_speed;
-			else if (offset.y < 0)
-				mom.y -= ai_speed;
-
-			turbo = abs(offset.y) > 50;
+			if (ydiff >= ball.shape.getRadius()) {
+				mom.y += std::copysign(ai_speed, offset.y);
+				turbo = ydiff > 99;
+			}
 		}
 	}
 	else // player
@@ -366,14 +366,14 @@ void pong::game_instance::updatePlayer(player_t& player)
 		turbo = gofast_kb || gofast_js;
 	}
 
-	// mover pra player.update()
+	// TODO: mover pra player.update()
 	mom.y = std::clamp(mom.y, -paddle_max_speed, paddle_max_speed);
 
-	if (turbo && mom != vel())
+	if (turbo)
 	{
 		mom.y *= 1.25f;
 	}
-	else if (player.velocity == mom) {
+	else if (!player.ai && player.velocity == mom) {
 		mom.y *= 0.6f;
 	}
 
@@ -385,15 +385,11 @@ void pong::game_instance::updatePlayer(player_t& player)
 		auto position = player.shape.getPosition();
 
 		if (collision(player.shape, bg.topBorder())) {
-			auto b = bg.topBorder();
-			//auto i = player.id == playerid::one ? 3 : 2;
-			position.y = b.getTransform().transformPoint(b.getPoint(3)).y + player.shape.getOrigin().y + 2;
+			position.y = bg.getPoint(0).y + player.shape.getOrigin().y + 2;
 			//	p.y = 108;
 		}
 		else {
-			auto b = bg.bottomBorder();
-			//auto i = player.id == playerid::one ? 0 : 1;
-			position.y = b.getTransform().transformPoint(b.getPoint(0)).y - player.shape.getOrigin().y - 2;
+			position.y = bg.getPoint(2).y - player.shape.getOrigin().y - 2;
 			//	p.y = 916;
 		}
 
@@ -418,8 +414,8 @@ void pong::game_instance::updateBall()
 	{
 		using namespace gvar;
 
-		mom.x = ball_acceleration;
-		mom.y = player->velocity.y * 0.5f;
+		mom.x += ball_acceleration;
+		mom.y += player->velocity.y * 0.5f;
 
 		ball.velocity = {
 			-std::clamp(mom.x, -ball_max_speed, ball_max_speed),
