@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <optional>
 #include <vector>
+#include <sstream>
 
 #include <imgui-SFML.h>
 #include <fmt/ostream.h>
@@ -63,7 +64,7 @@ static auto scan_joy_btn() noexcept
 #endif
 
 using namespace pong;
-using win = pong::menu::win::Id;
+using win = menu::win::Id;
 
 namespace
 {
@@ -389,12 +390,13 @@ void controlsUi()
 
 		gui::ID _id_ = id++;
 		auto constexpr popup_id = "Rebind popup";
-		auto keystr = fmt::format("{}", curKey);
+		auto keyname = conv::to_string_view(curKey);
 
 		// butão
 		Text("%5s:", label);
 		SameLine(75);
-		if (Button(keystr.c_str())) {
+		// TODO: Isso assume que keyname tem terminador nulo
+		if (Button(keyname.data())) {
 			OpenPopup(popup_id);
 			isVisible[win::rebiding_popup] = true;
 		}

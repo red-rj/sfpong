@@ -33,6 +33,7 @@
     <ClInclude Include="convert.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="convert.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="joyinput.cpp" />

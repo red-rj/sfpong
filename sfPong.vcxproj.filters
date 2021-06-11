@@ -20,5 +20,6 @@
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="joyinput.cpp" />
+    <ClCompile Include="convert.cpp" />
   </ItemGroup>
 </Project>
