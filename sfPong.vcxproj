@@ -29,7 +29,6 @@
     <ClInclude Include="joyinput.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="rng.h" />
-    <ClInclude Include="symbol_table.h" />
     <ClInclude Include="convert.h" />
   </ItemGroup>
   <ItemGroup>

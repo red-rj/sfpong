@@ -6,7 +6,6 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="ci_string.h" />
-    <ClInclude Include="symbol_table.h" />
     <ClInclude Include="convert.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="joyinput.h" />
