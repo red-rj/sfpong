@@ -63,8 +63,6 @@ static auto scan_joy_btn() noexcept
 }
 #endif
 
-using namespace pong;
-using win = menu::win::Id;
 
 namespace
 {
@@ -76,25 +74,24 @@ namespace
 
 	// font ids
 	namespace ft { enum Id {
-		default_,
-		default_large,
+		normal,
+		larger,
 		monospace,
 		section_title,
 
 		Count,
-
-		normal = default_,
-		larger = default_large
 	};}
 
 	// show flags
-	bool isVisible[win::Count];
+	bool isVisible[menu::win::Count];
 
 	//fonts
 	ImFont* fonts[ft::Count];
 
 }
 
+using win = menu::win::Id;
+using namespace pong;
 
 // windows
 static void optionsWin();
@@ -123,7 +120,7 @@ static void clear_joysticks()
 }
 
 
-void pong::menu::update()
+void menu::update()
 {
 	using namespace ImGui;
 	using namespace ImScoped;
@@ -187,7 +184,7 @@ void pong::menu::update()
 	}
 }
 
-void pong::menu::init()
+void menu::init()
 {
 	settings = &G->settings;
 	work_settings = *settings;
@@ -204,7 +201,7 @@ void pong::menu::init()
 	ImGui::SFML::UpdateFontTexture();
 }
 
-void pong::menu::processEvent(sf::Event& event)
+void menu::processEvent(sf::Event& event)
 {
 	using sf::Event;
 
@@ -223,7 +220,7 @@ void pong::menu::processEvent(sf::Event& event)
 	}
 }
 
-bool pong::menu::is_open(win::Id id) noexcept
+bool menu::is_open(win::Id id) noexcept
 {
 	return isVisible[id];
 }
@@ -407,7 +404,7 @@ void controlsUi()
 		{
 			using Key = sf::Keyboard::Key;
 
-			gui::Font _f_{ fonts[ft::default_large] };
+			gui::Font _f_{ fonts[ft::larger] };
 			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 			auto key = scan_kb();

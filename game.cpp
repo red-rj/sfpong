@@ -241,7 +241,7 @@ void pong::game_instance::processEvent(sf::Event& event)
 {
 	using sf::Event;
 	using sf::Keyboard;
-	using mwin = pong::menu::win::Id;
+	using mwin = menu::win::Id;
 
 #ifndef NDEBUG
 	// devEvents
@@ -561,7 +561,7 @@ int pong::main()
 			}
 
 			ImGui::SFML::ProcessEvent(event);
-			pong::menu::processEvent(event);
+			menu::processEvent(event);
 			G->processEvent(event);
 		}
 
@@ -570,7 +570,8 @@ int pong::main()
 
 		G->update();
 		G->render();
-		pong::menu::update();
+		menu::update();
+
 		ImGui::SFML::Render(G->window);
 
 		G->window.display();

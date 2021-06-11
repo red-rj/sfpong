@@ -7,8 +7,6 @@ namespace sf {
 	class Window;
 }
 
-namespace pong
-{
 namespace menu {
 
 	void init();
@@ -32,4 +30,3 @@ namespace menu {
 	bool is_open(win::Id id) noexcept;
 
 } // menu
-}

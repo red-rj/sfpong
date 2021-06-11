@@ -54,7 +54,7 @@ int main(int argc, const char* argv[])
 		return e;
 	}
 	ImGui::SFML::Init(G->window);
-	pong::menu::init();
+	menu::init();
 
 	int ec = pong::main();
 
