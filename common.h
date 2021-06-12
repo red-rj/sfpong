@@ -13,25 +13,23 @@ namespace pong
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
 
-    /*
     template<class T>
-    class vec2
+    class area
     {
     public:
-        vec2() = default;
-        constexpr vec2(T x_, T y_) : x(width_), y(height_) {}
-        vec2(sf::Vector2<T> const& vec) : size_2d(vec.x, vec.y) {}
+        area() = default;
+        constexpr area(T w, T h) : width(w), height(h) {}
+        area(sf::Vector2<T> const& vec) : area(vec.x, vec.y) {}
 
-        operator sf::Vector2<T>() const { return { x, y }; }
+        operator sf::Vector2<T>() const { return { width, height }; }
 
-        T x{}, y{};
+        T width{}, height{};
     };
-    */
+
+    using vec2 = sf::Vector2f;
 
     // position type
     using pos = sf::Vector2f;
-    // velocity type
-    using vel = sf::Vector2f;
     // bounds type
     using rect = sf::Rect<float>;
     // direction type

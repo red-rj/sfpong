@@ -294,7 +294,7 @@ void pong::game_instance::processEvent(sf::Event& event)
 bool pong::game_instance::waiting_to_serve() const noexcept
 {
 	return !paused
-		&& ball.velocity == vel()
+		&& ball.velocity == vec2()
 		&& ball.shape.getPosition() == point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
@@ -526,21 +526,24 @@ void pong::game_instance::reset()
 
 void pong::game_instance::reset(ball_t& b)
 {
-	b.velocity = vel();
+	b.velocity = {};
 	b.shape.setPosition(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
 void pong::game_instance::reset(player_t& p)
 {
-	const auto margin = gvar::playarea_width * .05f;
 	const auto center = point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 
 	if (p.id == playerid::one) {
+		//p.shape.setPosition(margin - gvar::paddle_width, center.y);
+		auto margin = bg.getPoint(0).x;
 		p.shape.setPosition(margin - gvar::paddle_width, center.y);
 	}
 	else if (p.id == playerid::two) {
+		auto margin = bg.getPoint(2).x;
 		p.shape.setPosition(gvar::playarea_width - margin, center.y);
 	}
+
 	p.velocity = {};
 }
 

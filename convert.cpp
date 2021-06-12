@@ -156,6 +156,9 @@ namespace // name-value tables
         { sf::Mouse::XButton1, "XButton1" },
         { sf::Mouse::XButton2, "Mouse5" },
         { sf::Mouse::XButton2, "XButton2" },
+    };
+
+    const enumname sfmousewheel_table[] = {
         { sf::Mouse::VerticalWheel, "MouseWheel" },
         { sf::Mouse::HorizontalWheel, "MouseHWheel" },
     };

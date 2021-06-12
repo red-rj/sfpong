@@ -22,12 +22,13 @@ using sf::Mouse;
 using namespace std::literals;
 using iof = std::ios_base;
 
-template<class E, class Traits = std::char_traits<char>, class Alloc = std::allocator<typename Traits::char_type>>
-using iostream_translator = boost::property_tree::stream_translator<typename Traits::char_type, Traits, Alloc, E>;
+#define TRAITS(traits) typename traits ## ::char_type, traits
+
+template<class E, class Tr = std::char_traits<char>, class Alloc = std::allocator<typename Tr::char_type>>
+using iostream_translator = boost::property_tree::stream_translator<TRAITS(Tr), Alloc, E>;
 
 namespace boost::property_tree
 {
-#define TRAITS(traits) traits ## ::char_type, traits
 #define STDTRAITS(c) TRAITS(std::char_traits<c>)
 
     template<>

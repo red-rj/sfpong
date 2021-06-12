@@ -53,7 +53,7 @@ int main(int argc, const char* argv[])
 	catch (int e) {
 		return e;
 	}
-	ImGui::SFML::Init(G->window);
+	ImGui::SFML::Init(G->window, false);
 	menu::init();
 
 	int ec = pong::main();

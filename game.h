@@ -29,8 +29,12 @@ namespace pong
 			shape.move(velocity);
 		}
 
+		point previewPos() const {
+			return shape.getPosition() + velocity;
+		}
+
 		sf::RectangleShape shape;
-		sf::Vector2f velocity;
+		vec2 velocity;
 		playerid id;
 		bool ai = false;
 	};
@@ -45,7 +49,7 @@ namespace pong
 		}
 
 		sf::CircleShape shape;
-		sf::Vector2f velocity;
+		vec2 velocity;
 	};
 
 	struct background : sf::Drawable, sf::Transformable
