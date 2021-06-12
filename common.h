@@ -8,8 +8,6 @@
 
 namespace pong
 {
-    //namespace log = spdlog;
-
     template<typename T, typename E = T>
     using pair = std::pair<T, E>;
 
@@ -47,27 +45,6 @@ namespace files
         mono_tff = "support/liberation-mono.ttf"
         ;
 }
-
+    // versão do jogo
     extern const char version[];
-
-    constexpr auto nameof(playerid pl) noexcept
-    {
-        switch (pl)
-        {
-        case playerid::one: return "Player 1";
-        case playerid::two: return "Player 2";
-        default: return "Player ???";
-        }
-    }
-
-    constexpr auto nameof(dir d) noexcept {
-        switch (d)
-        {
-        case dir::up: return "up";
-        case dir::down: return "down";
-        case dir::left: return "left";
-        case dir::right: return "right";
-        default: return "???";
-        }
-    }
 }

@@ -4,6 +4,7 @@
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <fmt/format.h>
+#include "common.h"
 
 namespace conv
 {
@@ -12,6 +13,9 @@ namespace conv
 
 	bool parse(std::string_view text, sf::Keyboard::Key& key);
 	bool parse(std::string_view text, sf::Mouse::Button& btn);
+
+	auto to_string_view(pong::playerid pid) noexcept -> std::string_view;
+	auto to_string_view(pong::dir d) noexcept -> std::string_view;
 }
 
 template <class T>

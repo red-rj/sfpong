@@ -1,6 +1,7 @@
 #include "convert.h"
 #include "ci_string.h"
 #include <algorithm>
+#include <spdlog/spdlog.h>
 
 struct enumname
 {
@@ -192,5 +193,25 @@ namespace conv
 
         btn = it != End ? sf::Mouse::Button(it->value) : sf::Mouse::Button(-1);
         return it != End;
+    }
+
+    auto to_string_view(pong::playerid pid) noexcept -> std::string_view {
+        switch (pid)
+        {
+        case pong::playerid::one: return "Player 1";
+        case pong::playerid::two: return "Player 2";
+        default: return "Player ???";
+        }
+    }
+
+    auto to_string_view(pong::dir d) noexcept ->std::string_view {
+        switch (d)
+        {
+        case pong::dir::up: return "up";
+        case pong::dir::down: return "down";
+        case pong::dir::left: return "left";
+        case pong::dir::right: return "right";
+        default: return "???";
+        }
     }
 }

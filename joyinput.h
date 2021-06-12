@@ -4,7 +4,6 @@
 
 namespace pong
 {
-
     // representação de um input de joystick
     struct joy_input
     {
