@@ -148,6 +148,7 @@ namespace pong
 
 	};
 
+	// Game thingies
 	extern game_instance* G;
 
 	int main();

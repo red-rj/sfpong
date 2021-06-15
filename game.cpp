@@ -10,6 +10,7 @@
 #include "rng.h"
 #include "menu.h"
 #include "gvar.h"
+#include "convert.h"
 
 const char pong::version[] = "0.9.0";
 
@@ -455,7 +456,7 @@ bool pong::game_instance::updateScore()
 			serveDir = dir::right;
 		}
 		bg.update_score(score.first, score.second);
-		spdlog::info("score: {}x{} ; serve: {}", score.first, score.second, nameof(serveDir));
+		spdlog::info("score: {}x{} ; serve: {}", score.first, score.second, conv::to_string_view(serveDir));
 
 		return true;
 	}

@@ -125,7 +125,16 @@ void pong::game_settings::load_file(std::filesystem::path const& iniPath)
     const auto ini = iniPath.string();
     cfgtree cfg;
     spdlog::info("loading config file: {}", ini);
-    read_ini(ini, cfg);
+    
+    try
+    {
+        read_ini(ini, cfg);
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Error: {}; Using defaults", e.what());
+    }
+
     load_tree(cfg);
 }
 

@@ -67,7 +67,7 @@ static auto scan_joy_btn() noexcept
 namespace
 {
 	pong::game_settings work_settings;
-	pong::game_settings *settings;
+	//pong::game_settings *settings;
 
 	std::array<std::string, sf::Joystick::Count> _joystick_names;
 	int _joystick_count;
@@ -186,8 +186,7 @@ void menu::update()
 
 void menu::init()
 {
-	settings = &G->settings;
-	work_settings = *settings;
+	work_settings = G->settings;
 	refresh_joysticks();
 
 	auto* atlas = ImGui::GetIO().Fonts;
@@ -230,7 +229,7 @@ void optionsWin()
 {
 	namespace gui = ImScoped;
 
-	const bool isDirty = work_settings != *settings;
+	const bool isDirty = work_settings != G->settings;
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
@@ -238,10 +237,10 @@ void optionsWin()
 	if (!guiwindow)
 		return;
 
-{
+{ // child
 	auto guiwindowsize = ImGui::GetWindowSize();
 	gui::Child _content_{ "conteudo opções", { guiwindowsize.x - 10, guiwindowsize.y - 100 } };
-
+	
 	if (auto tabbar = gui::TabBar("##Tabs"))
 	{
 		if (auto tab = gui::TabBarItem("Game"))
@@ -287,12 +286,12 @@ void optionsWin()
 	ImGui::Separator();
 
 	if (ImGui::Button("Descartar")) {
-		work_settings = *settings;
+		work_settings = G->settings;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Salvar") && isDirty)
 	{
-		*settings = work_settings;
+		G->settings = work_settings;
 		// TODO: resolução
 		//window.setSize(settings->resolution());
 	}
