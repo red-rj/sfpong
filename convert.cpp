@@ -6,10 +6,10 @@
 struct enumname
 {
     int value;
-    std::string_view name;
+    const char* name;
 
     constexpr auto ci_name() const {
-        return util::ci_string_view(name.data(), name.size());
+        return util::ci_string_view(name);
     }
 
     constexpr bool operator== (int v) const { return v == value; }
@@ -17,7 +17,8 @@ struct enumname
     constexpr bool operator== (util::ci_string_view n) const { return n == ci_name(); }
 };
 
-namespace // name-value tables
+// name-value tables
+namespace
 {
     // gerado por codegen-v2.py
     const enumname sfkeyboard_table[] = {

@@ -57,7 +57,6 @@ int main(int argc, const char* argv[])
 	menu::init();
 
 	int ec = pong::main();
-
 	ImGui::SFML::Shutdown();
 	delete G;
 
