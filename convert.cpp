@@ -8,13 +8,9 @@ struct enumname
     int value;
     const char* name;
 
-    constexpr auto ci_name() const {
-        return util::ci_string_view(name);
-    }
-
     constexpr bool operator== (int v) const { return v == value; }
     constexpr bool operator== (std::string_view n) const { return n == name; }
-    constexpr bool operator== (util::ci_string_view n) const { return n == ci_name(); }
+    constexpr bool operator== (util::ci_string_view n) const { return n == util::ci_string_view(name); }
 };
 
 // name-value tables
