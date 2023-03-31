@@ -23,14 +23,13 @@ using namespace std::literals;
 using iof = std::ios_base;
 
 #define TRAITS(traits) typename traits ## ::char_type, traits
+#define STDTRAITS(c) TRAITS(std::char_traits<c>)
 
 template<class E, class Tr = std::char_traits<char>, class Alloc = std::allocator<typename Tr::char_type>>
 using iostream_translator = boost::property_tree::stream_translator<TRAITS(Tr), Alloc, E>;
 
 namespace boost::property_tree
 {
-#define STDTRAITS(c) TRAITS(std::char_traits<c>)
-
     template<>
     struct customize_stream<STDTRAITS(char), Keyboard::Key>
     {
@@ -62,10 +61,10 @@ namespace boost::property_tree
         }
 
     };
+}
 
 #undef TRAITS
 #undef STDTRAITS
-}
 
 class joyid_translator : iostream_translator<int>
 {

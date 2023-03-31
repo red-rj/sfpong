@@ -67,10 +67,8 @@ static auto scan_joy_btn() noexcept
 namespace
 {
 	pong::game_settings work_settings;
-	//pong::game_settings *settings;
 
-	std::array<std::string, sf::Joystick::Count> _joystick_names;
-	int _joystick_count;
+	std::vector<std::string> _joystick_names;
 
 	// font ids
 	namespace ft { enum Id {
@@ -104,19 +102,15 @@ static void refresh_joysticks()
 {
 	using sf::Joystick;
 
+	_joystick_names.clear();
+
 	for (int i=0; i < Joystick::Count; i++)
 	{
 		if (Joystick::isConnected(i)) {
 			auto info = Joystick::getIdentification(i);
-			_joystick_names[i] = info.name;
-			_joystick_count++;
+			_joystick_names.push_back(info.name);
 		}
 	}
-}
-static void clear_joysticks()
-{
-	for_each_n(_joystick_names.begin(), _joystick_count, [](std::string& n) { n.clear(); });
-	_joystick_count = 0;
 }
 
 
@@ -208,7 +202,6 @@ void menu::processEvent(sf::Event& event)
 	{
 	case Event::JoystickConnected:
 	case Event::JoystickDisconnected:
-		clear_joysticks();
 		refresh_joysticks();
 		break;
 	case Event::KeyPressed:
@@ -467,7 +460,7 @@ void controlsUi()
 					selected = npos;
 				}
 
-				for (int s{}; s < _joystick_count; s++)
+				for (int s{}; s < _joystick_names.size(); s++)
 				{
 					is_selected = s == joyid;
 					auto& name = _joystick_names[s];
