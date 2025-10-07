@@ -281,7 +281,7 @@ void pong::game_instance::processEvent(sf::Event& event)
 				break;
 			case Keyboard::Escape:
 				paused = !paused;
-				// imgui deve capturar input só com o jogo pausado
+				// imgui deve capturar input sï¿½ com o jogo pausado
 				auto& io = ImGui::GetIO();
 				io.WantCaptureKeyboard = paused;
 				io.WantCaptureMouse = paused;
@@ -534,15 +534,13 @@ void pong::game_instance::reset(ball_t& b)
 void pong::game_instance::reset(player_t& p)
 {
 	const auto center = point(gvar::playarea_width / 2, gvar::playarea_height / 2);
+	const auto margin = 10;
 
 	if (p.id == playerid::one) {
-		//p.shape.setPosition(margin - gvar::paddle_width, center.y);
-		auto margin = bg.getPoint(0).x;
 		p.shape.setPosition(margin - gvar::paddle_width, center.y);
 	}
 	else if (p.id == playerid::two) {
-		auto margin = bg.getPoint(2).x;
-		p.shape.setPosition(gvar::playarea_width - margin, center.y);
+		p.shape.setPosition(gvar::playarea_width - gvar::paddle_width - margin, center.y);
 	}
 
 	p.velocity = {};
