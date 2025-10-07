@@ -130,7 +130,8 @@ namespace ImScoped
         TreeNode(const void* ptr_id, const char* fmt, ...) IM_FMTARGS(3) {
             va_list ap;
             va_start(ap, fmt);
-            IsOpen = ImGui::TreeNodeV(ptr_id, fmt, ap); va_end(ap);
+            IsOpen = ImGui::TreeNodeV(ptr_id, fmt, ap);
+            va_end(ap);
         }
         ~TreeNode() { if (IsOpen) ImGui::TreePop(); }
     };
