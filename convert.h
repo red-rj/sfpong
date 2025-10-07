@@ -19,13 +19,14 @@ namespace conv
 }
 
 template <class T>
-struct fmt::formatter<sf::Vector2<T>> : formatter<T>
+class fmt::formatter<sf::Vector2<T>> : public formatter<T>
 {
 	using base = formatter<T>;
 	char field_sep = ';';
 
+public:
 	template<class Ctx>
-	auto format(sf::Vector2f const& vec, Ctx& ctx) {
+	auto format(sf::Vector2f const& vec, Ctx& ctx) const {
 		base::format(vec.x, ctx);
 		format_to(ctx.out(), "{} ", field_sep);
 		return base::format(vec.y, ctx);

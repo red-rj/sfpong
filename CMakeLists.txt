@@ -18,7 +18,7 @@ find_package(spdlog REQUIRED)
 find_package(lyra CONFIG REQUIRED)
 find_package(Catch2)
 
-target_compile_options(sfpong PRIVATE cxx_std_20)
+target_compile_features(sfpong PRIVATE cxx_std_20)
 
 target_link_libraries(sfpong PRIVATE 
     # SFML::Graphics SFML::Window 

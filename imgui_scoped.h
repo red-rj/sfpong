@@ -81,17 +81,21 @@ namespace ImScoped
         ~TextWrapPos() { ImGui::PopTextWrapPos(); }
     };
 
-    struct AllowKeyboardFocus : Property
-    {
-        AllowKeyboardFocus(bool allow_keyboard_focus) { ImGui::PushAllowKeyboardFocus(allow_keyboard_focus); }
-        ~AllowKeyboardFocus() { ImGui::PopAllowKeyboardFocus(); }
-    };
+    // renamed to (Push|Pop)TabStop
+    // struct AllowKeyboardFocus : Property
+    // {
+    //     AllowKeyboardFocus(bool allow_keyboard_focus) {
+    //         ImGui::PushAllowKeyboardFocus(allow_keyboard_focus);
+    //     }
+    //     ~AllowKeyboardFocus() { ImGui::PopAllowKeyboardFocus(); }
+    // };
 
-    struct ButtonRepeat : Property
-    {
-        ButtonRepeat(bool repeat) { ImGui::PushButtonRepeat(repeat); }
-        ~ButtonRepeat() { ImGui::PopButtonRepeat(); }
-    };
+    // renamed to (Push|Pop)ItemFlag w/ ImGuiItemFlags_ButtonRepeat
+    // struct ButtonRepeat : Property
+    // {
+    //     ButtonRepeat(bool repeat) { ImGui::PushButtonRepeat(repeat); }
+    //     ~ButtonRepeat() { ImGui::PopButtonRepeat(); }
+    // };
 
     struct Group : Property
     {
@@ -261,11 +265,14 @@ namespace ImScoped
         ~ClipRect() { ImGui::PopClipRect(); }
     };
 
-    struct ChildFrame : Widget
-    {
-        ChildFrame(ImGuiID id, const ImVec2& size, ImGuiWindowFlags flags = 0) { IsOpen = ImGui::BeginChildFrame(id, size, flags); }
-        ~ChildFrame() { ImGui::EndChildFrame(); }
-    };
+    // renamed to (Begin|End)Child w/ ImGuiChildFlags_FrameStyle
+    // struct ChildFrame : Widget
+    // {
+    //     ChildFrame(ImGuiID id, const ImVec2& size, ImGuiWindowFlags flags = 0) { 
+    //         IsOpen = ImGui::BeginChild(id, size, flag | ImGuiChildFlags_FrameStyle);
+    //     }
+    //     ~ChildFrame() { ImGui::EndChild(); }
+    // };
 
     // eu
 

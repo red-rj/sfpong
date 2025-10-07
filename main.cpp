@@ -28,7 +28,7 @@ int main(int argc, const char* argv[])
 
 	auto cli_result = cli.parse({ argc, argv });
 	if (!cli_result) {
-		print(stderr, "CLI error: {}\n", cli_result.errorMessage());
+		print(stderr, "CLI error: {}\n", cli_result.message());
 		return 5;
 	}
 	

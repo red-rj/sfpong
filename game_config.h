@@ -2,11 +2,9 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <array>
+#include <filesystem>
 #include "common.h"
 
-namespace std::filesystem {
-    class path;
-}
 
 namespace pong
 {
@@ -62,7 +60,8 @@ namespace ckey
         auto& get_keyboard_keys(playerid pid) const noexcept { return player_keys[int(pid)]; }
         void set_keyboard_keys(playerid pid, keyboard_ctrls ctrls) noexcept { player_keys[int(pid)] = ctrls; }
 
-        static const int njoystick = -1;
+        static const int njoystick;
+
         auto get_joystick(playerid pid) const noexcept { return player_joystick[int(pid)]; }
         void set_joystick(playerid pid, int joyid) noexcept;
         void unset_joystick(playerid pid) noexcept { set_joystick(pid, njoystick); }

@@ -158,7 +158,7 @@ void menu::update()
 				MenuItem("Sobre", nullptr, &isVisible[about]);
 			}
 
-			MenuItem(u8"OpÁıes", nullptr, &isVisible[options]);
+			MenuItem("Op√ß√µes", nullptr, &isVisible[options]);
 
 			if (auto m = Menu("Extra")) {
 				MenuItem("Stats", "F12", &isVisible[game_stats]);
@@ -226,13 +226,13 @@ void optionsWin()
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
-	gui::Window guiwindow(u8"OpÁıes", &isVisible[win::options], wflags);
+	gui::Window guiwindow("Op√ß√µes", &isVisible[win::options], wflags);
 	if (!guiwindow)
 		return;
 
 { // child
 	auto guiwindowsize = ImGui::GetWindowSize();
-	gui::Child _content_{ "conteudo opÁıes", { guiwindowsize.x - 10, guiwindowsize.y - 100 } };
+	gui::Child _content_{ "conteudo op√ß√µes", { guiwindowsize.x - 10, guiwindowsize.y - 100 } };
 	
 	if (auto tabbar = gui::TabBar("##Tabs"))
 	{
@@ -242,7 +242,7 @@ void optionsWin()
 			auto curVidMode = sf::VideoMode(work_settings.resolution.x, work_settings.resolution.y);
 			auto preview = fmt::format("{} x {}", curVidMode.width, curVidMode.height);
 
-			if (auto cb = gui::Combo(u8"ResoluÁ„o", preview.c_str())) {
+			if (auto cb = gui::Combo("Resolu√ß√£o", preview.c_str())) {
 				for (auto& vid : vidModes) {
 					preview = fmt::format("{} x {}", vid.width, vid.height);
 					auto isSelected = vid == curVidMode;
@@ -285,7 +285,7 @@ void optionsWin()
 	if (ImGui::Button("Salvar") && isDirty)
 	{
 		G->settings = work_settings;
-		// TODO: resoluÁ„o
+		// TODO: resolu√ß√£o
 		//window.setSize(settings->resolution());
 	}
 }
@@ -373,7 +373,6 @@ void controlsUi()
 	}
 
 	auto inputKbKey = [id = 0](const char* label, sf::Keyboard::Key& curKey) mutable
-	#pragma region Block
 	{
 		using namespace ImGui;
 
@@ -381,7 +380,7 @@ void controlsUi()
 		auto constexpr popup_id = "Rebind popup";
 		auto keyname = conv::to_string_view(curKey);
 
-		// but„o
+		// bot√£o
 		Text("%5s:", label);
 		SameLine(75);
 		// TODO: Isso assume que keyname tem terminador nulo
@@ -409,7 +408,6 @@ void controlsUi()
 			}
 		}
 	};
-	#pragma endregion
 
 	auto inputKbCtrls = [&](pong::playerid pl)
 	{

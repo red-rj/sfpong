@@ -1,0 +1,13 @@
+{
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.configureEnvironment": {
+        "CMAKE_TOOLCHAIN_FILE": "/home/pedro/Programas/vcpkg/scripts/buildsystems/vcpkg.cmake"
+    },
+    "files.associations": {
+        "*.opf": "xml",
+        "*.sgml": "xml",
+        "ignore": "ignore",
+        "format": "cpp",
+        "thread": "cpp"
+    }
+}

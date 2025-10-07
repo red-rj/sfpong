@@ -22,16 +22,14 @@ using sf::Mouse;
 using namespace std::literals;
 using iof = std::ios_base;
 
-#define TRAITS(traits) typename traits ## ::char_type, traits
-#define STDTRAITS(c) TRAITS(std::char_traits<c>)
 
 template<class E, class Tr = std::char_traits<char>, class Alloc = std::allocator<typename Tr::char_type>>
-using iostream_translator = boost::property_tree::stream_translator<TRAITS(Tr), Alloc, E>;
+using iostream_translator = boost::property_tree::stream_translator<typename Tr::char_type, Tr, Alloc, E>;
 
 namespace boost::property_tree
 {
     template<>
-    struct customize_stream<STDTRAITS(char), Keyboard::Key>
+    struct customize_stream<char, std::char_traits<char>, Keyboard::Key>
     {
         static void insert(std::ostream& os, Keyboard::Key key)
         {
@@ -47,7 +45,7 @@ namespace boost::property_tree
     };
 
     template<>
-    struct customize_stream<STDTRAITS(char), Mouse::Button>
+    struct customize_stream<char, std::char_traits<char>, Mouse::Button>
     {
         static auto insert(std::ostream& os, Mouse::Button btn)
         {
@@ -63,8 +61,7 @@ namespace boost::property_tree
     };
 }
 
-#undef TRAITS
-#undef STDTRAITS
+const int pong::game_settings::njoystick = -1;
 
 class joyid_translator : iostream_translator<int>
 {
