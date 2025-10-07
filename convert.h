@@ -22,13 +22,11 @@ template <class T>
 class fmt::formatter<sf::Vector2<T>> : public formatter<T>
 {
 	using base = formatter<T>;
-	char field_sep = ';';
+	std::string_view sep = ", ";
 
 public:
 	template<class Ctx>
 	auto format(sf::Vector2f const& vec, Ctx& ctx) const {
-		base::format(vec.x, ctx);
-		format_to(ctx.out(), "{} ", field_sep);
-		return base::format(vec.y, ctx);
+		return format_to(ctx.out(), "(x={0:.1f}{1}y={2:.1f})", vec.x, sep, vec.y);
 	}
 };

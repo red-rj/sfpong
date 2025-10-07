@@ -265,3 +265,4 @@ __pycache__/
 game.cfg
 imgui.ini
 build
+.vscode/*.json

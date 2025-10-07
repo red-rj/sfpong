@@ -2,28 +2,33 @@ sfPong TODOs
 ============
 
 * [wip] Suporte a Joystick e Mouse
-	- [ ] Arrumar um jeito de serializar e deserializar inputs de Joystick
-	- [ ] sensitividade configur·vel
-	- [x] deadzone configur·vel
+	- [x] Arrumar um jeito de serializar e deserializar inputs de Joystick
+	- [ ] sensitividade configur√°vel
+	- [x] deadzone configur√°vel
 * [x] Unit tests
 * [] Sound Fx?
 * [] Renomear tags (v0.0.0)
-* [x] N„o usar absolute path do ttf
-* [x] Menu de seleÁ„o de modo (1 ou 2 jogadores)
-* [z] Variavel de vers„o do programa (SFPONG_VERSION)
-* [x] BUG: Mousewheel n„o funciona no menu
-* [x] tornar posicionamento independende da resoluÁ„o da janela (sf::View)
+* [x] N√£o usar absolute path do ttf
+* [x] Menu de sele√ß√£o de modo (1 ou 2 jogadores)
+* [z] Variavel de vers√£o do programa (SFPONG_VERSION)
+* [x] BUG: Mousewheel n√£o funciona no menu
+* [x] tornar posicionamento independende da resolu√ß√£o da janela (sf::View)
 * [x] refatorar Cfg*
 * [wip] Melhorar IA
 	- [x] refatorar
-	- [] Dificuldade ajustavel
+	- [ ] Dificuldade ajustavel
 * [x] refatorar menu
 
-* [x] unificar configuraÁ„o
+* [x] unificar configura√ß√£o
 	atualmente exite copias de player_input_cfg espalhadas pelo projetos
 	criar classa modelando configs, passar ptrs pra quem precisa
 * [X] encapsular Playarea e pong_court em uma classe
 	parar de depender no valor de playarea
 * [X] refatorar startup (main) e game
 	remover classe `game`, quebrar em partes
-* [X] n„o herdar de shape para player e ball
+* [X] n√£o herdar de shape para player e ball
+
+## 2025
+
+* substituir Boost property_tree por TOML (toml11)
+* 

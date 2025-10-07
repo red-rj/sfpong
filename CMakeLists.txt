@@ -8,7 +8,7 @@ set(CPPFILES  config.cpp convert.cpp game.cpp joyinput.cpp main.cpp menu.cpp)
 set(HEADERS  ci_string.h common.h convert.h game_config.h game.h gvar.h 
              imgui_inc.h imgui_scoped.h joyinput.h menu.h rng.h)
 
-add_executable(sfpong ${CPPFILES})
+add_executable(sfpong ${CPPFILES} ${HEADERS})
 
 find_package(SFML 2.6 CONFIG REQUIRED COMPONENTS graphics system)
 find_package(ImGui-SFML REQUIRED)
