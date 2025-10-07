@@ -1,0 +1,20 @@
+{
+  "dependencies": [
+    "sfml",
+    "imgui-sfml",
+    "fmt",
+    "boost-property-tree",
+    "spdlog",
+    "bfgroup-lyra"
+  ],
+  "overrides": [
+    {
+      "name":"sfml",
+      "version":"2.6.2"
+    },
+    {
+      "name":"imgui-sfml",
+      "version":"2.6#1"
+    }
+  ]
+}
