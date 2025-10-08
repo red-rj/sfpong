@@ -539,10 +539,10 @@ void pong::game::reset(player_t& p)
 	const auto margin = 10;
 
 	if (p.id == playerid::one) {
-		p.shape.setPosition(margin - gvar::paddle_width, center.y);
+		p.shape.setPosition(gvar::paddle_width + margin, center.y);
 	}
 	else if (p.id == playerid::two) {
-		p.shape.setPosition(gvar::playarea_width - gvar::paddle_width - margin, center.y);
+		p.shape.setPosition(gvar::playarea_width - (gvar::paddle_width + margin), center.y);
 	}
 
 	p.velocity = {};
@@ -564,19 +564,17 @@ int pong::game::main()
 				break;
 			}
 
-			ImGui::SFML::ProcessEvent(event);
-			menu.processEvent(event);
 			processEvent(event);
+			menu.processEvent(event);
 		}
 
 		auto dt = restartClock();
-		ImGui::SFML::Update(window, dt);
 
 		update();
-		render();
-		menu.update();
+		menu.update(dt);
 
-		ImGui::SFML::Render(window);
+		render();
+		menu.render();
 
 		window.display();
 	}

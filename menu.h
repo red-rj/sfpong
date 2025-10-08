@@ -5,6 +5,7 @@
 namespace sf {
 	class Event;
 	class Window;
+	class Time;
 }
 
 namespace pong {
@@ -38,8 +39,9 @@ public:
 
 	bool isOpen(menuid mid);
 
-	void update();
+	void update(sf::Time delta);
 	void processEvent(sf::Event& event);
+	void render();
 
 private:
 

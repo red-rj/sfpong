@@ -132,6 +132,8 @@ void themenu::processEvent(sf::Event &event)
 {
 	using sf::Event;
 
+	ImGui::SFML::ProcessEvent(event);
+
 	switch (event.type)
 	{
 	case Event::JoystickConnected:
@@ -146,11 +148,18 @@ void themenu::processEvent(sf::Event &event)
 	}
 }
 
+void themenu::render()
+{
+	ImGui::SFML::Render(game.window);
+}
 
-void themenu::update()
+void themenu::update(sf::Time delta)
 {
 	using namespace ImGui;
 	using namespace ImScoped;
+
+	ImGui::SFML::Update(game.window, delta);
+
 
 	if (visible[ui_game_stats])
 		gameStatsUi();
