@@ -16,7 +16,7 @@ const char pong::version[] = "0.9.0";
 
 using namespace std::literals;
 
-namespace pong { game_instance* G = nullptr; }
+namespace pong { game* G = nullptr; }
 
 namespace
 {
@@ -179,7 +179,7 @@ pong::point pong::background::getPoint(size_t i) const
 }
 
 
-pong::game_instance::game_instance(arguments_t params_)
+pong::game::game(arguments_t params_)
 	: bg({gvar::playarea_width, gvar::playarea_height})
 	, params(params_)
 {
@@ -211,13 +211,13 @@ pong::game_instance::game_instance(arguments_t params_)
 	reset();
 }
 
-pong::game_instance::~game_instance()
+pong::game::~game()
 {
 	spdlog::info("Tchau! ;D");
 	settings.save_file(params.configFile);
 }
 
-void pong::game_instance::changeMode(gamemode m) noexcept
+void pong::game::changeMode(gamemode m) noexcept
 {
 	switch (m)
 	{
@@ -238,7 +238,7 @@ void pong::game_instance::changeMode(gamemode m) noexcept
 }
 
 
-void pong::game_instance::processEvent(sf::Event& event)
+void pong::game::processEvent(sf::Event& event)
 {
 	using sf::Event;
 	using sf::Keyboard;
@@ -292,14 +292,14 @@ void pong::game_instance::processEvent(sf::Event& event)
 	}
 }
 
-bool pong::game_instance::waiting_to_serve() const noexcept
+bool pong::game::waiting_to_serve() const noexcept
 {
 	return !paused
 		&& ball.velocity == vec2()
 		&& ball.shape.getPosition() == point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
-void pong::game_instance::serve(dir direction)
+void pong::game::serve(dir direction)
 {
 	auto mov = gvar::ball_speed;
 	if (direction == dir::left) {
@@ -310,7 +310,7 @@ void pong::game_instance::serve(dir direction)
 	ball.velocity = { mov, 0 };
 }
 
-void pong::game_instance::updatePlayer(player_t& player)
+void pong::game::updatePlayer(player_t& player)
 {
 	using gvar::paddle_max_speed;
 	bool turbo = false;
@@ -399,7 +399,7 @@ void pong::game_instance::updatePlayer(player_t& player)
 
 }
 
-void pong::game_instance::updateBall()
+void pong::game::updateBall()
 {
 	player_t* player = nullptr;
 	auto mom = ball.velocity;
@@ -436,7 +436,7 @@ void pong::game_instance::updateBall()
 	}
 }
 
-bool pong::game_instance::updateScore()
+bool pong::game::updateScore()
 {
 	auto bounds = rect({}, bg.size());
 
@@ -463,7 +463,7 @@ bool pong::game_instance::updateScore()
 	else return false;
 }
 
-void pong::game_instance::update()
+void pong::game::update()
 {
 	if (!paused)
 	{
@@ -504,7 +504,7 @@ static sf::View get_play_view(float target_width)
 	return view;
 }
 
-void pong::game_instance::render()
+void pong::game::render()
 {
 	window.clear();
 
@@ -515,7 +515,7 @@ void pong::game_instance::render()
 }
 
 
-void pong::game_instance::reset()
+void pong::game::reset()
 {
 	reset(player1);
 	reset(player2);
@@ -525,13 +525,13 @@ void pong::game_instance::reset()
 	bg.update_score(0, 0);
 }
 
-void pong::game_instance::reset(ball_t& b)
+void pong::game::reset(ball_t& b)
 {
 	b.velocity = {};
 	b.shape.setPosition(gvar::playarea_width / 2, gvar::playarea_height / 2);
 }
 
-void pong::game_instance::reset(player_t& p)
+void pong::game::reset(player_t& p)
 {
 	const auto center = point(gvar::playarea_width / 2, gvar::playarea_height / 2);
 	const auto margin = 10;
@@ -547,36 +547,36 @@ void pong::game_instance::reset(player_t& p)
 }
 
 
-int pong::main()
+int pong::game::main()
 {
-	while (G->window.isOpen())
+	while (window.isOpen())
 	{
 		sf::Event event;
-		while (G->window.pollEvent(event))
+		while (window.pollEvent(event))
 		{
 			// global events
 			switch (event.type)
 			{
 			case sf::Event::Closed:
-				G->window.close();
+				window.close();
 				break;
 			}
 
 			ImGui::SFML::ProcessEvent(event);
 			menu::processEvent(event);
-			G->processEvent(event);
+			processEvent(event);
 		}
 
-		auto dt = G->restartClock();
+		auto dt = restartClock();
 		ImGui::SFML::Update(G->window, dt);
 
-		G->update();
-		G->render();
+		update();
+		render();
 		menu::update();
 
 		ImGui::SFML::Render(G->window);
 
-		G->window.display();
+		window.display();
 	}
 
 	return 0;

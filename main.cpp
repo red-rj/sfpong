@@ -48,7 +48,7 @@ int main(int argc, const char* argv[])
 	// game instance
 	spdlog::info("setting-up game");
 	try {
-		G = new pong::game_instance(params);
+		G = new pong::game(params);
 	}
 	catch (int e) {
 		return e;
@@ -56,7 +56,7 @@ int main(int argc, const char* argv[])
 	ImGui::SFML::Init(G->window, false);
 	menu::init();
 
-	int ec = pong::main();
+	int ec = G->main();
 	ImGui::SFML::Shutdown();
 	delete G;
 

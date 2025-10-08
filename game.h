@@ -90,11 +90,11 @@ namespace pong
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 	};
 
-	class game_instance
+	class game
 	{
 	public:
-		explicit game_instance(arguments_t params);
-		~game_instance();
+		explicit game(arguments_t params);
+		~game();
 
 		sf::RenderWindow window;
 		arguments_t params;
@@ -138,6 +138,8 @@ namespace pong
 			paused = false;
 		}
 
+		int main();
+
 	private:
 		void reset(player_t& player);
 		void reset(ball_t& ball);
@@ -149,7 +151,5 @@ namespace pong
 	};
 
 	// Game thingies
-	extern game_instance* G;
-
-	int main();
+	extern game* G;
 }
