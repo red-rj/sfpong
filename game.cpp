@@ -16,8 +16,6 @@ const char pong::version[] = "0.9.0";
 
 using namespace std::literals;
 
-namespace pong { game* G = nullptr; }
-
 namespace
 {
 	auto rnd_eng = std::default_random_engine(1337);
@@ -182,6 +180,7 @@ pong::point pong::background::getPoint(size_t i) const
 pong::game::game(arguments_t params_)
 	: bg({gvar::playarea_width, gvar::playarea_height})
 	, params(params_)
+	, menu(*this, 21)
 {
 	try
 	{
@@ -209,6 +208,8 @@ pong::game::game(arguments_t params_)
 
 	changeMode(gamemode::singleplayer);
 	reset();
+
+	menu.init();
 }
 
 pong::game::~game()
@@ -242,7 +243,6 @@ void pong::game::processEvent(sf::Event& event)
 {
 	using sf::Event;
 	using sf::Keyboard;
-	using mwin = menu::win::Id;
 
 #ifndef NDEBUG
 	// devEvents
@@ -267,7 +267,9 @@ void pong::game::processEvent(sf::Event& event)
 	}
 #endif // !NDEBUG
 
-	if (!menu::is_open(mwin::rebiding_popup)) {
+	using enum themenu::menuid;
+
+	if (!menu.isOpen(ui_rebiding_popup)) {
 		switch (event.type)
 		{
 		case Event::KeyReleased:
@@ -281,7 +283,7 @@ void pong::game::processEvent(sf::Event& event)
 				break;
 			case Keyboard::Escape:
 				paused = !paused;
-				// imgui deve capturar input s� com o jogo pausado
+				// imgui deve capturar input só com o jogo pausado
 				auto& io = ImGui::GetIO();
 				io.WantCaptureKeyboard = paused;
 				io.WantCaptureMouse = paused;
@@ -563,18 +565,18 @@ int pong::game::main()
 			}
 
 			ImGui::SFML::ProcessEvent(event);
-			menu::processEvent(event);
+			menu.processEvent(event);
 			processEvent(event);
 		}
 
 		auto dt = restartClock();
-		ImGui::SFML::Update(G->window, dt);
+		ImGui::SFML::Update(window, dt);
 
 		update();
 		render();
-		menu::update();
+		menu.update();
 
-		ImGui::SFML::Render(G->window);
+		ImGui::SFML::Render(window);
 
 		window.display();
 	}

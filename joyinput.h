@@ -4,7 +4,7 @@
 
 namespace pong
 {
-    // representação de um input de joystick
+    // representaÃ§Ã£o de um input de joystick
     struct joy_input
     {
         enum input_type { invalid=-1, button, axis } type = invalid;

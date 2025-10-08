@@ -18,7 +18,6 @@ using fmt::print;
 
 int main(int argc, const char* argv[])
 {
-	using pong::G;
 	pong::arguments_t params;
 
 	auto cli = lyra::cli()
@@ -47,18 +46,11 @@ int main(int argc, const char* argv[])
 
 	// game instance
 	spdlog::info("setting-up game");
-	try {
-		G = new pong::game(params);
+	int r = 0;
+	{
+		pong::game game(params);
+		r = game.main();
 	}
-	catch (int e) {
-		return e;
-	}
-	ImGui::SFML::Init(G->window, false);
-	menu::init();
 
-	int ec = G->main();
-	ImGui::SFML::Shutdown();
-	delete G;
-
-	return ec;
+	return r;
 }

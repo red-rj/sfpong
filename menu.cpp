@@ -30,7 +30,6 @@ static auto scan_kb() noexcept -> std::optional<sf::Keyboard::Key>
 	return {};
 }
 
-#if 0
 static auto scan_mouse_btn() noexcept -> std::optional<sf::Mouse::Button>
 {
 	using sf::Mouse;
@@ -45,7 +44,7 @@ static auto scan_mouse_btn() noexcept -> std::optional<sf::Mouse::Button>
 	return {};
 }
 
-static auto scan_joy_btn() noexcept
+static auto scan_joy_btn() noexcept -> std::optional<std::tuple<unsigned,unsigned>>
 {
 	using sf::Joystick;
 
@@ -60,141 +59,76 @@ static auto scan_joy_btn() noexcept
 			}
 		}
 	}
+
+	return std::nullopt;
 }
-#endif
 
 
 namespace
 {
-	pong::game_settings work_settings;
-
 	std::vector<std::string> _joystick_names;
+	// std::vector<sf::Joystick::Identification> _joysticks;
 
-	// font ids
-	namespace ft { enum Id {
-		normal,
-		larger,
-		monospace,
-		section_title,
-
-		Count,
-	};}
-
-	// show flags
-	bool isVisible[menu::win::Count];
-
-	//fonts
-	ImFont* fonts[ft::Count];
-
+	void refresh_joysticks()
+	{
+		using sf::Joystick;
+	
+		_joystick_names.clear();
+	
+		for (int i=0; i < Joystick::Count; i++)
+		{
+			if (Joystick::isConnected(i)) {
+				auto info = Joystick::getIdentification(i);
+				_joystick_names.push_back(info.name);
+			}
+		}
+	}
 }
 
-using win = menu::win::Id;
 using namespace pong;
 
-// windows
-static void optionsWin();
-static void gameStatsWin();
-static void aboutSfPongWin();
-// ui
-static void controlsUi();
-
-static void refresh_joysticks()
+void themenu::init()
 {
-	using sf::Joystick;
+	work_settings = game.settings;
 
-	_joystick_names.clear();
-
-	for (int i=0; i < Joystick::Count; i++)
-	{
-		if (Joystick::isConnected(i)) {
-			auto info = Joystick::getIdentification(i);
-			_joystick_names.push_back(info.name);
-		}
+	if (!ImGui::SFML::Init(game.window, false)) {
+		spdlog::error("ImGui::SFML::Init failed!");
+		std::terminate();
 	}
-}
-
-
-void menu::update()
-{
-	using namespace ImGui;
-	using namespace ImScoped;
-	using namespace win;
-
-	if (isVisible[game_stats])
-		gameStatsWin();
 	
-	if (G->paused) {
-		// windows
-		if (isVisible[options])
-			optionsWin();
-		if (isVisible[about])
-			aboutSfPongWin();
-		if (isVisible[imgui_demo])
-			ImGui::ShowDemoWindow(&isVisible[imgui_demo]);
-		if (isVisible[imgui_about])
-			ImGui::ShowAboutWindow(&isVisible[imgui_about]);
-
-		// main menu
-		if (auto mm = MainMenuBar()) {
-			TextDisabled("sfPong");
-
-			if (auto m = Menu("Jogo")) {
-				if (MenuItem("Continuar", "ESC"))
-					G->paused = false;
-				if (auto m1 = Menu("Novo")) {
-
-					if (MenuItem("1 jogador", nullptr, G->mode == gamemode::singleplayer)) {
-						G->newGame(gamemode::singleplayer);
-					}
-					if (MenuItem("2 jogadores", nullptr, G->mode == gamemode::multiplayer)) {
-						G->newGame(gamemode::multiplayer);
-					}
-				}
-				if (MenuItem("Reiniciar")) {
-					G->reset();
-					G->paused = false;
-				}
-				Separator();
-				MenuItem("Sobre", nullptr, &isVisible[about]);
-			}
-
-			MenuItem("Opções", nullptr, &isVisible[options]);
-
-			if (auto m = Menu("Extra")) {
-				MenuItem("Stats", "F12", &isVisible[game_stats]);
-			}
-
-			StyleColor _s_[] = {
-				{ImGuiCol_Button, sf::Color::Transparent},
-				{ImGuiCol_ButtonHovered, sf::Color::Red},
-				{ImGuiCol_ButtonActive, sf::Color(255, 50, 50)}
-			};
-
-			if (Button("Sair")) {
-				spdlog::info("Tchau! :)");
-				G->window.close();
-			}
-		}
-	}
-}
-
-void menu::init()
-{
-	work_settings = G->settings;
 	refresh_joysticks();
-
 	auto* atlas = ImGui::GetIO().Fonts;
-	const auto ui_font_size = 18.f;
 
 	atlas->Clear();
-	fonts[ft::normal] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size);
-	fonts[ft::larger] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 2);
-	fonts[ft::section_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, ui_font_size * 1.25f);
-	fonts[ft::monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, ui_font_size);
-	ImGui::SFML::UpdateFontTexture();
+	fonts[font_normal] = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size);
+	fonts[font_larger] = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size * 2);
+	fonts[font_title] = atlas->AddFontFromFileTTF(pong::files::sans_tff, font_size * 1.25f);
+	fonts[font_monospace] = atlas->AddFontFromFileTTF(pong::files::mono_tff, font_size);
+
+	if (!ImGui::SFML::UpdateFontTexture()) {
+		spdlog::error("ImGui::SFML::UpdateFontTexture failed!");
+		std::terminate();
+	}
 }
 
-void menu::processEvent(sf::Event& event)
+themenu::themenu(pong::game& gameref, float fontsize)
+	: game(gameref)
+	, font_size(fontsize)
+{
+	visible.fill(false);
+}
+
+themenu::~themenu()
+{
+	ImGui::SFML::Shutdown(game.window);
+}
+
+bool themenu::isOpen(menuid mid)
+{
+    return visible[mid];
+}
+
+void themenu::processEvent(sf::Event &event)
 {
 	using sf::Event;
 
@@ -206,27 +140,85 @@ void menu::processEvent(sf::Event& event)
 		break;
 	case Event::KeyPressed:
 		if (event.key.code == sf::Keyboard::F12) {
-			isVisible[win::game_stats] = !isVisible[win::game_stats];
+			visible[ui_game_stats] = !visible[ui_game_stats];
 		}
 		break;
 	}
 }
 
-bool menu::is_open(win::Id id) noexcept
+
+void themenu::update()
 {
-	return isVisible[id];
+	using namespace ImGui;
+	using namespace ImScoped;
+
+	if (visible[ui_game_stats])
+		gameStatsUi();
+	
+	if (game.paused) {
+		// windows
+		if (visible[ui_options])
+			optionsUi();
+		if (visible[ui_about])
+			aboutUi();
+		if (visible[ui_imgui_demo])
+			ImGui::ShowDemoWindow(&visible[ui_imgui_demo]);
+		if (visible[ui_imgui_about])
+			ImGui::ShowAboutWindow(&visible[ui_imgui_about]);
+
+		// main menu
+		if (auto mm = MainMenuBar()) {
+			TextDisabled("sfPong");
+
+			if (auto m = Menu("Jogo")) {
+				if (MenuItem("Continuar", "ESC"))
+					game.paused = false;
+				if (auto m1 = Menu("Novo")) {
+
+					if (MenuItem("1 jogador", nullptr, game.mode == gamemode::singleplayer)) {
+						game.newGame(gamemode::singleplayer);
+					}
+					if (MenuItem("2 jogadores", nullptr, game.mode == gamemode::multiplayer)) {
+						game.newGame(gamemode::multiplayer);
+					}
+				}
+				if (MenuItem("Reiniciar")) {
+					game.reset();
+					game.paused = false;
+				}
+				Separator();
+				MenuItem("Sobre", nullptr, &visible[ui_about]);
+			}
+
+			MenuItem("Opções", nullptr, &visible[ui_options]);
+
+			if (auto m = Menu("Extra")) {
+				MenuItem("Stats", "F12", &visible[ui_game_stats]);
+			}
+
+			StyleColor _s_[] = {
+				{ImGuiCol_Button, sf::Color::Transparent},
+				{ImGuiCol_ButtonHovered, sf::Color::Red},
+				{ImGuiCol_ButtonActive, sf::Color(255, 50, 50)}
+			};
+
+			if (Button("Sair")) {
+				spdlog::info("Tchau! :)");
+				game.window.close();
+			}
+		}
+	}
 }
 
-
-void optionsWin()
+void themenu::optionsUi()
 {
 	namespace gui = ImScoped;
 
-	const bool isDirty = work_settings != G->settings;
+	const bool isDirty = work_settings != game.settings;
 	auto wflags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (isDirty) wflags |= ImGuiWindowFlags_UnsavedDocument;
 
-	gui::Window guiwindow("Opções", &isVisible[win::options], wflags);
+	gui::Window guiwindow("Opções", &visible[ui_options], wflags);
 	if (!guiwindow)
 		return;
 
@@ -265,11 +257,11 @@ void optionsWin()
 
 			if (Button("game stats"))
 			{
-				isVisible[win::game_stats] = true;
+				visible[ui_game_stats] = true;
 			}
 			if (Button("ImGui demo window"))
 			{
-				isVisible[win::imgui_demo] = true;
+				visible[ui_imgui_demo] = true;
 			}
 		}
 	}
@@ -279,18 +271,17 @@ void optionsWin()
 	ImGui::Separator();
 
 	if (ImGui::Button("Descartar")) {
-		work_settings = G->settings;
+		work_settings = game.settings;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Salvar") && isDirty)
 	{
-		G->settings = work_settings;
+		game.settings = work_settings;
 		// TODO: resolução
-		//window.setSize(settings->resolution());
 	}
 }
 
-void gameStatsWin()
+void themenu::gameStatsUi()
 {
 	namespace ims = ImScoped;
 
@@ -301,12 +292,12 @@ void gameStatsWin()
 
 	auto const wflags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings 
 						| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-	ims::Window overlay("Stats", &isVisible[win::game_stats], wflags);
+	ims::Window overlay("Stats", &visible[ui_game_stats], wflags);
 
 	point Pos[] = {
-		G->player1.shape.getPosition(),
-		G->player2.shape.getPosition(),
-		G->ball.shape.getPosition()
+		game.player1.shape.getPosition(),
+		game.player2.shape.getPosition(),
+		game.ball.shape.getPosition()
 	};
 
 	auto text = fmt::format("P1: [{:.2f}]\n" "P2: [{:.2f}]\n" "Ball: [{:.2f}]", Pos[0], Pos[1], Pos[2]);
@@ -314,24 +305,24 @@ void gameStatsWin()
 	ImGui::Text("Positions:\n%s", text.c_str());
 
 	text = fmt::format("P1: {:.3f}\nP2: {:.3f}\nBall: [{:.2f}]", 
-		G->player1.velocity, G->player2.velocity, G->ball.velocity);
+		game.player1.velocity, game.player2.velocity, game.ball.velocity);
 
 	ImGui::Text("Velocity:\n%s", text.c_str());
 }
 
-void aboutSfPongWin()
+void themenu::aboutUi()
 {
 	using namespace ImGui;
 	namespace gui = ImScoped;
 
-	auto window = gui::Window("Sobre sfPong", &isVisible[win::about], ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+	auto window = gui::Window("Sobre sfPong", &visible[ui_about], ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 	if (!window) return;
 
 	Text("sfPong %s", pong::version);
 	Text("Criado por Pedro Oliva Rodrigues.");
 	Separator();
 
-	gui::Font _f_ = fonts[ft::monospace];
+	gui::Font _f_ = fonts[font_monospace];
 
 	const auto libver = "%-7s %d.%d.%d";
 	Text(libver, "SFML", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
@@ -345,9 +336,9 @@ void aboutSfPongWin()
 
 	SameLine();
 
-	gui::Font _ff_ = fonts[ft::normal];
+	gui::Font _ff_ = fonts[font_normal];
 	if (SmallButton(" + "))
-		isVisible[win::imgui_about] = true;
+		visible[ui_imgui_about] = true;
 }
 
 	Text(libver, "Boost",
@@ -363,16 +354,16 @@ void aboutSfPongWin()
 	Text(libver, "spdlog", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
 }
 
-void controlsUi()
+void themenu::controlsUi()
 {
 	namespace gui = ImScoped;
 
 	{
-		gui::Font _f_ = fonts[ft::section_title];
+		gui::Font _f_ = fonts[font_title];
 		ImGui::Text("Teclado:");
 	}
 
-	auto inputKbKey = [id = 0](const char* label, sf::Keyboard::Key& curKey) mutable
+	auto inputKbKey = [&,id = 0](const char* label, sf::Keyboard::Key& curKey) mutable
 	{
 		using namespace ImGui;
 
@@ -386,16 +377,16 @@ void controlsUi()
 		// TODO: Isso assume que keyname tem terminador nulo
 		if (Button(keyname.data())) {
 			OpenPopup(popup_id);
-			isVisible[win::rebiding_popup] = true;
+			visible[ui_rebiding_popup] = true;
 		}
 
 		// popup
 		const auto flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
-		if (auto popup = gui::PopupModal(popup_id, &isVisible[win::rebiding_popup], flags))
+		if (auto popup = gui::PopupModal(popup_id, &visible[ui_rebiding_popup], flags))
 		{
 			using Key = sf::Keyboard::Key;
 
-			gui::Font _f_{ fonts[ft::larger] };
+			gui::Font _f_{ fonts[font_larger] };
 			Text("Pressione uma nova tecla para '%s', ou Esc para cancelar.", label);
 
 			auto key = scan_kb();
@@ -430,7 +421,7 @@ void controlsUi()
 	ImGui::Spacing();
 
 	{
-		gui::Font _f_ = fonts[ft::section_title];
+		gui::Font _f_ = fonts[font_title];
 		ImGui::Text("Joystick:");
 	}
 

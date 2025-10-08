@@ -1,8 +1,9 @@
 #pragma once
 #include <utility>
+#include "SFML/Graphics.hpp"
 #include "common.h"
 #include "game_config.h"
-#include "SFML/Graphics.hpp"
+#include "menu.h"
 
 namespace pong
 {
@@ -141,6 +142,9 @@ namespace pong
 		int main();
 
 	private:
+		themenu menu;
+		friend class themenu;
+
 		void reset(player_t& player);
 		void reset(ball_t& ball);
 
@@ -149,7 +153,4 @@ namespace pong
 		bool updateScore();
 
 	};
-
-	// Game thingies
-	extern game* G;
 }
